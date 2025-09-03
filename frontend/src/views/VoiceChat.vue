@@ -1,8 +1,48 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, nextTick, watch, watchEffect } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useChat } from '../composables/useChat'
 
+// PrimeVue components
+import Button from 'primevue/button'
+import InputTextarea from 'primevue/textarea'
+import Tabs from 'primevue/tabs'
+import TabList from 'primevue/tablist'
+import Tab from 'primevue/tab'
+import TabPanels from 'primevue/tabpanels'
+import TabPanel from 'primevue/tabpanel'
+import Avatar from 'primevue/avatar'
+import Divider from 'primevue/divider'
+import Panel from 'primevue/panel'
+import ChatHistory from '../components/ChatHistory.vue'
+
+// Chat composable
+const { startChat, sendMessage, fetchChat, deleteChat, currentChatId, messages, loading } = useChat()
+const route = useRoute()
+const router = useRouter()
+
+// UI state
+const activeTab = ref('text')
+const inputText = ref('')
+const listRef = ref<HTMLDivElement | null>(null)
+
+watch(messages, () => nextTick(scrollToBottom))
+
+function scrollToBottom() {
+  const el = listRef.value
+  if (el) el.scrollTop = el.scrollHeight
+}
+
+async function handleSend() {
+  const text = inputText.value.trim()
+  if (!text) return
+  await sendMessage(text)
+  inputText.value = ''
+}
+
+// Voice/WebSocket area
 const isRecording = ref(false)
-const statusText = ref('idle')
+const statusText = ref('disconnected')
 const chunkCount = ref(0)
 const bytesSent = ref(0)
 
@@ -60,24 +100,211 @@ function stopRecording() {
   }
   isRecording.value = false
 }
+
+async function handleNewChat() {
+  const chat = await startChat('Новый чат')
+  router.push({ path: `/voice-chat/${chat.id}` })
+}
+
+async function handleDeleteChat() {
+  if (!currentChatId.value) return
+  await deleteChat(currentChatId.value)
+  const chat = await startChat('Новый чат')
+  router.replace({ path: `/voice-chat/${chat.id}` })
+}
+
+// Autostart chat on first mount
+onMounted(async () => {
+  if (!currentChatId.value) {
+    const chat = await startChat('Новый чат')
+    router.replace({ name: undefined, params: { chatId: chat.id } as any })
+  } else {
+    router.replace({ name: undefined, params: { chatId: currentChatId.value } as any })
+  }
+  await nextTick()
+  scrollToBottom()
+})
+
+watchEffect(async () => {
+  if (currentChatId.value) {
+    await fetchChat(currentChatId.value)
+  }
+})
 </script>
 
 <template>
-  <div style="padding: 16px; border: 1px solid #e5e7eb; border-radius: 8px; margin-top: 16px;">
-    <h2>Voice Chat (WebSocket)</h2>
-    <div style="margin: 8px 0;">
-      <button @click="startRecording" :disabled="isRecording" style="margin-right: 8px;">Start</button>
-      <button @click="stopRecording" :disabled="!isRecording">Stop</button>
-    </div>
-    <div style="font-size: 14px; color: #374151;">
-      <div>Status: {{ statusText }}</div>
-      <div>Chunks sent: {{ chunkCount }}</div>
-      <div>Bytes sent: {{ bytesSent }}</div>
+  <div class="chat-page">
+    <div class="chat-container">
+      <Panel>
+      <!-- Header -->
+        <div class="chat-header">
+          <div class="title">
+            <span class="app-title">Чат</span>
+            <span class="chat-id" v-if="currentChatId">#{{ currentChatId?.slice(0, 6) }}</span>
+          </div>
+          <div class="actions">
+            <Button label="Новый" icon="pi pi-plus" size="small" @click="handleNewChat" :disabled="loading" />
+            <Button label="Удалить" icon="pi pi-trash" size="small" severity="danger" class="ml-8" @click="handleDeleteChat" :disabled="!currentChatId || loading" />
+          </div>
+        </div>
+
+        <Divider class="my-12" />
+
+        <div class="content">
+          <div class="main">
+            <!-- Tabs for modes (PrimeVue 4 Tabs API) -->
+            <Tabs v-model:value="activeTab">
+              <TabList>
+                <Tab value="text">Текст</Tab>
+                <Tab value="voice">Звонок</Tab>
+              </TabList>
+              <TabPanels>
+              <TabPanel value="text">
+            <!-- Messages -->
+            <div ref="listRef" class="messages">
+              <div v-for="m in messages" :key="m.id" class="msg" :class="m.role">
+                <div class="avatar">
+                  <Avatar :label="m.role === 'user' ? 'U' : 'A'" :severity="m.role === 'user' ? 'info' : 'success'" shape="circle" size="large" />
+                </div>
+                <div class="bubble">
+                  <div class="content">{{ m.content }}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Input area -->
+            <div class="input-bar">
+              <InputTextarea v-model="inputText" autoResize rows="1" :disabled="loading" placeholder="Введите сообщение..." class="flex-1" />
+              <Button icon="pi pi-send" label="Отправить" class="send-btn" :disabled="loading || !inputText.trim()" @click="handleSend" />
+            </div>
+              </TabPanel>
+
+              <TabPanel value="voice">
+            <div class="voice">
+              <div class="voice-stats">
+                <div class="stat-item"><span class="label">Статус:</span> <span class="value">{{ statusText }}</span></div>
+                <div class="stat-item"><span class="label">Чанков:</span> <span class="value">{{ chunkCount }}</span></div>
+                <div class="stat-item"><span class="label">Байт:</span> <span class="value">{{ bytesSent }}</span></div>
+              </div>
+              <div class="voice-actions">
+                <Button label="Старт" icon="pi pi-microphone" :disabled="isRecording" @click="startRecording" />
+                <Button label="Стоп" icon="pi pi-stop" severity="danger" :disabled="!isRecording" class="ml-8" @click="stopRecording" />
+              </div>
+
+              <Divider class="my-12" />
+
+              <!-- Shared messages view -->
+              <div ref="listRef" class="messages">
+                <div v-for="m in messages" :key="m.id" class="msg" :class="m.role">
+                  <div class="avatar">
+                    <Avatar :label="m.role === 'user' ? 'U' : 'A'" :severity="m.role === 'user' ? 'info' : 'success'" shape="circle" size="large" />
+                  </div>
+                  <div class="bubble">
+                    <div class="content">{{ m.content }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+              </TabPanel>
+              </TabPanels>
+            </Tabs>
+          </div>
+          <div class="aside">
+            <div class="chat-history-wrapper">
+              <ChatHistory 
+                :active-id="currentChatId"
+                :loading="loading"
+                @select="id => router.push({ path: `/voice-chat/${id}` })"
+                @create="handleNewChat"
+              />
+            </div>
+          </div>
+        </div>
+      </Panel>
     </div>
   </div>
+  
 </template>
 
 <style scoped>
-h2 { margin: 0 0 8px; font-size: 16px; }
-button { padding: 6px 12px; }
+.ml-8 { margin-left: 8px; }
+.my-12 { margin-top: 12px; margin-bottom: 12px; }
+
+.chat-page {
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+}
+
+.chat-container {
+  width: 100%;
+  max-width: 920px;
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.content { display: grid; grid-template-columns: 1fr 280px; gap: 12px; }
+.main { min-width: 0; }
+.aside { min-width: 0; }
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.title { display: flex; align-items: baseline; gap: 8px; }
+.app-title { font-size: 18px; font-weight: 600; }
+.chat-id { font-size: 12px; opacity: 0.7; }
+
+.messages {
+  height: calc(60vh - 80px);
+  overflow-y: auto;
+  padding: 8px;
+  background: var(--surface-ground);
+  border-radius: 8px;
+}
+
+.msg { display: flex; gap: 8px; margin-bottom: 10px; }
+.msg.user { flex-direction: row-reverse; }
+.msg .avatar { flex-shrink: 0; }
+.msg .bubble {
+  max-width: 80%;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+}
+.msg.user .bubble { background: var(--primary-50); border-color: var(--primary-200); }
+.msg .content { white-space: pre-wrap; word-break: break-word; }
+
+.input-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+.send-btn { white-space: nowrap; }
+
+.voice { display: flex; flex-direction: column; gap: 12px; }
+.voice-stats { display: flex; gap: 16px; flex-wrap: wrap; font-size: 14px; }
+.stat-item .label { opacity: 0.7; margin-right: 6px; }
+.voice-actions { display: flex; align-items: center; }
+
+.chat-history-wrapper {
+  max-height: calc(65vh);
+  overflow-y: auto;
+}
+
+/* Mobile tweaks */
+@media (max-width: 600px) {
+  .chat-container { padding: 8px; border: none; border-radius: 0; }
+  .messages { height: 50vh; }
+  .msg .bubble { max-width: 90%; }
+}
+
+@media (max-width: 900px) {
+  .content { grid-template-columns: 1fr; }
+}
 </style>

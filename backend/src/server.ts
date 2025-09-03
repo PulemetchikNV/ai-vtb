@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { WebSocketServer, WebSocket, RawData } from 'ws';
 import type { IncomingMessage } from 'http';
+import chatRoutes from './routes/chat';
 
 const server = Fastify({
     logger: {
@@ -17,6 +18,10 @@ async function start() {
 
     server.get('/health', async () => {
         return { status: 'ok' };
+    });
+
+    await server.register(async (s) => {
+        await chatRoutes(s);
     });
 
     // WebSocket server for streaming audio chunks

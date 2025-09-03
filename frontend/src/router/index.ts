@@ -6,7 +6,7 @@ const router = createRouter({
     history: createWebHistory(),
     routes: [
         { path: '/', component: ResumeUpload },
-        { path: '/voice-chat', component: VoiceChat },
+        { path: '/voice-chat/:chatId?', component: VoiceChat },
     ],
 });
 
