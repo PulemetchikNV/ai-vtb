@@ -1,0 +1,59 @@
+services:
+  resumeparsing-dev:
+    build:
+      context: .
+      dockerfile: resumeParsing/Dockerfile
+    container_name: resume-parsing-dev
+    image: resumeparsing:latest
+    environment:
+      - UPLOADS_DIR=/app/data/uploads
+      - CHROMA_DIR=/app/data/chroma
+      - CHROMA_COLLECTION=resumes
+      - EMBED_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+      - CHUNK_SIZE=800
+      - CHUNK_OVERLAP=120
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./resumeParsing/app:/app/app:ro
+      - ./data/uploads:/app/data/uploads
+      - ./data/chroma:/app/data/chroma
+    restart: unless-stopped
+
+  backend-dev:
+    image: node:20-alpine
+    working_dir: /app
+    container_name: backend-dev
+    command: sh -c "npm install && npm run dev"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - NODE_ENV=development
+      - PORT=3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend:/app
+      - backend_node_modules:/app/node_modules
+    depends_on:
+      - resumeparsing-dev
+    restart: unless-stopped
+
+  frontend-dev:
+    image: node:20-alpine
+    working_dir: /app
+    container_name: frontend-dev
+    command: sh -c "npm install && npm run dev -- --host"
+    volumes:
+      - ./frontend:/app
+      - node_modules_cache:/app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    ports:
+      - "5174:5173"
+    depends_on:
+      - resumeparsing-dev
+    restart: unless-stopped
+
+volumes:
+  node_modules_cache:
+  backend_node_modules:

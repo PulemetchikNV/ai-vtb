@@ -1,0 +1,1 @@
+Senior Python developer. 5 years with FastAPI, PostgreSQL, Docker, CI/CD. Built ETL pipelines and optimized SQL.

@@ -1,0 +1,14 @@
+.venv
+__pycache__
+*.pyc
+*.pyo
+.DS_Store
+data/uploads
+data/chroma
+tests
+*.log
+.git
+.gitignore
+README.md
+resume.txt
+
