@@ -11,27 +11,19 @@ import TabList from 'primevue/tablist'
 import Tab from 'primevue/tab'
 import TabPanels from 'primevue/tabpanels'
 import TabPanel from 'primevue/tabpanel'
-import Avatar from 'primevue/avatar'
 import Divider from 'primevue/divider'
 import Panel from 'primevue/panel'
 import ChatHistory from '../components/ChatHistory.vue'
+import Messages from '../components/Messages.vue'
 
 // Chat composable
-const { startChat, sendMessage, fetchChat, deleteChat, currentChatId, messages, loading } = useChat()
+const { startChat, sendMessage, fetchChat, deleteChat, currentChatId, messages, loadChatHistory, loading } = useChat()
 const route = useRoute()
 const router = useRouter()
 
 // UI state
 const activeTab = ref('text')
 const inputText = ref('')
-const listRef = ref<HTMLDivElement | null>(null)
-
-watch(messages, () => nextTick(scrollToBottom))
-
-function scrollToBottom() {
-  const el = listRef.value
-  if (el) el.scrollTop = el.scrollHeight
-}
 
 async function handleSend() {
   const text = inputText.value.trim()
@@ -104,11 +96,13 @@ function stopRecording() {
 async function handleNewChat() {
   const chat = await startChat('Новый чат')
   router.push({ path: `/voice-chat/${chat.id}` })
+  loadChatHistory()
 }
 
 async function handleDeleteChat() {
   if (!currentChatId.value) return
   await deleteChat(currentChatId.value)
+
   const chat = await startChat('Новый чат')
   router.replace({ path: `/voice-chat/${chat.id}` })
 }
@@ -121,8 +115,7 @@ onMounted(async () => {
   } else {
     router.replace({ name: undefined, params: { chatId: currentChatId.value } as any })
   }
-  await nextTick()
-  scrollToBottom()
+  // messages autoscroll handled inside Messages component
 })
 
 watchEffect(async () => {
@@ -160,52 +153,32 @@ watchEffect(async () => {
               </TabList>
               <TabPanels>
               <TabPanel value="text">
-            <!-- Messages -->
-            <div ref="listRef" class="messages">
-              <div v-for="m in messages" :key="m.id" class="msg" :class="m.role">
-                <div class="avatar">
-                  <Avatar :label="m.role === 'user' ? 'U' : 'A'" :severity="m.role === 'user' ? 'info' : 'success'" shape="circle" size="large" />
-                </div>
-                <div class="bubble">
-                  <div class="content">{{ m.content }}</div>
-                </div>
-              </div>
-            </div>
+                <Messages :messages="messages" />
 
-            <!-- Input area -->
-            <div class="input-bar">
-              <InputTextarea v-model="inputText" autoResize rows="1" :disabled="loading" placeholder="Введите сообщение..." class="flex-1" />
-              <Button icon="pi pi-send" label="Отправить" class="send-btn" :disabled="loading || !inputText.trim()" @click="handleSend" />
-            </div>
+                <!-- Input area -->
+                <div class="input-bar">
+                  <InputTextarea v-model="inputText" autoResize rows="1" :disabled="loading" placeholder="Введите сообщение..." class="flex-1" />
+                  <Button icon="pi pi-send" label="Отправить" class="send-btn" :disabled="loading || !inputText.trim()" @click="handleSend" />
+                </div>
               </TabPanel>
 
               <TabPanel value="voice">
-            <div class="voice">
-              <div class="voice-stats">
-                <div class="stat-item"><span class="label">Статус:</span> <span class="value">{{ statusText }}</span></div>
-                <div class="stat-item"><span class="label">Чанков:</span> <span class="value">{{ chunkCount }}</span></div>
-                <div class="stat-item"><span class="label">Байт:</span> <span class="value">{{ bytesSent }}</span></div>
-              </div>
-              <div class="voice-actions">
-                <Button label="Старт" icon="pi pi-microphone" :disabled="isRecording" @click="startRecording" />
-                <Button label="Стоп" icon="pi pi-stop" severity="danger" :disabled="!isRecording" class="ml-8" @click="stopRecording" />
-              </div>
-
-              <Divider class="my-12" />
-
-              <!-- Shared messages view -->
-              <div ref="listRef" class="messages">
-                <div v-for="m in messages" :key="m.id" class="msg" :class="m.role">
-                  <div class="avatar">
-                    <Avatar :label="m.role === 'user' ? 'U' : 'A'" :severity="m.role === 'user' ? 'info' : 'success'" shape="circle" size="large" />
+                <div class="voice">
+                  <div class="voice-stats">
+                    <div class="stat-item"><span class="label">Статус:</span> <span class="value">{{ statusText }}</span></div>
+                    <div class="stat-item"><span class="label">Чанков:</span> <span class="value">{{ chunkCount }}</span></div>
+                    <div class="stat-item"><span class="label">Байт:</span> <span class="value">{{ bytesSent }}</span></div>
                   </div>
-                  <div class="bubble">
-                    <div class="content">{{ m.content }}</div>
+                  <div class="voice-actions">
+                    <Button label="Старт" icon="pi pi-microphone" :disabled="isRecording" @click="startRecording" />
+                    <Button label="Стоп" icon="pi pi-stop" severity="danger" :disabled="!isRecording" class="ml-8" @click="stopRecording" />
                   </div>
+
+                  <Divider class="my-12" />
+
+                  <Messages :messages="messages" />
                 </div>
-              </div>
-            </div>
-              </TabPanel>
+                </TabPanel>
               </TabPanels>
             </Tabs>
           </div>
@@ -216,6 +189,7 @@ watchEffect(async () => {
                 :loading="loading"
                 @select="id => router.push({ path: `/voice-chat/${id}` })"
                 @create="handleNewChat"
+                @delete="loadChatHistory"
               />
             </div>
           </div>
@@ -258,30 +232,11 @@ watchEffect(async () => {
 .app-title { font-size: 18px; font-weight: 600; }
 .chat-id { font-size: 12px; opacity: 0.7; }
 
-.messages {
-  height: calc(60vh - 80px);
-  overflow-y: auto;
-  padding: 8px;
-  background: var(--surface-ground);
-  border-radius: 8px;
-}
-
-.msg { display: flex; gap: 8px; margin-bottom: 10px; }
-.msg.user { flex-direction: row-reverse; }
-.msg .avatar { flex-shrink: 0; }
-.msg .bubble {
-  max-width: 80%;
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: var(--surface-card);
-  border: 1px solid var(--surface-border);
-}
-.msg.user .bubble { background: var(--primary-50); border-color: var(--primary-200); }
-.msg .content { white-space: pre-wrap; word-break: break-word; }
+/* Messages styles moved into Messages.vue */
 
 .input-bar {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 1fr auto;
   gap: 8px;
   margin-top: 10px;
 }

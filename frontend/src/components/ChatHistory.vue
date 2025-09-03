@@ -3,6 +3,8 @@ import { onMounted, ref } from 'vue'
 import axios from 'axios'
 import Button from 'primevue/button'
 import Skeleton from 'primevue/skeleton'
+import { useChat } from '../composables/useChat'
+import { chatHistory } from '../__data__/store'
 
 export type ChatItem = {
   id: string
@@ -14,26 +16,21 @@ export type ChatItem = {
 const props = defineProps<{ activeId: string | null; backendUrl?: string }>()
 const emit = defineEmits<{ (e: 'select', id: string): void; (e: 'create'): void }>()
 
-const items = ref<ChatItem[]>([])
 const loading = ref(false)
 
-const api = axios.create({ baseURL: props.backendUrl || (import.meta as any).env?.VITE_BACKEND_URL || 'http://localhost:3000' })
-
-async function load() {
-  loading.value = true
-  try {
-    const res = await api.get<ChatItem[]>('/chats')
-    items.value = res.data
-  } finally {
-    loading.value = false
-  }
-}
+const {deleteChat, loadChatHistory}  = useChat()
 
 function selectChat(id: string) {
   emit('select', id)
 }
 
-onMounted(load)
+async function handleDeleteChat(id: string) {
+  if (!id) return
+  await deleteChat(id)
+  await loadChatHistory()
+}
+
+onMounted(loadChatHistory)
 </script>
 
 <template>
@@ -48,11 +45,14 @@ onMounted(load)
     </div>
 
     <div v-else class="list">
-      <div v-for="c in items" :key="c.id" class="row" :class="{ active: c.id === props.activeId }" @click="selectChat(c.id)">
-        <div class="row-title">{{ c.title || 'Без названия' }}</div>
+      <div v-for="c in chatHistory" :key="c.id" class="row" :class="{ active: c.id === props.activeId }" @click="selectChat(c.id)">
+        <div class="row-title">
+          {{ c.title || 'Без названия' }}
+          <Button size="small" rounded variant="text" icon="pi pi-trash" severity="danger" @click.stop="handleDeleteChat(c.id)" />
+        </div>
         <div class="row-sub">#{{ c.id.slice(0,6) }}</div>
       </div>
-      <div v-if="!items.length" class="empty">Нет чатов</div>
+      <div v-if="!chatHistory.length" class="empty">Нет чатов</div>
     </div>
   </div>
 </template>

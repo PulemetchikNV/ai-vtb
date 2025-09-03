@@ -2,6 +2,7 @@ import { computed, ref } from 'vue'
 import axios from 'axios'
 import { useRoute } from 'vue-router'
 import router from '../router'
+import { chatHistory } from '../__data__/store'
 
 export type Chat = {
     id: string
@@ -105,5 +106,18 @@ export function useChat() {
         }
     }
 
-    return { currentChatId, messages, loading, error, startChat, fetchChat, sendMessage, deleteChat }
+    async function loadChatHistory() {
+        loading.value = true
+        error.value = null
+        try {
+            const res = await api.get<Chat[]>('/chats')
+            chatHistory.value = res.data
+            return res.data
+        }
+        finally {
+            loading.value = false
+        }
+    }
+
+    return { currentChatId, messages, loading, error, startChat, fetchChat, sendMessage, deleteChat, loadChatHistory }
 }
