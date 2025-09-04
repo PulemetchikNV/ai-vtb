@@ -1,5 +1,6 @@
 import { FastifyInstance, FastifySchema } from 'fastify';
 import { prisma } from '../prisma';
+import { chatEventBus } from '../services/chatEventBus';
 
 export default async function chatRoutes(server: FastifyInstance) {
     server.get('/chats', async () => {
@@ -51,12 +52,14 @@ export default async function chatRoutes(server: FastifyInstance) {
         const userMsg = await prisma.message.create({
             data: { chatId: id, role: 'user', content }
         });
+        chatEventBus.broadcastMessageCreated(userMsg);
 
         // Stub assistant reply
         const assistantText = `Echo: ${content}`;
         const assistantMsg = await prisma.message.create({
             data: { chatId: id, role: 'assistant', content: assistantText }
         });
+        chatEventBus.broadcastMessageCreated(assistantMsg);
 
         return reply.send({ user: userMsg, assistant: assistantMsg });
     });

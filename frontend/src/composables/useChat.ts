@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import axios from 'axios'
 import { useRoute } from 'vue-router'
 import router from '../router'
@@ -34,6 +34,7 @@ export function useChat() {
         }
     })
     const messages = ref<Message[]>([])
+    let ws: WebSocket | null = null
     const loading = ref(false)
     const error = ref<string | null>(null)
 
@@ -118,6 +119,36 @@ export function useChat() {
             loading.value = false
         }
     }
+
+    function disconnectWs() {
+        if (ws) {
+            try { ws.close() } catch { }
+            ws = null
+        }
+    }
+
+    function connectWs(chatId: string) {
+        disconnectWs()
+        const url = (import.meta as any).env?.VITE_BACKEND_WS_URL || 'ws://localhost:3000'
+        ws = new WebSocket(`${url}/ws/chat?chatId=${encodeURIComponent(chatId)}`)
+        ws.onmessage = (ev) => {
+            try {
+                const evt = JSON.parse(ev.data)
+                if (evt?.type === 'message.created') {
+                    const msg: Message = evt.payload
+                    if (msg.chatId === (currentChatId.value as string | null)) {
+                        messages.value = [...messages.value, msg]
+                    }
+                }
+            } catch { }
+        }
+    }
+
+    // Auto-connect to WS when chatId changes
+    watch(() => currentChatId.value, (id: string | null) => {
+        if (id) connectWs(id)
+        else disconnectWs()
+    }, { immediate: true })
 
     return { currentChatId, messages, loading, error, startChat, fetchChat, sendMessage, deleteChat, loadChatHistory }
 }

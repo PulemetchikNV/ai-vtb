@@ -47,7 +47,9 @@ async function startRecording() {
   try {
     stream = await navigator.mediaDevices.getUserMedia({ audio: true })
 
-    ws = new WebSocket('ws://localhost:3000/ws/audio')
+    const cid = currentChatId.value
+    const wsUrl = `ws://localhost:3000/ws/audio${cid ? `?chatId=${encodeURIComponent(cid)}` : ''}`
+    ws = new WebSocket(wsUrl)
     ws.binaryType = 'arraybuffer'
 
     ws.onopen = () => {
