@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifySchema } from 'fastify';
 import { prisma } from '../prisma';
 import { chatEventBus } from '../services/chatEventBus';
+import { analyzeDialog } from '../services/ai';
 
 export default async function chatRoutes(server: FastifyInstance) {
     server.get('/chats', async () => {
@@ -81,5 +82,11 @@ export default async function chatRoutes(server: FastifyInstance) {
             include: { messages: { orderBy: { createdAt: 'asc' } } }
         });
         return chat;
+    });
+
+    server.post('/chat/:id/finish', async (req, reply) => {
+        const { id } = req.params as { id: string };
+        const result = await analyzeDialog(id);
+        return reply.send(result ?? { ok: true });
     });
 }

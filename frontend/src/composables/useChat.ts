@@ -106,6 +106,21 @@ export function useChat() {
         }
     }
 
+    async function finishChat() {
+        if (!currentChatId.value) return
+        loading.value = true
+        error.value = null
+        try {
+            await api.post(`/chat/${currentChatId.value}/finish`, {})
+            await fetchChat(currentChatId.value)
+        } catch (e: any) {
+            error.value = e?.message ?? 'Failed to finish chat'
+            throw e
+        } finally {
+            loading.value = false
+        }
+    }
+
     async function loadChatHistory() {
         loading.value = true
         error.value = null
@@ -149,5 +164,5 @@ export function useChat() {
         else disconnectWs()
     }, { immediate: true })
 
-    return { currentChatId, messages, loading, error, startChat, fetchChat, sendMessage, deleteChat, loadChatHistory }
+    return { currentChatId, messages, loading, error, startChat, fetchChat, sendMessage, deleteChat, loadChatHistory, finishChat }
 }

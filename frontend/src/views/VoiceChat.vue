@@ -20,7 +20,7 @@ import Dialog from 'primevue/dialog'
 import { useVacancies } from '../composables/useVacancies'
 
 // Chat composable
-const { startChat, sendMessage, fetchChat, deleteChat, currentChatId, messages, loadChatHistory, loading } = useChat()
+const { startChat, sendMessage, fetchChat, deleteChat, finishChat, currentChatId, messages, loadChatHistory, loading } = useChat()
 const route = useRoute()
 const router = useRouter()
 
@@ -146,6 +146,7 @@ watchEffect(async () => {
           <div class="actions">
             <Button label="Новый" icon="pi pi-plus" size="small" @click="handleNewChat" :disabled="loading" />
             <Button label="Удалить" icon="pi pi-trash" size="small" severity="danger" class="ml-8" @click="handleDeleteChat(currentChatId as string)" :disabled="!currentChatId || loading" />
+            <Button label="Завершить" icon="pi pi-check-circle" size="small" severity="success" class="ml-8" @click="finishChat" :disabled="!currentChatId || loading" />
           </div>
         </div>
 

@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import fetch from 'node-fetch';
+import { prisma } from '../prisma';
 
 const isProxyApiEnabled = process.env.IS_PROXY_API_ENABLED === 'true';
 const isImageGenerationEnabled = process.env.IS_IMAGE_GENERATION_ENABLED === 'true';
@@ -220,4 +221,32 @@ export const aiService = {
             throw error;
         }
     }
+}
+
+export async function analyzeDialog(chatId: string) {
+    // Stub: fetch chat and vacancy, then fill requirements_checklist with default evaluation
+    const chat = await prisma.chat.findUnique({ where: { id: chatId }, include: { vacancy: true } });
+    if (!chat) return null;
+    const base = Array.isArray(chat.requirements_checklist) ? chat.requirements_checklist as any[] : [];
+
+    let checklist: any[] = base;
+    if ((!checklist || checklist.length === 0) && chat.vacancy && Array.isArray((chat.vacancy as any).requirements_checklist)) {
+        // map vacancy requirements to analysis schema
+        const vacReqs = (chat.vacancy as any).requirements_checklist as Array<any>;
+        checklist = vacReqs.map(req => ({
+            id: req.id,
+            description: req.description,
+            type: req.type,
+            weight: req.weight,
+            status: 'unconfirmed',
+            score: 0,
+            justification: ''
+        }));
+    }
+
+    await prisma.chat.update({
+        where: { id: chatId },
+        data: { requirements_checklist: checklist, is_finished: true }
+    });
+    return { chatId, items: checklist };
 }
