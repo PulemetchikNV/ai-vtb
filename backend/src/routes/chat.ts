@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifySchema } from 'fastify';
 import { prisma } from '../prisma';
 import { chatEventBus } from '../services/chatEventBus';
-import { analyzeDialog } from '../services/ai';
+import { analyzer } from '../services/analyzer';
 
 export default async function chatRoutes(server: FastifyInstance) {
     server.get('/chats', async () => {
@@ -24,7 +24,9 @@ export default async function chatRoutes(server: FastifyInstance) {
         }
     }, async (req, reply) => {
         const body = (req.body as { title?: string | null; vacancyId?: string | null }) || {};
-        const initialChecklist: unknown[] = [];
+        const vacancy = body.vacancyId ? await prisma.vacancy.findUnique({ where: { id: body.vacancyId } }) : null;
+        const initialChecklist = vacancy?.requirements_checklist || [];
+
         const chat = await prisma.chat.create({
             data: {
                 title: body.title ?? null,
@@ -86,7 +88,19 @@ export default async function chatRoutes(server: FastifyInstance) {
 
     server.post('/chat/:id/finish', async (req, reply) => {
         const { id } = req.params as { id: string };
-        const result = await analyzeDialog(id);
-        return reply.send(result ?? { ok: true });
+        // пометить чат завершённым
+        await prisma.chat.update({ where: { id }, data: { is_finished: true } });
+        // fire-and-forget: шлём 204 сразу
+        reply.code(204).send();
+        // запустим/перезапустим анализ в фоне и транслируем прогресс через WS
+        try {
+            chatEventBus.broadcastAnalysisStarted(id);
+            const result = await analyzer.analyzeDialog(id);
+            // сохраняется в analyzer; здесь дополнительно читаем чат и берём analysis из БД как источник истины
+            const updated = await prisma.chat.findUnique({ where: { id }, select: { analysis: true } });
+            chatEventBus.broadcastAnalysisCompleted((updated?.analysis || result) as any);
+        } catch (e: any) {
+            chatEventBus.broadcastAnalysisError(id, e?.message || 'unknown error');
+        }
     });
 }

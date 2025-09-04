@@ -20,7 +20,7 @@ import Dialog from 'primevue/dialog'
 import { useVacancies } from '../composables/useVacancies'
 
 // Chat composable
-const { startChat, sendMessage, fetchChat, deleteChat, finishChat, currentChatId, messages, loadChatHistory, loading } = useChat()
+const { startChat, sendMessage, fetchChat, deleteChat, finishChat, currentChatId, messages, loadChatHistory, loading, analysis, analysisError } = useChat()
 const route = useRoute()
 const router = useRouter()
 
@@ -173,6 +173,15 @@ watchEffect(async () => {
                   <InputTextarea v-model="inputText" autoResize rows="1" :disabled="loading" placeholder="Введите сообщение..." class="flex-1" />
                   <Button icon="pi pi-send" label="Отправить" class="send-btn" :disabled="loading || !inputText.trim()" @click="handleSend" />
                 </div>
+
+                <Divider class="my-12" />
+                <div v-if="analysis" class="analysis">
+                  <h4>Результаты анализа</h4>
+                  <pre class="json">{{ JSON.stringify(analysis, null, 2) }}</pre>
+                  <div v-if="analysisError" class="error">
+                    <Button label="Пересоздать отчёт" icon="pi pi-refresh" @click="finishChat" />
+                  </div>
+                </div>
               </TabPanel>
 
               <TabPanel value="voice">
@@ -288,6 +297,16 @@ watchEffect(async () => {
 
 .new-chat-form { display: grid; gap: 10px; }
 .mt-12 { margin-top: 12px; }
+
+.analysis { text-align: left; }
+.analysis .json {
+  background: var(--surface-ground);
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  padding: 8px;
+  overflow: auto;
+}
+.analysis .error { margin-top: 8px; }
 
 /* Mobile tweaks */
 @media (max-width: 600px) {

@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 from app.services.extractors import extract_structured_data
 from app.utils.text import chunk_text
 from app.utils.chunking import chunk_structured_document, chunk_dialogue
-from app.services.vectorstore import add_documents, get_collection, delete_all
+from app.services.vectorstore import add_documents, get_collection, delete_all, get_by_where
 
 
 router = APIRouter()
@@ -63,6 +63,14 @@ async def add_document(doc: DocumentIn):
     if not chunks:
         raise HTTPException(status_code=400, detail="Пустой документ")
 
+    # Кеширование: если уже есть документы с таким source_id и source_type — возвращаем их, не добавляя повторно
+    existing = get_by_where({
+        "source_id": {"$eq": doc.source_id},
+        "source_type": {"$eq": doc.source_type},
+    }, include=["ids", "metadatas"], limit=1)
+    if existing and existing.get("ids"):
+        return {"source_id": doc.source_id, "chunks": len(existing.get("ids", [])), "structured_data": structured, "cached": True}
+
     ids = [f"{doc.source_id}_{i}_{uuid4().hex[:8]}" for i in range(len(chunks))]
     metadatas = [{
         "source_id": doc.source_id,
@@ -72,8 +80,11 @@ async def add_document(doc: DocumentIn):
         **flat_structured,
     } for i in range(len(chunks))]
 
+    print(f'ADDED {len(chunks)} chunks for {doc.source_id} {doc.source_type} {doc.document_name}')
+    print(f'METADATAS: {metadatas}')
+
     add_documents(chunks, metadatas, ids)
-    return {"source_id": doc.source_id, "chunks": len(chunks), "structured_data": structured}
+    return {"source_id": doc.source_id, "chunks": len(chunks), "structured_data": structured, "cached": False}
 
 
 @router.post("/query")

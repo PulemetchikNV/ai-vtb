@@ -4,7 +4,11 @@ import type { Message } from '@prisma/client/generated/client-types';
 type ChatId = string;
 
 type ChatEvent =
-    | { type: 'message.created'; payload: Message };
+    | { type: 'message.created'; payload: Message }
+    | { type: 'analysis.started'; payload: { chatId: string } }
+    | { type: 'analysis.progress'; payload: any }
+    | { type: 'analysis.completed'; payload: { chatId: string; items: any[]; categoryScores: Record<string, number>; finalScore: number; error?: boolean } }
+    | { type: 'analysis.error'; payload: { chatId: string; message: string } };
 
 class ChatEventBus {
     private chatIdToClients: Map<ChatId, Set<WebSocket>> = new Map();
@@ -41,6 +45,22 @@ class ChatEventBus {
 
     broadcastMessageCreated(message: Message) {
         this.broadcast(message.chatId, { type: 'message.created', payload: message });
+    }
+
+    broadcastAnalysisStarted(chatId: ChatId) {
+        this.broadcast(chatId, { type: 'analysis.started', payload: { chatId } });
+    }
+
+    broadcastAnalysisProgress(chatId: ChatId, payload: any) {
+        this.broadcast(chatId, { type: 'analysis.progress', payload });
+    }
+
+    broadcastAnalysisCompleted(payload: { chatId: string; items: any[]; categoryScores: Record<string, number>; finalScore: number; error?: boolean }) {
+        this.broadcast(payload.chatId, { type: 'analysis.completed', payload });
+    }
+
+    broadcastAnalysisError(chatId: ChatId, message: string) {
+        this.broadcast(chatId, { type: 'analysis.error', payload: { chatId, message } });
     }
 }
 

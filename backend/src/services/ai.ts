@@ -21,8 +21,12 @@ function getRandomTokensForSentences() {
     return Math.floor(Math.random() * (maxTokens - minTokens + 1)) + minTokens;
 }
 
+type GeminiRaw = { candidates: any[] } & Record<string, any>;
+
+
 export const aiService = {
-    async communicateWithGemini(messages: { role: 'user' | 'model', content: string }[]) {
+    async communicateWithGemini<T extends boolean = true>(messages: { role: 'user' | 'model', content: string }[], returnText: T = true as T)
+        : Promise<T extends true ? string : GeminiRaw> {
         try {
             const baseUrlText = isProxyApiEnabled
                 ? 'https://api.proxyapi.ru/google'
@@ -63,9 +67,17 @@ export const aiService = {
                 throw new Error(`Ошибка Gemini API: ${response.status} ${JSON.stringify(errorData)}`);
             }
 
-            const data = await response.json();
-            console.log('=== GOT GEMINI RESPONSE ===', data)
-            return data;
+            const responseData = await response.json() as any;
+
+            if (!('candidates' in responseData) || responseData.candidates?.length > 0) {
+                throw new Error('No candidates in response');
+            }
+
+            const data: { candidates: any[] } & Record<string, any> = responseData as GeminiRaw;
+            const textReponse = data.candidates[0].content.parts[0].text as string;
+            console.log('=== GOT GEMINI RESPONSE ===', textReponse)
+
+            return (returnText ? textReponse : data) as any;
         } catch (error) {
             console.error('Ошибка при общении с Gemini API:', error);
             throw error;
@@ -221,32 +233,4 @@ export const aiService = {
             throw error;
         }
     }
-}
-
-export async function analyzeDialog(chatId: string) {
-    // Stub: fetch chat and vacancy, then fill requirements_checklist with default evaluation
-    const chat = await prisma.chat.findUnique({ where: { id: chatId }, include: { vacancy: true } });
-    if (!chat) return null;
-    const base = Array.isArray(chat.requirements_checklist) ? chat.requirements_checklist as any[] : [];
-
-    let checklist: any[] = base;
-    if ((!checklist || checklist.length === 0) && chat.vacancy && Array.isArray((chat.vacancy as any).requirements_checklist)) {
-        // map vacancy requirements to analysis schema
-        const vacReqs = (chat.vacancy as any).requirements_checklist as Array<any>;
-        checklist = vacReqs.map(req => ({
-            id: req.id,
-            description: req.description,
-            type: req.type,
-            weight: req.weight,
-            status: 'unconfirmed',
-            score: 0,
-            justification: ''
-        }));
-    }
-
-    await prisma.chat.update({
-        where: { id: chatId },
-        data: { requirements_checklist: checklist, is_finished: true }
-    });
-    return { chatId, items: checklist };
 }

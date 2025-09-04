@@ -60,9 +60,13 @@ export function useChat() {
         loading.value = true
         error.value = null
         try {
-            const res = await api.get<{ id: string; messages: Message[] }>(`/chat/${id}`)
+            const res = await api.get<{ id: string; messages: Message[]; analysis?: any }>(`/chat/${id}`)
             currentChatId.value = res.data.id
             messages.value = res.data.messages
+            if (res.data.analysis) {
+                analysis.value = res.data.analysis
+                analysisError.value = !!res.data.analysis?.error
+            }
             return res.data
         } catch (e: any) {
             error.value = e?.message ?? 'Failed to fetch chat'
@@ -106,18 +110,20 @@ export function useChat() {
         }
     }
 
+    const analysis = ref<any | null>(null)
+    const analysisError = ref<boolean>(false)
+
     async function finishChat() {
         if (!currentChatId.value) return
-        loading.value = true
         error.value = null
+        analysis.value = { status: 'started' }
+        analysisError.value = false
         try {
             await api.post(`/chat/${currentChatId.value}/finish`, {})
-            await fetchChat(currentChatId.value)
+            // 204 — ждём события по WebSocket
         } catch (e: any) {
             error.value = e?.message ?? 'Failed to finish chat'
             throw e
-        } finally {
-            loading.value = false
         }
     }
 
@@ -153,6 +159,16 @@ export function useChat() {
                     if (msg.chatId === (currentChatId.value as string | null)) {
                         messages.value = [...messages.value, msg]
                     }
+                } else if (evt?.type === 'analysis.started') {
+                    analysis.value = { status: 'running' }
+                } else if (evt?.type === 'analysis.progress') {
+                    analysis.value = { ...(analysis.value || {}), last: evt.payload }
+                } else if (evt?.type === 'analysis.completed') {
+                    analysis.value = evt.payload
+                    analysisError.value = !!evt.payload?.error
+                } else if (evt?.type === 'analysis.error') {
+                    analysisError.value = true
+                    analysis.value = { error: true, message: evt.payload?.message }
                 }
             } catch { }
         }
@@ -164,5 +180,5 @@ export function useChat() {
         else disconnectWs()
     }, { immediate: true })
 
-    return { currentChatId, messages, loading, error, startChat, fetchChat, sendMessage, deleteChat, loadChatHistory, finishChat }
+    return { currentChatId, messages, loading, error, startChat, fetchChat, sendMessage, deleteChat, loadChatHistory, finishChat, analysis, analysisError }
 }

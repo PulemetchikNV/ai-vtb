@@ -21,7 +21,7 @@ def get_collection():
     global _collection
     if _collection is None:
         client = get_client()
-        embedding_fn = SentenceTransformerEmbeddingFunction(model_name=EMBED_MODEL, device="cuda")
+        embedding_fn = SentenceTransformerEmbeddingFunction(model_name=EMBED_MODEL)
         # create if not exists
         try:
             _collection = client.get_collection(CHROMA_COLLECTION)
@@ -40,6 +40,16 @@ def get_collection():
 def add_documents(documents: List[str], metadatas: List[Dict[str, Any]], ids: List[str]):
     collection = get_collection()
     collection.add(documents=documents, metadatas=metadatas, ids=ids)
+
+
+def get_by_where(where: Dict[str, Any], limit: Optional[int] = None, include: Optional[List[str]] = None):
+    collection = get_collection()
+    kwargs: Dict[str, Any] = {"where": where}
+    if limit is not None:
+        kwargs["limit"] = limit
+    if include is not None:
+        kwargs["include"] = include
+    return collection.get(**kwargs)
 
 
 def similarity_search(query: str, n_results: int = 5, where: Optional[Dict[str, Any]] = None):
