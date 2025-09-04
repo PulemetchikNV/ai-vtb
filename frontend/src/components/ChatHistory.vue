@@ -14,7 +14,7 @@ export type ChatItem = {
 }
 
 const props = defineProps<{ activeId: string | null; backendUrl?: string }>()
-const emit = defineEmits<{ (e: 'select', id: string): void; (e: 'create'): void }>()
+const emit = defineEmits<{ (e: 'select', id: string): void; (e: 'create'): void; (e: 'delete', id: string): void }>()
 
 const loading = ref(false)
 
@@ -28,6 +28,7 @@ async function handleDeleteChat(id: string) {
   if (!id) return
   await deleteChat(id)
   await loadChatHistory()
+  emit('delete', id)
 }
 
 onMounted(loadChatHistory)

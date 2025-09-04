@@ -15,14 +15,24 @@ export default async function chatRoutes(server: FastifyInstance) {
             body: {
                 type: 'object',
                 properties: {
-                    title: { type: ['string', 'null'] }
+                    title: { type: ['string', 'null'] },
+                    vacancyId: { type: ['string', 'null'] }
                 },
                 additionalProperties: false
             } as FastifySchema
         }
     }, async (req, reply) => {
-        const body = (req.body as { title?: string | null }) || {};
-        const chat = await prisma.chat.create({ data: { title: body.title ?? null } });
+        const body = (req.body as { title?: string | null; vacancyId?: string | null }) || {};
+        const initialChecklist: unknown[] = [];
+        const chat = await prisma.chat.create({
+            data: {
+                title: body.title ?? null,
+                requirements_checklist: initialChecklist as any,
+                ...(body.vacancyId
+                    ? { vacancy: { connect: { id: body.vacancyId } } }
+                    : {})
+            }
+        });
         return reply.code(201).send(chat);
     });
 

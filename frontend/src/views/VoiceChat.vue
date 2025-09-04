@@ -15,6 +15,9 @@ import Divider from 'primevue/divider'
 import Panel from 'primevue/panel'
 import ChatHistory from '../components/ChatHistory.vue'
 import Messages from '../components/Messages.vue'
+import Dropdown from 'primevue/dropdown'
+import Dialog from 'primevue/dialog'
+import { useVacancies } from '../composables/useVacancies'
 
 // Chat composable
 const { startChat, sendMessage, fetchChat, deleteChat, currentChatId, messages, loadChatHistory, loading } = useChat()
@@ -24,6 +27,9 @@ const router = useRouter()
 // UI state
 const activeTab = ref('text')
 const inputText = ref('')
+const selectedVacancyId = ref<string | null>(null)
+const showNewChat = ref(false)
+const { vacancies, load: loadVacancies } = useVacancies()
 
 async function handleSend() {
   const text = inputText.value.trim()
@@ -95,26 +101,26 @@ function stopRecording() {
   isRecording.value = false
 }
 
-async function handleNewChat() {
-  const chat = await startChat('Новый чат')
+function handleNewChat() {
+  showNewChat.value = true
+}
+
+async function confirmStartChat() {
+  if (!selectedVacancyId.value) return
+  const chat = await startChat(`Собеседование (${selectedVacancyId.value})`, selectedVacancyId.value)
+  showNewChat.value = false
   router.push({ path: `/voice-chat/${chat.id}` })
   loadChatHistory()
 }
 
-async function handleDeleteChat() {
-  if (!currentChatId.value) return
-  await deleteChat(currentChatId.value)
-
-  const chat = await startChat('Новый чат')
-  router.replace({ path: `/voice-chat/${chat.id}` })
+async function handleDeleteChat(id: string) {
+  if (currentChatId.value === id) router.replace({ path: `/voice-chat` })
 }
 
 // Autostart chat on first mount
 onMounted(async () => {
-  if (!currentChatId.value) {
-    const chat = await startChat('Новый чат')
-    router.replace({ name: undefined, params: { chatId: chat.id } as any })
-  } else {
+  await loadVacancies()
+  if (currentChatId.value) {
     router.replace({ name: undefined, params: { chatId: currentChatId.value } as any })
   }
   // messages autoscroll handled inside Messages component
@@ -139,7 +145,7 @@ watchEffect(async () => {
           </div>
           <div class="actions">
             <Button label="Новый" icon="pi pi-plus" size="small" @click="handleNewChat" :disabled="loading" />
-            <Button label="Удалить" icon="pi pi-trash" size="small" severity="danger" class="ml-8" @click="handleDeleteChat" :disabled="!currentChatId || loading" />
+            <Button label="Удалить" icon="pi pi-trash" size="small" severity="danger" class="ml-8" @click="handleDeleteChat(currentChatId as string)" :disabled="!currentChatId || loading" />
           </div>
         </div>
 
@@ -147,6 +153,10 @@ watchEffect(async () => {
 
         <div class="content">
           <div class="main">
+            <div v-if="!currentChatId" class="placeholder">
+              <p>Создайте новый чат или выберите существующий в истории справа.</p>
+            </div>
+            <template v-else>
             <!-- Tabs for modes (PrimeVue 4 Tabs API) -->
             <Tabs v-model:value="activeTab">
               <TabList>
@@ -183,6 +193,7 @@ watchEffect(async () => {
                 </TabPanel>
               </TabPanels>
             </Tabs>
+            </template>
           </div>
           <div class="aside">
             <div class="chat-history-wrapper">
@@ -191,7 +202,7 @@ watchEffect(async () => {
                 :loading="loading"
                 @select="id => router.push({ path: `/voice-chat/${id}` })"
                 @create="handleNewChat"
-                @delete="loadChatHistory"
+                @delete="handleDeleteChat"
               />
             </div>
           </div>
@@ -200,6 +211,17 @@ watchEffect(async () => {
     </div>
   </div>
   
+  <Dialog v-model:visible="showNewChat" modal header="Новый диалог" :style="{ width: '520px' }">
+    <div class="new-chat-form">
+      <label>Выберите вакансию</label>
+      <Dropdown v-model="selectedVacancyId" :options="vacancies" optionLabel="title" optionValue="id" placeholder="Выбор вакансии" class="w-full" style="width: 100%" />
+      <div class="actions mt-12">
+        <Button label="Отмена" severity="secondary" @click="showNewChat = false" />
+        <Button label="Начать" icon="pi pi-arrow-right" @click="confirmStartChat" :disabled="!selectedVacancyId" />
+      </div>
+    </div>
+  </Dialog>
+
 </template>
 
 <style scoped>
@@ -253,6 +275,18 @@ watchEffect(async () => {
   max-height: calc(65vh);
   overflow-y: auto;
 }
+
+.placeholder {
+  display: grid;
+  place-items: center;
+  height: 50vh;
+  color: var(--text-color-secondary, #6b7280);
+  border: 1px dashed var(--surface-border);
+  border-radius: 8px;
+}
+
+.new-chat-form { display: grid; gap: 10px; }
+.mt-12 { margin-top: 12px; }
 
 /* Mobile tweaks */
 @media (max-width: 600px) {

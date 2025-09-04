@@ -38,11 +38,11 @@ export function useChat() {
     const loading = ref(false)
     const error = ref<string | null>(null)
 
-    async function startChat(title?: string | null) {
+    async function startChat(title?: string | null, vacancyId?: string | null) {
         loading.value = true
         error.value = null
         try {
-            const res = await api.post<Chat>('/chat', { title: title ?? null })
+            const res = await api.post<Chat>('/chat', { title: title ?? null, vacancyId: vacancyId ?? null })
             currentChatId.value = res.data.id
             messages.value = []
             return res.data
@@ -78,7 +78,6 @@ export function useChat() {
         error.value = null
         try {
             const res = await api.post<{ user: Message; assistant: Message }>(`/chat/${currentChatId.value}/message`, { content })
-            messages.value.push(res.data.user, res.data.assistant)
             return res.data
         } catch (e: any) {
             error.value = e?.message ?? 'Failed to send message'

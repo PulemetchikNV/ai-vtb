@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import { WebSocketServer, WebSocket, RawData } from 'ws';
 import type { IncomingMessage } from 'http';
 import chatRoutes from './routes/chat';
+import vacancyRoutes from './routes/vacancies';
 import { StubTranscriber } from './services/transcriber';
 import { StreamingAudioSession } from './services/streamingSession';
 import { chatEventBus } from './services/chatEventBus';
@@ -25,6 +26,9 @@ async function start() {
 
     await server.register(async (s) => {
         await chatRoutes(s);
+    });
+    await server.register(async (s) => {
+        await vacancyRoutes(s);
     });
 
     // WebSocket server for streaming audio chunks
