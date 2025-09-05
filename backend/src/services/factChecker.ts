@@ -4,7 +4,8 @@ import { extractJsonWithoutRegex } from "../utils";
 import { prisma } from "../prisma";
 import fetch from 'node-fetch';
 import { logger } from "../server";
-import { factAdjudicator } from "./factAdjudicator";
+import { factAdjudicator, type LedgerFact } from "./factAdjudicator";
+import { chatDebugLog } from "./chatDebug";
 
 type FactItem = {
     fact: string;
@@ -19,6 +20,7 @@ export const factChecker = {
      * Appends found contradictions into chat.facts_meta.contradictions.
      */
     runGuardianForFact: async ({ chatId, fact }: { chatId: string; fact: FactItem }) => {
+        await chatDebugLog(chatId, `проверяем противоречат ли факты чему-либо`)
         // 1) Find top-3 nearest facts in the per-chat collection
         const searchRes = await fetch(`http://resumeparsing-dev:8000/api/facts/collections/${chatId}/search`, {
             method: 'POST',
@@ -44,6 +46,7 @@ export const factChecker = {
             const guardianResp = await aiService.communicateWithGemini([{ role: 'user', content: guardianPrompt }], true, 'gemini-2.0-flash');
             const extracted = JSON.parse(extractJsonWithoutRegex(guardianResp) ?? '[]') as any[];
             logger.info({ event: 'guardian_contradictions', chatId, count: Array.isArray(extracted) ? extracted.length : 0 }, 'Guardian extracted contradictions')
+            await chatDebugLog(chatId, `финальные факты для ответа: ${JSON.stringify(extracted)}`)
             if (Array.isArray(extracted) && extracted.length > 0) {
                 // fetch latest facts_meta to avoid stale overwrites
                 const chat = await prisma.chat.findUnique({ where: { id: chatId }, select: { facts_meta: true } });
@@ -65,12 +68,14 @@ export const factChecker = {
     },
 
     handleMessage: async ({ content, chatId }: { content: string, chatId: string }) => {
+        await chatDebugLog(chatId, `получили сообщение: ${JSON.stringify(content)}`)
         const prompt = GET_FACTS_PROMPT(content);
         const response = await aiService.communicateWithGemini([{ role: 'user', content: prompt }], true, 'gemini-2.0-flash');
 
         try {
             const parsed = JSON.parse(extractJsonWithoutRegex(response) ?? '') as FactItem[];
             logger.info({ event: 'facts_extracted', chatId, count: Array.isArray(parsed) ? parsed.length : 0 }, 'Facts extracted from message')
+            await chatDebugLog(chatId, `получены факты: ${JSON.stringify(parsed.map(f => f.fact))}`)
             if (!Array.isArray(parsed)) {
                 throw new Error('Invalid response');
             }
@@ -107,6 +112,7 @@ export const factChecker = {
                     }
                 }
             });
+            await chatDebugLog(chatId, `факты занесены в базу`)
 
             // Ensure per-chat facts collection exists and append facts as documents
             try {
@@ -128,9 +134,9 @@ export const factChecker = {
                     }).then(r => r.json()) as any;
                     const neighborDocs: string[] = searchRes?.documents?.[0] || []
                     const neighborIds: string[] = searchRes?.ids?.[0] || []
-                    const neighbors = neighborDocs.map((text, idx) => ({
+                    const neighbors: LedgerFact[] = neighborDocs.map((text, idx) => ({
                         fact_id: neighborIds[idx], fact: text, status: 'active', invalidated_by: null
-                    }))
+                    })) as LedgerFact[]
 
                     const decision = await factAdjudicator.adjudicate(f, neighbors)
                     logger.info({ event: 'adjudicator_decision', chatId, fact_id: f.fact_id, decision }, 'Adjudicator decision')

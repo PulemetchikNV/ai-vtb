@@ -1,6 +1,7 @@
 import { aiService } from './ai'
 import { extractJsonWithoutRegex } from '../utils'
 import { logger } from '../server'
+import { chatDebugLog } from './chatDebug'
 
 export type LedgerFact = {
     fact_id: string
@@ -36,6 +37,7 @@ export const factAdjudicator = {
             const parsed = JSON.parse(extractJsonWithoutRegex(resp) ?? '{}') as AdjudicationResult
             if (!parsed || !('action' in parsed)) return { action: 'ADD_NEW' }
             logger.info({ event: 'fact_adjudication', chatFact: newFact.fact_id, action: (parsed as any).action, target: (parsed as any).target_fact_id }, 'Fact adjudication decision')
+            await chatDebugLog(newFact.fact_id.split('_')[0] || 'unknown', `арбитр: решение ${JSON.stringify(parsed)}`)
             return parsed
         } catch {
             return { action: 'ADD_NEW' }

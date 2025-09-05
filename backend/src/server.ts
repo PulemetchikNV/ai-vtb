@@ -6,6 +6,7 @@ import chatRoutes from './routes/chat';
 import vacancyRoutes from './routes/vacancies';
 import { StubTranscriber } from './services/transcriber';
 import { StreamingAudioSession } from './services/streamingSession';
+import { chatDebugLog } from './services/chatDebug';
 import { chatEventBus } from './services/chatEventBus';
 
 export const server = Fastify({
@@ -86,6 +87,7 @@ async function start() {
             const buf = Buffer.isBuffer(data) ? data : Buffer.from(data as ArrayBuffer);
             chunkCount += 1;
             session.handleChunk(buf);
+            await chatDebugLog(chatId, `получен аудио-чанк #${chunkCount}, bytes=${buf.length}`)
         });
 
         ws.on('close', async () => {

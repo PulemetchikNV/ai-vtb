@@ -2,6 +2,7 @@ import { FastifyBaseLogger } from 'fastify';
 import { prisma } from '../prisma';
 import { Transcriber } from './transcriber';
 import { chatEventBus } from './chatEventBus';
+import { chatDebugLog } from './chatDebug';
 
 export class StreamingAudioSession {
     private readonly logger: FastifyBaseLogger;
@@ -43,6 +44,7 @@ export class StreamingAudioSession {
                 data: { chatId: this.chatId, role: 'user', content: text }
             });
             chatEventBus.broadcastMessageCreated(userMsg);
+            await chatDebugLog(this.chatId, `получено голосовое сообщение: ${JSON.stringify(text)}`)
 
             // Echo assistant reply (placeholder)
             const assistantText = `Echo: ${text}`;
@@ -50,6 +52,7 @@ export class StreamingAudioSession {
                 data: { chatId: this.chatId, role: 'assistant', content: assistantText }
             });
             chatEventBus.broadcastMessageCreated(assistantMsg);
+            await chatDebugLog(this.chatId, `отправляем пользователю сообщение ${JSON.stringify(assistantText)}`)
 
             this.logger.info({ event: 'utterance-transcribed', chatId: this.chatId, userMsgId: userMsg.id });
         } catch (err) {

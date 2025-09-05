@@ -2,6 +2,7 @@ import { INITIAL_DIALOG_PROMPT } from "../__data__/prompts"
 import { aiService } from "./ai"
 import { prisma } from "../prisma"
 import type { Vacancy, Message } from "../../prisma/generated/client"
+import { chatDebugLog, chatDebugSeparator } from "./chatDebug"
 
 
 export const dialogueService = {
@@ -15,6 +16,7 @@ export const dialogueService = {
         }
     },
     async getNextMessage({ userMessage, messageHistory, chatId }: { userMessage: string, messageHistory: Message[], chatId: string }) {
+        await chatDebugSeparator(chatId)
         // fetch latest contradictions
         const chat = await prisma.chat.findUnique({ where: { id: chatId }, select: { facts_meta: true } })
         const contradictions = (chat?.facts_meta as any)?.contradictions || []
@@ -24,11 +26,10 @@ export const dialogueService = {
         основываясь на том, как пользователь отреагирует на их упоминание.
 
         Несостыковки:
-            ${
-                notSent.map(
-                (c: any) => `- ${c.explanation} 
+            ${notSent.map(
+            (c: any) => `- ${c.explanation} 
                     (факты, на котором этот вывод основан: ${c.conflicting_facts.map((f: any) => f.message_id).join(', ')})`
-                ).join('\n')
+        ).join('\n')
             }
         ]
         ` : ''
@@ -41,6 +42,7 @@ export const dialogueService = {
         formattedMessages.push({ role: 'user' as const, content: `${userMessage}${contradictionsNote}`, })
 
         const aiResponse = await aiService.communicateWithGemini(formattedMessages)
+        await chatDebugLog(chatId, `отправляем пользователю сообщение ${JSON.stringify(aiResponse)}`)
         // mark contradictions as sent
         if (notSent.length) {
             const current = (chat?.facts_meta as any) || {}
