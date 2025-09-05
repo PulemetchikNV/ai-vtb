@@ -60,3 +60,15 @@ export const INITIAL_DIALOG_PROMPT = ({
     </section>
 
 `
+
+export const GET_FACTS_PROMPT = (userMessage: string) => `
+   Извлеки из этого предложения ключевые факты или утверждения, в которых кандидат может потенциально ошибиться на интервью.
+   Предложение: ${userMessage}
+
+   пример:
+   Предложение: 'я делал этот проект сам'
+   Ответ дай в СТРОГО формате JSON: [{"fact": "работал над проектом один", "topic": "teamwork", "project": "unknown"}]"
+
+   Предложение: "пишу на vue 5 лет"
+   Ответ дай в СТРОГО формате JSON: [{"fact": "опыт работы с vue 5 лет", "topic": "skills", "project": "unknown"}]"
+`

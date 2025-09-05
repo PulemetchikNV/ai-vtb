@@ -15,6 +15,7 @@ model Chat {
     vacancy                Vacancy?  @relation(fields: [vacancyId], references: [id], onDelete: SetNull)
     requirements_checklist Json?
     analysis               Json?
+    facts_meta             Json?
     is_finished            Boolean   @default(false)
     createdAt              DateTime  @default(now())
     updatedAt              DateTime  @updatedAt

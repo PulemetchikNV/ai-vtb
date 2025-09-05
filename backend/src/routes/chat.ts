@@ -3,11 +3,12 @@ import { prisma } from '../prisma';
 import { chatEventBus } from '../services/chatEventBus';
 import { analyzer } from '../services/analyzer';
 import { dialogueService } from '../services/dialogue';
+import { factChecker } from '../services/factChecker';
 
 async function finishChat(chatId: string, callback: () => any, finishMessage?: string) {
     const originalChat = await prisma.chat.findUnique({ where: { id: chatId } });
     const isOriginalFinished = originalChat?.is_finished;
-    
+
     if (!isOriginalFinished) {
         await prisma.chat.update({ where: { id: chatId }, data: { is_finished: true } });
         const systemMsg = await prisma.message.create({ data: { chatId, role: 'system', content: finishMessage ?? 'Разговор завершен' } });
@@ -61,9 +62,11 @@ export default async function chatRoutes(server: FastifyInstance) {
                 requirements_checklist: initialChecklist as any,
                 ...(body.vacancyId
                     ? { vacancy: { connect: { id: body.vacancyId } } }
-                    : {})
+                    : {}),
+                facts_meta: { fact_ledger: [], contradictions: [] } as any
             }
         });
+
         if (vacancy) {
             try {
                 const { systemPrompt, initialMessage } = await dialogueService.getInitialMessage({ vacancy });
@@ -104,12 +107,14 @@ export default async function chatRoutes(server: FastifyInstance) {
         const userMsg = await prisma.message.create({
             data: { chatId: id, role: 'user', content }
         });
+        await factChecker.handleMessage({ content, chatId: id });
         chatEventBus.broadcastMessageCreated(userMsg);
+
         const messageHistory = await prisma.message.findMany({ where: { chatId: id }, orderBy: { createdAt: 'asc' } });
 
         // Stub assistant reply
         try {
-            const assistantText = await dialogueService.getNextMessage({ userMessage: content, messageHistory });
+            const assistantText = await dialogueService.getNextMessage({ userMessage: content, messageHistory, chatId: id });
             const assistantMsg = await prisma.message.create({
                 data: { chatId: id, role: 'assistant', content: assistantText }
             });

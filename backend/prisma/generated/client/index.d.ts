@@ -1110,6 +1110,7 @@ export namespace Prisma {
     vacancyId: number
     requirements_checklist: number
     analysis: number
+    facts_meta: number
     is_finished: number
     createdAt: number
     updatedAt: number
@@ -1141,6 +1142,7 @@ export namespace Prisma {
     vacancyId?: true
     requirements_checklist?: true
     analysis?: true
+    facts_meta?: true
     is_finished?: true
     createdAt?: true
     updatedAt?: true
@@ -1225,6 +1227,7 @@ export namespace Prisma {
     vacancyId: string | null
     requirements_checklist: JsonValue | null
     analysis: JsonValue | null
+    facts_meta: JsonValue | null
     is_finished: boolean
     createdAt: Date
     updatedAt: Date
@@ -1253,6 +1256,7 @@ export namespace Prisma {
     vacancyId?: boolean
     requirements_checklist?: boolean
     analysis?: boolean
+    facts_meta?: boolean
     is_finished?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -1267,6 +1271,7 @@ export namespace Prisma {
     vacancyId?: boolean
     requirements_checklist?: boolean
     analysis?: boolean
+    facts_meta?: boolean
     is_finished?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -1279,6 +1284,7 @@ export namespace Prisma {
     vacancyId?: boolean
     requirements_checklist?: boolean
     analysis?: boolean
+    facts_meta?: boolean
     is_finished?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -1305,6 +1311,7 @@ export namespace Prisma {
       vacancyId: string | null
       requirements_checklist: Prisma.JsonValue | null
       analysis: Prisma.JsonValue | null
+      facts_meta: Prisma.JsonValue | null
       is_finished: boolean
       createdAt: Date
       updatedAt: Date
@@ -1708,6 +1715,7 @@ export namespace Prisma {
     readonly vacancyId: FieldRef<"Chat", 'String'>
     readonly requirements_checklist: FieldRef<"Chat", 'Json'>
     readonly analysis: FieldRef<"Chat", 'Json'>
+    readonly facts_meta: FieldRef<"Chat", 'Json'>
     readonly is_finished: FieldRef<"Chat", 'Boolean'>
     readonly createdAt: FieldRef<"Chat", 'DateTime'>
     readonly updatedAt: FieldRef<"Chat", 'DateTime'>
@@ -3999,6 +4007,7 @@ export namespace Prisma {
     vacancyId: 'vacancyId',
     requirements_checklist: 'requirements_checklist',
     analysis: 'analysis',
+    facts_meta: 'facts_meta',
     is_finished: 'is_finished',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -4152,6 +4161,7 @@ export namespace Prisma {
     vacancyId?: StringNullableFilter<"Chat"> | string | null
     requirements_checklist?: JsonNullableFilter<"Chat">
     analysis?: JsonNullableFilter<"Chat">
+    facts_meta?: JsonNullableFilter<"Chat">
     is_finished?: BoolFilter<"Chat"> | boolean
     createdAt?: DateTimeFilter<"Chat"> | Date | string
     updatedAt?: DateTimeFilter<"Chat"> | Date | string
@@ -4165,6 +4175,7 @@ export namespace Prisma {
     vacancyId?: SortOrderInput | SortOrder
     requirements_checklist?: SortOrderInput | SortOrder
     analysis?: SortOrderInput | SortOrder
+    facts_meta?: SortOrderInput | SortOrder
     is_finished?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -4181,6 +4192,7 @@ export namespace Prisma {
     vacancyId?: StringNullableFilter<"Chat"> | string | null
     requirements_checklist?: JsonNullableFilter<"Chat">
     analysis?: JsonNullableFilter<"Chat">
+    facts_meta?: JsonNullableFilter<"Chat">
     is_finished?: BoolFilter<"Chat"> | boolean
     createdAt?: DateTimeFilter<"Chat"> | Date | string
     updatedAt?: DateTimeFilter<"Chat"> | Date | string
@@ -4194,6 +4206,7 @@ export namespace Prisma {
     vacancyId?: SortOrderInput | SortOrder
     requirements_checklist?: SortOrderInput | SortOrder
     analysis?: SortOrderInput | SortOrder
+    facts_meta?: SortOrderInput | SortOrder
     is_finished?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -4211,6 +4224,7 @@ export namespace Prisma {
     vacancyId?: StringNullableWithAggregatesFilter<"Chat"> | string | null
     requirements_checklist?: JsonNullableWithAggregatesFilter<"Chat">
     analysis?: JsonNullableWithAggregatesFilter<"Chat">
+    facts_meta?: JsonNullableWithAggregatesFilter<"Chat">
     is_finished?: BoolWithAggregatesFilter<"Chat"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"Chat"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Chat"> | Date | string
@@ -4341,6 +4355,7 @@ export namespace Prisma {
     title?: string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
+    facts_meta?: NullableJsonNullValueInput | InputJsonValue
     is_finished?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -4354,6 +4369,7 @@ export namespace Prisma {
     vacancyId?: string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
+    facts_meta?: NullableJsonNullValueInput | InputJsonValue
     is_finished?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -4365,6 +4381,7 @@ export namespace Prisma {
     title?: NullableStringFieldUpdateOperationsInput | string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
+    facts_meta?: NullableJsonNullValueInput | InputJsonValue
     is_finished?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -4378,6 +4395,7 @@ export namespace Prisma {
     vacancyId?: NullableStringFieldUpdateOperationsInput | string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
+    facts_meta?: NullableJsonNullValueInput | InputJsonValue
     is_finished?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -4390,6 +4408,7 @@ export namespace Prisma {
     vacancyId?: string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
+    facts_meta?: NullableJsonNullValueInput | InputJsonValue
     is_finished?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -4400,6 +4419,7 @@ export namespace Prisma {
     title?: NullableStringFieldUpdateOperationsInput | string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
+    facts_meta?: NullableJsonNullValueInput | InputJsonValue
     is_finished?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -4411,6 +4431,7 @@ export namespace Prisma {
     vacancyId?: NullableStringFieldUpdateOperationsInput | string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
+    facts_meta?: NullableJsonNullValueInput | InputJsonValue
     is_finished?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -4639,6 +4660,7 @@ export namespace Prisma {
     vacancyId?: SortOrder
     requirements_checklist?: SortOrder
     analysis?: SortOrder
+    facts_meta?: SortOrder
     is_finished?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -5266,6 +5288,7 @@ export namespace Prisma {
     title?: string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
+    facts_meta?: NullableJsonNullValueInput | InputJsonValue
     is_finished?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -5278,6 +5301,7 @@ export namespace Prisma {
     vacancyId?: string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
+    facts_meta?: NullableJsonNullValueInput | InputJsonValue
     is_finished?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -5304,6 +5328,7 @@ export namespace Prisma {
     title?: NullableStringFieldUpdateOperationsInput | string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
+    facts_meta?: NullableJsonNullValueInput | InputJsonValue
     is_finished?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -5316,6 +5341,7 @@ export namespace Prisma {
     vacancyId?: NullableStringFieldUpdateOperationsInput | string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
+    facts_meta?: NullableJsonNullValueInput | InputJsonValue
     is_finished?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -5326,6 +5352,7 @@ export namespace Prisma {
     title?: string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
+    facts_meta?: NullableJsonNullValueInput | InputJsonValue
     is_finished?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -5337,6 +5364,7 @@ export namespace Prisma {
     title?: string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
+    facts_meta?: NullableJsonNullValueInput | InputJsonValue
     is_finished?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -5378,6 +5406,7 @@ export namespace Prisma {
     vacancyId?: StringNullableFilter<"Chat"> | string | null
     requirements_checklist?: JsonNullableFilter<"Chat">
     analysis?: JsonNullableFilter<"Chat">
+    facts_meta?: JsonNullableFilter<"Chat">
     is_finished?: BoolFilter<"Chat"> | boolean
     createdAt?: DateTimeFilter<"Chat"> | Date | string
     updatedAt?: DateTimeFilter<"Chat"> | Date | string
@@ -5420,6 +5449,7 @@ export namespace Prisma {
     title?: string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
+    facts_meta?: NullableJsonNullValueInput | InputJsonValue
     is_finished?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -5430,6 +5460,7 @@ export namespace Prisma {
     title?: NullableStringFieldUpdateOperationsInput | string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
+    facts_meta?: NullableJsonNullValueInput | InputJsonValue
     is_finished?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -5441,6 +5472,7 @@ export namespace Prisma {
     title?: NullableStringFieldUpdateOperationsInput | string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
+    facts_meta?: NullableJsonNullValueInput | InputJsonValue
     is_finished?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -5452,6 +5484,7 @@ export namespace Prisma {
     title?: NullableStringFieldUpdateOperationsInput | string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
+    facts_meta?: NullableJsonNullValueInput | InputJsonValue
     is_finished?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string

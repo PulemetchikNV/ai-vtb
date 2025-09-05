@@ -68,3 +68,45 @@ def delete_all():
     _collection = None
     return get_collection()
 
+
+# Named collections (for per-chat facts)
+def get_named_collection(name: str):
+    client = get_client()
+    embedding_fn = SentenceTransformerEmbeddingFunction(model_name=EMBED_MODEL)
+    try:
+        col = client.get_collection(name)
+    except Exception:
+        col = client.create_collection(
+            name=name,
+            embedding_function=embedding_fn,
+            metadata={"hnsw:space": "cosine"},
+        )
+    if getattr(col, "_embedding_function", None) is None:
+        col._embedding_function = embedding_fn  # type: ignore
+    return col
+
+
+def ensure_collection(name: str):
+    get_named_collection(name)
+    return {"ok": True, "name": name}
+
+
+def add_documents_to(collection_name: str, documents: List[str], metadatas: List[Dict[str, Any]], ids: Optional[List[str]] = None):
+    col = get_named_collection(collection_name)
+    if ids is None:
+        # basic ids
+        ids = [f"{collection_name}_{i}" for i in range(len(documents))]
+    col.add(documents=documents, metadatas=metadatas, ids=ids)
+    return {"ok": True, "count": len(documents)}
+
+
+def query_named_collection(name: str, query_text: str, n_results: int = 3, where: Optional[Dict[str, Any]] = None):
+    col = get_named_collection(name)
+    return col.query(query_texts=[query_text], n_results=n_results, where=where)
+
+
+def update_document_metadata(collection_name: str, ids: List[str], metadatas: List[Dict[str, Any]]):
+    col = get_named_collection(collection_name)
+    col.update(ids=ids, metadatas=metadatas)
+    return {"ok": True, "updated": len(ids)}
+

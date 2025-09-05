@@ -15,6 +15,7 @@ model Chat {
   vacancy                Vacancy?  @relation(fields: [vacancyId], references: [id], onDelete: SetNull)
   requirements_checklist Json?
   analysis               Json?
+  facts_meta             Json?
   is_finished            Boolean   @default(false)
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
@@ -24,7 +25,7 @@ model Chat {
 model Message {
   id            String   @id @default(cuid())
   chatId        String
-  role          String // 'user' | 'assistant'
+  role          String // 'user' | 'assistant' | 'system'
   content       String
   hiddenContent String?
   createdAt     DateTime @default(now())

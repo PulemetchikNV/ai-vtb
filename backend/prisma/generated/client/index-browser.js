@@ -128,6 +128,7 @@ exports.Prisma.ChatScalarFieldEnum = {
   vacancyId: 'vacancyId',
   requirements_checklist: 'requirements_checklist',
   analysis: 'analysis',
+  facts_meta: 'facts_meta',
   is_finished: 'is_finished',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

@@ -23,15 +23,20 @@ function getRandomTokensForSentences() {
 
 type GeminiRaw = { candidates: any[] } & Record<string, any>;
 
+type GeminiModel = 'gemini-2.5-flash' | 'gemini-2.0-flash';
 
 export const aiService = {
-    async communicateWithGemini<T extends boolean = true>(messages: { role: 'user' | 'model', content: string }[], returnText: T = true as T)
+    async communicateWithGemini<T extends boolean = true>(
+        messages: { role: 'user' | 'model', content: string }[],
+        returnText: T = true as T,
+        model: GeminiModel = 'gemini-2.5-flash'
+    )
         : Promise<T extends true ? string : GeminiRaw> {
         try {
             const baseUrlText = isProxyApiEnabled
                 ? 'https://api.proxyapi.ru/google'
                 : 'https://generativelanguage.googleapis.com';
-            const url = `${baseUrlText}/v1beta/models/gemini-2.5-flash:generateContent${isProxyApiEnabled ? '' : `?key=${apiKey}`}`;
+            const url = `${baseUrlText}/v1beta/models/${model}:generateContent${isProxyApiEnabled ? '' : `?key=${apiKey}`}`;
             console.log("COMMUNICATE WITH GEMINI", url, messages)
 
             // const maxOutputTokens = getRandomTokensForSentences();

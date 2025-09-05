@@ -11,8 +11,28 @@ import { chatEventBus } from './services/chatEventBus';
 export const server = Fastify({
     logger: {
         transport: {
-            target: 'pino-pretty',
-            options: { colorize: true }
+            options: { colorize: true },
+            targets: [
+                {
+                    // Терминал (красиво)
+                    target: 'pino-pretty',
+                    level: 'info',
+                    options: {
+                        colorize: true,
+                        translateTime: 'SYS:standard',
+                        ignore: 'pid,hostname'
+                    }
+                },
+                // {
+                //     // Файл с уровня 'info' и выше
+                //     target: 'pino/file',
+                //     level: 'info',
+                //     options: {
+                //         destination: './logs/app-info.log',
+                //         // при необходимости укажите абсолютный путь
+                //     }
+                // }
+            ]
         }
     }
 });

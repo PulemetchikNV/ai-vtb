@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers.resumes import router as resumes_router
 from app.routers.documents import router as documents_router
+from app.routers import router as facts_router
 
 
 def create_app() -> FastAPI:
@@ -18,6 +19,7 @@ def create_app() -> FastAPI:
 
     app.include_router(resumes_router, prefix="/api/resumes", tags=["resumes"])
     app.include_router(documents_router, prefix="/api", tags=["documents"])
+    app.include_router(facts_router, prefix="/api", tags=["facts"])
     return app
 
 
