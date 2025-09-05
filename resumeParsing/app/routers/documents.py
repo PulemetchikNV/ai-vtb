@@ -64,12 +64,19 @@ async def add_document(doc: DocumentIn):
         raise HTTPException(status_code=400, detail="Пустой документ")
 
     # Кеширование: если уже есть документы с таким source_id и source_type — возвращаем их, не добавляя повторно
-    existing = get_by_where({
-        "source_id": {"$eq": doc.source_id},
-        "source_type": {"$eq": doc.source_type},
-    }, include=["ids", "metadatas"], limit=1)
+    # Chroma ожидает единый оператор в where: используем $and для нескольких полей
+    existing_where = {
+        "$and": [
+            {"source_id": {"$eq": doc.source_id}},
+            {"source_type": {"$eq": doc.source_type}},
+        ]
+    }
+    # ids возвращаются по умолчанию; параметр include не поддерживает значение 'ids'
+    existing = get_by_where(existing_where, limit=1)
     if existing and existing.get("ids"):
-        return {"source_id": doc.source_id, "chunks": len(existing.get("ids", [])), "structured_data": structured, "cached": True}
+        ids = existing.get("ids", [])
+        chunks_count = len(ids[0]) if ids and isinstance(ids[0], list) else len(ids)
+        return {"source_id": doc.source_id, "chunks": chunks_count, "structured_data": structured, "cached": True}
 
     ids = [f"{doc.source_id}_{i}_{uuid4().hex[:8]}" for i in range(len(chunks))]
     metadatas = [{

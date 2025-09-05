@@ -3,6 +3,7 @@ import { prisma } from "../prisma";
 import { aiService } from "./ai";
 import fetch from 'node-fetch';
 import { chatEventBus } from './chatEventBus';
+import { extractJsonWithoutRegex } from "../utils";
 
 type ChecklistItemFinal = {
     id: string;
@@ -96,13 +97,19 @@ async function analyzeDialog(chatId: string) {
             // продолжим без фрагментов
             fragmentsText = '';
             hadError = true;
+
             chatEventBus.broadcastAnalysisProgress(chatId, { id: item.id, error: 'retriever_failed' });
         }
 
         const prompt = GET_INTERVIEW_ANALYSIS_PROMPT(item.description, [fragmentsText]);
         try {
             const response = await aiService.communicateWithGemini([{ role: 'user', content: prompt }], true);
-            const parsed = JSON.parse(response) as Partial<ChecklistItemFinal>;
+            const parsed = JSON.parse(extractJsonWithoutRegex(response) ?? '') as Partial<ChecklistItemFinal>;
+            console.log('PARSED', parsed)
+
+            if (parsed.score === undefined || parsed.justification === undefined) {
+                throw new Error('Invalid response');
+            }
             if (typeof parsed.score === 'number') item.score = parsed.score;
             if (typeof parsed.justification === 'string') item.justification = parsed.justification;
             item.status = 'evaluated';

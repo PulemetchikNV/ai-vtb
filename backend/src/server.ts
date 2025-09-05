@@ -8,7 +8,7 @@ import { StubTranscriber } from './services/transcriber';
 import { StreamingAudioSession } from './services/streamingSession';
 import { chatEventBus } from './services/chatEventBus';
 
-const server = Fastify({
+export const server = Fastify({
     logger: {
         transport: {
             target: 'pino-pretty',
@@ -16,6 +16,8 @@ const server = Fastify({
         }
     }
 });
+
+export const logger = server.log;
 
 async function start() {
     await server.register(cors, { origin: true });
@@ -50,7 +52,7 @@ async function start() {
         const url = new URL(req.url ?? '', 'http://localhost');
         const chatId = url.searchParams.get('chatId') || '';
         if (!chatId) {
-            server.log.warn({ event: 'ws-missing-chatId' }, 'Missing chatId in query');
+            logger.warn({ event: 'ws-missing-chatId' }, 'Missing chatId in query');
             ws.close(1008, 'chatId required');
             return;
         }
@@ -58,7 +60,7 @@ async function start() {
         const transcriber = new StubTranscriber();
         const session = new StreamingAudioSession({ logger: server.log, transcriber, chatId });
         let chunkCount = 0;
-        server.log.info({ event: 'ws-connected', url: req.url, chatId });
+        logger.info({ event: 'ws-connected', url: req.url, chatId });
 
         ws.on('message', async (data: RawData) => {
             const buf = Buffer.isBuffer(data) ? data : Buffer.from(data as ArrayBuffer);
@@ -68,7 +70,7 @@ async function start() {
 
         ws.on('close', async () => {
             await session.end();
-            server.log.info({ event: 'ws-closed', chatId, chunksReceived: chunkCount });
+            logger.info({ event: 'ws-closed', chatId, chunksReceived: chunkCount });
         });
     });
 
@@ -98,9 +100,9 @@ async function start() {
 
     try {
         await server.listen({ port, host });
-        server.log.info(`Server listening on ${host}:${port}`);
+        logger.info(`Server listening on ${host}:${port}`);
     } catch (error) {
-        server.log.error(error);
+        logger.error(error);
         process.exit(1);
     }
 }

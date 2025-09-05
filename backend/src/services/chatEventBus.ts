@@ -1,5 +1,5 @@
 import type { WebSocket } from 'ws';
-import type { Message } from '@prisma/client/generated/client-types';
+import type { Message } from '../../prisma/generated/client';
 
 type ChatId = string;
 
@@ -8,7 +8,8 @@ type ChatEvent =
     | { type: 'analysis.started'; payload: { chatId: string } }
     | { type: 'analysis.progress'; payload: any }
     | { type: 'analysis.completed'; payload: { chatId: string; items: any[]; categoryScores: Record<string, number>; finalScore: number; error?: boolean } }
-    | { type: 'analysis.error'; payload: { chatId: string; message: string } };
+    | { type: 'analysis.error'; payload: { chatId: string; message: string } }
+    | { type: 'message.deleted'; payload: string };
 
 class ChatEventBus {
     private chatIdToClients: Map<ChatId, Set<WebSocket>> = new Map();
@@ -45,6 +46,10 @@ class ChatEventBus {
 
     broadcastMessageCreated(message: Message) {
         this.broadcast(message.chatId, { type: 'message.created', payload: message });
+    }
+
+    broadcastMessageDeleted(message: Message) {
+        this.broadcast(message.chatId, { type: 'message.deleted', payload: message.id });
     }
 
     broadcastAnalysisStarted(chatId: ChatId) {

@@ -20,7 +20,7 @@ import Dialog from 'primevue/dialog'
 import { useVacancies } from '../composables/useVacancies'
 
 // Chat composable
-const { startChat, sendMessage, fetchChat, deleteChat, finishChat, currentChatId, messages, loadChatHistory, loading, analysis, analysisError } = useChat()
+const { startChat, sendMessage, fetchChat, chat, finishChat, currentChatId, messages, loadChatHistory, loading, analysis, analysisError } = useChat()
 const route = useRoute()
 const router = useRouter()
 
@@ -114,7 +114,15 @@ async function confirmStartChat() {
 }
 
 async function handleDeleteChat(id: string) {
-  if (currentChatId.value === id) router.replace({ path: `/voice-chat` })
+  if (currentChatId.value === id) {
+    router.replace({ path: `/voice-chat` })
+    chat.value = null
+    messages.value = []
+    analysis.value = null
+    analysisError.value = false
+
+    loadChatHistory()
+  }
 }
 
 // Autostart chat on first mount
@@ -146,7 +154,16 @@ watchEffect(async () => {
           <div class="actions">
             <Button label="Новый" icon="pi pi-plus" size="small" @click="handleNewChat" :disabled="loading" />
             <Button label="Удалить" icon="pi pi-trash" size="small" severity="danger" class="ml-8" @click="handleDeleteChat(currentChatId as string)" :disabled="!currentChatId || loading" />
-            <Button label="Завершить" icon="pi pi-check-circle" size="small" severity="success" class="ml-8" @click="finishChat" :disabled="!currentChatId || loading" />
+            <Button 
+              :label="chat?.is_finished ? 'Перегенерировать анализ' : 'Завершить'"
+              icon="pi pi-check-circle"
+              size="small"
+              severity="success"
+              class="ml-8"
+              :disabled="!currentChatId || loading"
+              :loading="loading"
+              @click="finishChat"
+            />
           </div>
         </div>
 

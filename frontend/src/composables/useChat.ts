@@ -9,6 +9,9 @@ export type Chat = {
     title: string | null
     createdAt: string
     updatedAt: string
+    messages: Message[]
+    is_finished: boolean
+    analysis?: any
 }
 
 export type Message = {
@@ -33,7 +36,15 @@ export function useChat() {
             router.push({ name: undefined, params: { chatId: value } as any })
         }
     })
-    const messages = ref<Message[]>([])
+    const chat = ref<Chat | null>(null)
+    const messages = computed<Message[]>({
+        get() {
+            return chat.value?.messages || []
+        },
+        set(value) {
+            chat.value!.messages = value
+        }
+    })
     let ws: WebSocket | null = null
     const loading = ref(false)
     const error = ref<string | null>(null)
@@ -44,6 +55,7 @@ export function useChat() {
         try {
             const res = await api.post<Chat>('/chat', { title: title ?? null, vacancyId: vacancyId ?? null })
             currentChatId.value = res.data.id
+            chat.value = res.data
             messages.value = []
             return res.data
         } catch (e: any) {
@@ -60,9 +72,9 @@ export function useChat() {
         loading.value = true
         error.value = null
         try {
-            const res = await api.get<{ id: string; messages: Message[]; analysis?: any }>(`/chat/${id}`)
+            const res = await api.get<{ id: string; messages: Message[]; analysis?: any } & any>(`/chat/${id}`)
             currentChatId.value = res.data.id
-            messages.value = res.data.messages
+            chat.value = res.data
             if (res.data.analysis) {
                 analysis.value = res.data.analysis
                 analysisError.value = !!res.data.analysis?.error
@@ -100,6 +112,7 @@ export function useChat() {
             await api.delete(`/chat/${id}`)
             if (!chatId || chatId === currentChatId.value) {
                 currentChatId.value = null
+                chat.value = null
                 messages.value = []
             }
         } catch (e: any) {
@@ -169,6 +182,8 @@ export function useChat() {
                 } else if (evt?.type === 'analysis.error') {
                     analysisError.value = true
                     analysis.value = { error: true, message: evt.payload?.message }
+                } else if (evt?.type === 'message.deleted') {
+                    messages.value = messages.value.filter(m => m.id !== evt.payload)
                 }
             } catch { }
         }
@@ -180,5 +195,5 @@ export function useChat() {
         else disconnectWs()
     }, { immediate: true })
 
-    return { currentChatId, messages, loading, error, startChat, fetchChat, sendMessage, deleteChat, loadChatHistory, finishChat, analysis, analysisError }
+    return { chat, currentChatId, messages, loading, error, startChat, fetchChat, sendMessage, deleteChat, loadChatHistory, finishChat, analysis, analysisError }
 }
