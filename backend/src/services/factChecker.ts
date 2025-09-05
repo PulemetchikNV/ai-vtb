@@ -36,11 +36,14 @@ export const factChecker = {
         Проанализируй новый факт и список близких фактов из истории диалога.
         Верни JSON-массив элементов вида {"explanation": "string", "conflicting_facts": [{"fact": "string", "message_id": "string"}]}
 
-        Новый факт: ${fact.fact}
+        Новый факт: "${fact.fact}"
         Похожие факты:
         ${neighbors.map((d, idx) => `- ${d}`).join('\n')}
 
-        Верни ответ СТРОГО в формате JSON массива без дополнительных комментариев.`;
+        Верни ответ СТРОГО в формате JSON массива без дополнительных комментариев.
+        
+        В explanation пиши о каком факте идет речь (его суть). НЕЛЬЗЯ ПИСАТЬ "Новый факт"
+        `;
 
         try {
             const guardianResp = await aiService.communicateWithGemini([{ role: 'user', content: guardianPrompt }], true, 'gemini-2.0-flash');

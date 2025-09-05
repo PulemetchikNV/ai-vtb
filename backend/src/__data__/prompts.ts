@@ -59,6 +59,9 @@ export const INITIAL_DIALOG_PROMPT = ({
         Если вешаешь трубку, пиши *FINISH CALL*. ВЕШАЙ ТРУБКО ТОЛЬКО В САМЫХ КРАЙНИХ СЛУЧАЯХ (ХАМСТВО, ПРОВАЛ ПО СЦЕНАРИЮ)
     </section>
 
+    <section>
+        Не пиши чересчур длинные сообщения. не более двух абзацев, и не более 8 предложений.
+    </section>
 `
 
 export const GET_FACTS_PROMPT = (userMessage: string) => `
