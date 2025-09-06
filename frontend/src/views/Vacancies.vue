@@ -50,7 +50,7 @@ async function submit() {
 
 function openCreate() {
   console.log('openCreate', formDefaultValue)
-  form.value = formDefaultValue
+  form.value = {...formDefaultValue}
   showCreate.value = true
 }
 
@@ -96,7 +96,12 @@ onMounted(load)
     </div>
 
     <div class="grid">
-      <Card v-for="v in vacancies" :key="v.id" class="vacancy">
+      <Card
+        v-for="v in vacancies"
+        :key="v.id"
+        :pt="{content: {style: {flexGrow: 1}}, body: {style: {height: '100%'}}}"
+        class="vacancy"
+      >
         <template #title>{{ v.title }}</template>
         <template #content>
           <p class="desc">{{ v.description_text }}</p>

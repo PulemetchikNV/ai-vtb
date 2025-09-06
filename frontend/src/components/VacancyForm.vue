@@ -12,7 +12,12 @@ type ReqRow = { id: string; description: string; type: 'technical_skill' | 'soft
 type FormModel = { title: string; description_text: string; requirements: Array<ReqRow>; weights: Record<string, number> }
 
 const props = defineProps<{ modelValue: FormModel }>()
-const emit = defineEmits<{ (e: 'update:modelValue', v: FormModel): void; (e: 'add-req'): void; (e: 'del-req', idx: number): void; (e: 'submit'): void }>()
+const emit = defineEmits<{ 
+  (e: 'update:modelValue', v: FormModel): void;
+  (e: 'add-req'): void;
+  (e: 'del-req', idx: number): void;
+  (e: 'submit'): void
+}>()
 
 const reqTypes = REQUIREMENT_TYPES as unknown as Array<{ value: 'technical_skill' | 'soft_skill'; label: string }>
 const model = computed({
@@ -30,7 +35,6 @@ function delReq(idx: number) {
 
 function submit() {
   emit('submit')
-
 }
 </script>
 
@@ -44,17 +48,11 @@ function submit() {
 
     <label>Вес категорий</label>
     <div class="weights">
-      <div class="w-row">
-        <span class="w-label">Тех. навыки</span>
-        <Slider v-model="model.weights.technical_skill" :min="0" :max="1" :step="0.05" class="w-slider"/>
-        <InputNumber v-model="model.weights.technical_skill" :min="0" :max="1" :step="0.05" mode="decimal" />
+      <div v-for="type in reqTypes" :key="type.value" class="w-row">
+        <span class="w-label">{{ type.label }}</span>
+        <Slider v-model="model.weights[type.value]" :min="0" :max="1" :step="0.05" class="w-slider"/>
+        <InputNumber v-model="model.weights[type.value]" :min="0" :max="1" :step="0.05" mode="decimal" />
       </div>
-      <div class="w-row">
-        <span class="w-label">Софт скиллы</span>
-        <Slider v-model="model.weights.soft_skill" :min="0" :max="1" :step="0.05" class="w-slider"/>
-        <InputNumber v-model="model.weights.soft_skill" :min="0" :max="1" :step="0.05" mode="decimal" />
-      </div>
-      <div class="w-note">Сумма весов не обязана быть ровно 1.0 — нормализуем при вычислении.</div>
     </div>
 
     <label>Требования</label>
@@ -77,14 +75,52 @@ function submit() {
 </template>
 
 <style scoped>
-.form { display: grid; gap: 10px; }
-.weights { display: grid; gap: 8px; margin-bottom: 4px; }
-.w-row { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; }
-.w-label { min-width: 110px; }
-.w-slider { width: 100%; }
-.req-list { display: grid; gap: 8px; }
-.req-row { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 8px; align-items: center; }
-.actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+.form { 
+  display: grid; 
+  gap: 10px;
+}
+
+.weights { 
+  display: grid; 
+  gap: 8px; 
+  margin-bottom: 4px; 
+}
+
+.w-row { 
+  display: grid; 
+  grid-template-columns: auto 1fr auto; 
+  gap: 8px; 
+  align-items: center; 
+}
+
+.w-label { 
+  min-width: 110px;
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+.w-slider { 
+  width: 100%;
+}
+
+.req-list { 
+  display: grid; 
+  gap: 8px; 
+}
+
+.req-row { 
+  display: grid; 
+  grid-template-columns: 1fr 1fr auto auto; 
+  gap: 8px; 
+  align-items: center; 
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px; 
+  margin-top: 8px; 
+}
 </style>
 
 

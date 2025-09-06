@@ -1,5 +1,6 @@
 import { FastifyInstance, FastifySchema } from 'fastify';
 import { prisma } from '../prisma';
+import { REQUIREMENT_TYPES } from '../__data__/constants';
 
 export default async function vacancyRoutes(server: FastifyInstance) {
     server.get('/vacancies', async () => {
@@ -26,7 +27,7 @@ export default async function vacancyRoutes(server: FastifyInstance) {
                             properties: {
                                 id: { type: 'string' },
                                 description: { type: 'string' },
-                                type: { type: 'string', enum: ['technical_skill', 'soft_skill'] },
+                                type: { type: 'string', enum: REQUIREMENT_TYPES },
                                 weight: { type: 'number', minimum: 0, maximum: 10 }
                             },
                             additionalProperties: false
