@@ -33,3 +33,5 @@ new_venv
 tmp/
 .env
 .venv
+
+/data/chroma
