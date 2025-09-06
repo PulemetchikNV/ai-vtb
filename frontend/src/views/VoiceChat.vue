@@ -136,6 +136,8 @@ onMounted(async () => {
 
 watchEffect(async () => {
   if (currentChatId.value) {
+    analysis.value = null
+    analysisError.value = false
     await fetchChat(currentChatId.value)
   }
 })
