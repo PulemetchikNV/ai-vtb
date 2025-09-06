@@ -73,8 +73,6 @@ export const aiService = {
             }
 
             const responseData = await response.json() as any;
-            console.log('=== GOT GEMINI RESPONSE RAW ===', responseData)
-
             if (!('candidates' in responseData) || !(responseData.candidates?.length)) {
                 throw new Error('No candidates in response');
             }

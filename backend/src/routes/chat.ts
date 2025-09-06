@@ -107,14 +107,30 @@ export default async function chatRoutes(server: FastifyInstance) {
         const userMsg = await prisma.message.create({
             data: { chatId: id, role: 'user', content }
         });
-        await factChecker.handleMessage({ content, chatId: id });
         chatEventBus.broadcastMessageCreated(userMsg);
 
         const messageHistory = await prisma.message.findMany({ where: { chatId: id }, orderBy: { createdAt: 'asc' } });
 
-        // Stub assistant reply
+        // Run analysis and fact extraction in parallel
         try {
-            const assistantText = await dialogueService.getNextMessage({ userMessage: content, messageHistory, chatId: id });
+            const previousAssistant = messageHistory.length >= 2 ? messageHistory[messageHistory.length - 2] : null;
+            const analyzerPromise = (async () => {
+                if (!previousAssistant) return null;
+                const { qualityAnalyzerChain } = await import('../chains/qualityAnalyzerChain');
+                const messageLimit = 6;
+                const lastMessageIndex = messageHistory.length >= messageLimit ? messageHistory.length - messageLimit : 0;
+                const lastFewMessages = messageHistory.slice(lastMessageIndex, messageHistory.length)
+                    .map(message => `${message.role}: ${message.content}`).join('\n');
+
+                return qualityAnalyzerChain.invoke({
+                    last_few_messages: lastFewMessages,
+                });
+            })();
+            const factCheckerPromise = factChecker.handleMessage({ content, chatId: id });
+
+            const [analyzerMeta] = await Promise.all([analyzerPromise, factCheckerPromise]);
+
+            const assistantText = await dialogueService.getNextMessage({ userMessage: content, messageHistory, chatId: id, analyzerMeta });
             const assistantMsg = await prisma.message.create({
                 data: { chatId: id, role: 'assistant', content: assistantText }
             });

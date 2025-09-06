@@ -3,7 +3,14 @@ import { aiService } from "./ai"
 import { prisma } from "../prisma"
 import type { Vacancy, Message } from "../../prisma/generated/client"
 import { chatDebugLog, chatDebugSeparator } from "./chatDebug"
+import type { QualityAnalyzerOutput } from "../chains/qualityAnalyzerChain"
 
+type GetNextMessageParams = { 
+    userMessage: string, 
+    messageHistory: Message[], 
+    chatId: string, 
+    analyzerMeta?: QualityAnalyzerOutput | null
+}
 
 export const dialogueService = {
     async getInitialMessage({ vacancy }: { vacancy: Vacancy }) {
@@ -15,7 +22,7 @@ export const dialogueService = {
             initialMessage
         }
     },
-    async getNextMessage({ userMessage, messageHistory, chatId }: { userMessage: string, messageHistory: Message[], chatId: string }) {
+    async getNextMessage({ userMessage, messageHistory, chatId, analyzerMeta }: GetNextMessageParams) {
         await chatDebugSeparator(chatId)
         // fetch latest contradictions
         const chat = await prisma.chat.findUnique({ where: { id: chatId }, select: { facts_meta: true } })
@@ -34,12 +41,24 @@ export const dialogueService = {
         ]
         ` : ''
 
-        const formattedMessages = messageHistory.map(message => ({
+        const qualityNote = analyzerMeta ? `
+        \n\n[Анализ качества ответа кандидата (относительно предыдущего вопроса интервьюера):
+        - Шаблонный ответ: ${analyzerMeta.is_canned_answer ? 'да' : 'нет'}
+        ${analyzerMeta.is_canned_answer ? `Упомяни в своей фразе что этот ответ слишком общий и задай вопрос который покажет конкретные знания кандидата` : ''}
+        - Уклончивость: ${analyzerMeta.is_evasive ? 'да' : 'нет'}
+        ${analyzerMeta.is_evasive ? `Верни русло разговора в предыдущую тему и заставь кандидата полностью раскрыть вопрос` : ''}
+        - Неполный ответ: ${analyzerMeta.is_not_full_answer ? 'да' : 'нет'}
+        ${analyzerMeta.is_not_full_answer ? `Упомяни в своей фразе что этот ответ не раскрывает всю суть и задай вопрос который покажет конкретные знания кандидата` : ''}
+        Пояснение: ${analyzerMeta.analysis}
+        ]
+        ` : ''
+
+        const formattedMessages = messageHistory.slice(0, -1).map(message => ({
             role: message.role === 'user' ? 'user' as const : 'model' as const,
             content: `${message.content}${message.hiddenContent ? ` \n\n${message.hiddenContent}` : ''}`
         }
         ))
-        formattedMessages.push({ role: 'user' as const, content: `${userMessage}${contradictionsNote}`, })
+        formattedMessages.push({ role: 'user' as const, content: `${userMessage}${contradictionsNote}${qualityNote}`, })
 
         const aiResponse = await aiService.communicateWithGemini(formattedMessages)
         await chatDebugLog(chatId, `отправляем пользователю сообщение ${JSON.stringify(aiResponse)}`)

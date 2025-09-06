@@ -5,8 +5,10 @@ import Select from 'primevue/select'
 import InputNumber from 'primevue/inputnumber'
 import Slider from 'primevue/slider'
 import Button from 'primevue/button'
-import { computed } from 'vue'
+import FloatLabel from 'primevue/floatlabel'
+import { InputText as InputTextPrime } from 'primevue'
 import { REQUIREMENT_TYPES } from '../__data__/constants'
+import { ref } from 'vue'
 
 type ReqRow = { id: string; description: string; type: 'technical_skill' | 'soft_skill'; weight: number }
 type FormModel = { title: string; description_text: string; requirements: Array<ReqRow>; weights: Record<string, number> }
@@ -16,14 +18,11 @@ const emit = defineEmits<{
   (e: 'update:modelValue', v: FormModel): void;
   (e: 'add-req'): void;
   (e: 'del-req', idx: number): void;
-  (e: 'submit'): void
+  (e: 'submit', v: FormModel): void
 }>()
 
 const reqTypes = REQUIREMENT_TYPES as unknown as Array<{ value: 'technical_skill' | 'soft_skill'; label: string }>
-const model = computed({
-  get: () => ({...props.modelValue}),
-  set: (v: FormModel) => emit('update:modelValue', v)
-})
+const model = ref<FormModel>({...props.modelValue})
 
 function addReq() { 
   emit('add-req')
@@ -34,7 +33,7 @@ function delReq(idx: number) {
 }
 
 function submit() {
-  emit('submit')
+  emit('submit', model.value)
 }
 </script>
 
@@ -51,7 +50,17 @@ function submit() {
       <div v-for="type in reqTypes" :key="type.value" class="w-row">
         <span class="w-label">{{ type.label }}</span>
         <Slider v-model="model.weights[type.value]" :min="0" :max="1" :step="0.05" class="w-slider"/>
-        <InputNumber v-model="model.weights[type.value]" :min="0" :max="1" :step="0.05" mode="decimal" />
+        <FloatLabel variant="on">
+          <InputNumber 
+            v-model="model.weights[type.value]"
+            :min="0"
+            :max="1"
+            :step="0.05"
+            mode="decimal"
+            id="weight"
+          />
+          <label for="weight">Вес</label>
+        </FloatLabel>
       </div>
     </div>
 
@@ -60,7 +69,20 @@ function submit() {
       <div v-for="(it, idx) in model.requirements" :key="idx" class="req-row">
         <InputText v-model="it.description" placeholder="Описание (напр. Знание React)" />
         <Select v-model="it.type" :options="reqTypes" optionLabel="label" optionValue="value" placeholder="Тип" />
-        <InputNumber v-model="it.weight" :min="1" :max="10" mode="decimal" :step="0.1" inputClass="p-inputtext p-component" placeholder="Вес (1-10)" />
+        <FloatLabel variant="on">
+          <InputNumber 
+            v-model="it.weight"
+            :min="1"
+            :max="10"
+            mode="decimal"
+            :step="0.1"
+            inputClass="p-inputtext p-component"
+            buttonLayout="stacked"
+            :showButtons="true"
+            id="addWeight"
+          />
+          <label for="addWeight">Доп. вес</label>
+        </FloatLabel>
         <Button icon="pi pi-minus" severity="secondary" @click="delReq(idx)" outlined />
       </div>
       <Button icon="pi pi-plus" label="Добавить" @click="addReq" outlined />
@@ -110,7 +132,7 @@ function submit() {
 
 .req-row { 
   display: grid; 
-  grid-template-columns: 1fr 1fr auto auto; 
+  grid-template-columns: 2fr 2fr 1fr auto; 
   gap: 8px; 
   align-items: center; 
 }

@@ -29,6 +29,12 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/ai_vtb?schema=public
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - IS_PROXY_API_ENABLED=${IS_PROXY_API_ENABLED}
+      - IS_IMAGE_GENERATION_ENABLED=${IS_IMAGE_GENERATION_ENABLED}
+      - PROXY_API_KEY=${PROXY_API_KEY}
+      - RAG_API_URL=http://resumeparsing:8000
     ports:
       - "3000:3000"
     volumes:

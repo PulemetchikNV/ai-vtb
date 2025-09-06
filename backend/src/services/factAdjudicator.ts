@@ -1,7 +1,6 @@
-import { aiService } from './ai'
-import { extractJsonWithoutRegex } from '../utils'
 import { logger } from '../server'
 import { chatDebugLog } from './chatDebug'
+import { factArbitratorChain, type FactArbitratorOutput } from '../chains/factArbitratorChain'
 
 export type LedgerFact = {
     fact_id: string
@@ -19,29 +18,36 @@ export type AdjudicationResult =
 
 export const factAdjudicator = {
     async adjudicate(newFact: LedgerFact, neighbors: LedgerFact[]): Promise<AdjudicationResult> {
-        const neighborText = neighbors
-            .map(n => `- [${n.fact_id}] ${n.fact} (status: ${n.status})`)
-            .join('\n')
+        // Пробегаемся по ближайшим фактам и запрашиваем решение попарно
+        let bestDecision: AdjudicationResult = { action: 'ADD_NEW' }
+        for (const neighbor of neighbors) {
+            try {
+                const result = await factArbitratorChain.invoke({
+                    old_fact_text: neighbor.fact,
+                    old_fact_id: neighbor.fact_id,
+                    new_fact_text: newFact.fact,
+                }) as FactArbitratorOutput
 
-        const prompt = `Ты — логический анализатор. Проанализируй новое утверждение кандидата в контексте предыдущих утверждений.
-Верни строго JSON одного из видов:
-{"action":"ADD_NEW"}
-{"action":"FLAG_CONTRADICTION","note":"строка"}
-{"action":"INVALIDATE_OLD","target_fact_id":"fact_123"}
+                console.log('ARBITRATOR RESULT', result)
+                // Логируем и сохраняем наиболее сильное решение
+                await chatDebugLog(newFact.fact_id.split('_')[0] || 'unknown', `арбитр: решение по паре (${neighbor.fact_id} vs new): ${JSON.stringify(result)}`)
+                logger.info({ event: 'fact_adjudication_pair', chatFact: newFact.fact_id, neighbor: neighbor.fact_id, action: (result as any).action, target: (result as any).target_fact_id }, 'Fact adjudication pair decision')
 
-Новое утверждение: ${newFact.fact}
-Предыдущие утверждения:\n${neighborText}`
-
-        try {
-            const resp = await aiService.communicateWithGemini([{ role: 'user', content: prompt }], true, 'gemini-2.0-flash')
-            const parsed = JSON.parse(extractJsonWithoutRegex(resp) ?? '{}') as AdjudicationResult
-            if (!parsed || !('action' in parsed)) return { action: 'ADD_NEW' }
-            logger.info({ event: 'fact_adjudication', chatFact: newFact.fact_id, action: (parsed as any).action, target: (parsed as any).target_fact_id }, 'Fact adjudication decision')
-            await chatDebugLog(newFact.fact_id.split('_')[0] || 'unknown', `арбитр: решение ${JSON.stringify(parsed)}`)
-            return parsed
-        } catch {
-            return { action: 'ADD_NEW' }
+                if (result.action === 'INVALIDATE_OLD') {
+                    bestDecision = { action: 'INVALIDATE_OLD', target_fact_id: (result as any).target_fact_id || neighbor.fact_id }
+                    break
+                }
+                if (result.action === 'FLAG_CONTRADICTION' && bestDecision.action !== 'INVALIDATE_OLD') {
+                    bestDecision = { action: 'FLAG_CONTRADICTION', note: (result as any).note }
+                    // продолжаем перебор — вдруг найдётся INVALIDATE_OLD
+                }
+            } catch {
+                // ignore and continue
+            }
         }
+        if (!bestDecision) return { action: 'ADD_NEW' }
+        logger.info({ event: 'fact_adjudication', chatFact: newFact.fact_id, action: (bestDecision as any).action, target: (bestDecision as any).target_fact_id }, 'Fact adjudication decision')
+        return bestDecision
     }
 }
 

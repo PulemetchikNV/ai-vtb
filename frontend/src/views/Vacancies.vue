@@ -62,10 +62,11 @@ function openEdit(v: any) {
   showEdit.value = true
 }
 
-async function submitEdit() {
+async function submitEdit(newForm: Form) {  
   if (!editingId.value) return
+  console.log('submitEdit', newForm)
 
-  const checklist = form.value.requirements
+  const checklist = newForm.requirements
     .map(it => ({ 
       id: it.id,
       description: it.description,
@@ -74,10 +75,10 @@ async function submitEdit() {
     }))
 
   await update(editingId.value, {
-    title: form.value.title,
-    description_text: form.value.description_text,
+    title: newForm.title,
+    description_text: newForm.description_text,
     requirements_checklist: checklist,
-    category_weights: form.value.weights
+    category_weights: newForm.weights
   })
   
   showEdit.value = false
@@ -129,12 +130,7 @@ onMounted(load)
     </Dialog>
 
     <Dialog v-model:visible="showEdit" modal header="Редактировать вакансию" :style="{ width: '720px' }">
-      <VacancyForm v-model="form" @add-req="addReq" @del-req="delReq" @submit="submitEdit">
-        <template #actions>
-          <Button label="Отмена" severity="secondary" @click="showEdit = false" />
-          <Button label="Сохранить" @click="submitEdit" :disabled="!form.title.trim()" />
-        </template>
-      </VacancyForm>
+      <VacancyForm v-model="form" @add-req="addReq" @del-req="delReq" @submit="submitEdit" />
     </Dialog>
   </div>
 </template>
