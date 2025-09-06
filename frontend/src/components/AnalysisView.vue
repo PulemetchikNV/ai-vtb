@@ -4,6 +4,7 @@ import Tag from 'primevue/tag'
 import ProgressBar from 'primevue/progressbar'
 import Divider from 'primevue/divider'
 import { computed } from 'vue'
+import { REQUIREMENT_TYPES } from '../__data__/constants'
 
 type RunningLast = { id?: string; fragments?: string[] }
 
@@ -29,6 +30,11 @@ type AnalysisData = {
 
 const props = defineProps<{ analysis: AnalysisData }>()
 
+const requireMentTypesMap = REQUIREMENT_TYPES.reduce((acc, el) => {
+  acc[el.value as string] = el.label
+  return acc
+}, {} as Record<string, string>)
+
 const isRunning = computed(() => props.analysis?.status === 'running')
 const hasError = computed(() => props.analysis?.error === true)
 const hasResult = computed(() => Array.isArray(props.analysis?.items))
@@ -37,9 +43,7 @@ const categoryScores = computed(() => props.analysis?.categoryScores || {})
 const finalPercent = computed(() => Math.round(((props.analysis?.finalScore ?? 0) * 100)))
 
 function labelForType(t: string): string {
-  if (t === 'technical_skill') return 'Тех. навык'
-  if (t === 'soft_skill') return 'Софт скилл'
-  return t
+  return requireMentTypesMap[t]
 }
 
 function statusSeverity(s: string): 'success' | 'warning' | 'danger' | 'info' | undefined {
@@ -99,7 +103,7 @@ function statusSeverity(s: string): 'success' | 'warning' | 'danger' | 'info' | 
           <template #content>
             <div class="categories">
               <div class="cat" v-for="(v, k) in categoryScores" :key="k">
-                <span class="k">{{ k }}</span>
+                <span class="k">{{ labelForType(k) }}</span>
                 <span class="v">{{ (v ?? 0).toFixed(2) }}</span>
               </div>
             </div>
