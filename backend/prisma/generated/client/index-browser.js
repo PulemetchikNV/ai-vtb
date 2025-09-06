@@ -148,6 +148,7 @@ exports.Prisma.VacancyScalarFieldEnum = {
   title: 'title',
   description_text: 'description_text',
   requirements_checklist: 'requirements_checklist',
+  category_weights: 'category_weights',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

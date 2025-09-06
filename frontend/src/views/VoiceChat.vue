@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick, watch, watchEffect } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, onMounted, watchEffect } from 'vue'
+import { useRouter } from 'vue-router'
 import { useChat } from '../composables/useChat'
 
 // PrimeVue components
@@ -18,10 +18,10 @@ import Messages from '../components/Messages.vue'
 import Dropdown from 'primevue/dropdown'
 import Dialog from 'primevue/dialog'
 import { useVacancies } from '../composables/useVacancies'
+import AnalysisView from '../components/AnalysisView.vue'
 
 // Chat composable
 const { startChat, sendMessage, fetchChat, chat, finishChat, currentChatId, messages, loadChatHistory, loading, analysis, analysisError } = useChat()
-const route = useRoute()
 const router = useRouter()
 
 // UI state
@@ -193,9 +193,8 @@ watchEffect(async () => {
 
                 <Divider class="my-12" />
                 <div v-if="analysis" class="analysis">
-                  <h4>Результаты анализа</h4>
-                  <pre class="json">{{ JSON.stringify(analysis, null, 2) }}</pre>
-                  <div v-if="analysisError" class="error">
+                  <AnalysisView :analysis="analysis as any" />
+                  <div v-if="analysisError" class="error mt-8">
                     <Button label="Пересоздать отчёт" icon="pi pi-refresh" @click="finishChat" />
                   </div>
                 </div>

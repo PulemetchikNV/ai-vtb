@@ -13,6 +13,7 @@ export type Vacancy = {
     title: string
     description_text: string
     requirements_checklist: VacancyRequirement[]
+    category_weights?: Record<string, number>
     createdAt: string
     updatedAt: string
 }
@@ -41,7 +42,7 @@ export function useVacancies() {
         }
     }
 
-    async function create(v: { title: string; description_text: string; requirements_checklist: VacancyRequirement[] }) {
+    async function create(v: { title: string; description_text: string; requirements_checklist: VacancyRequirement[]; category_weights?: Record<string, number> }) {
         loading.value = true
         error.value = null
         try {
@@ -70,5 +71,20 @@ export function useVacancies() {
         }
     }
 
-    return { vacancies, loading, error, load, create, remove }
+    async function update(id: string, v: Partial<{ title: string; description_text: string; requirements_checklist: VacancyRequirement[]; category_weights?: Record<string, number> }>) {
+        loading.value = true
+        error.value = null
+        try {
+            const res = await api.put<Vacancy>(`/vacancies/${id}`, v)
+            vacancies.value = vacancies.value.map(x => x.id === id ? res.data : x)
+            return res.data
+        } catch (e: any) {
+            error.value = e?.message ?? 'Failed to update vacancy'
+            throw e
+        } finally {
+            loading.value = false
+        }
+    }
+
+    return { vacancies, loading, error, load, create, remove, update }
 }

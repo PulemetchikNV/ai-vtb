@@ -4,6 +4,7 @@ import { aiService } from "./ai";
 import fetch from 'node-fetch';
 import { chatEventBus } from './chatEventBus';
 import { extractJsonWithoutRegex } from "../utils";
+import { REQUIREMENT_TYPES } from "../__data__/constants";
 
 type ChecklistItemFinal = {
     id: string;
@@ -129,11 +130,16 @@ async function analyzeDialog(chatId: string) {
         return Math.min(1, Math.max(0, val / 10));
     };
 
-    // Сводные веса категорий (мок, позже расширим)
-    const CATEGORY_WEIGHTS: Record<string, number> = {
-        technical_skill: 0.7,
-        soft_skill: 0.3,
-    };
+    const weightsDefault = REQUIREMENT_TYPES.reduce((acc, it) => {
+        acc[it] = Math.round(1 / REQUIREMENT_TYPES.length * 100) / 100
+        return acc
+    }, {} as Record<string, number>)
+    
+    // Сводные веса категорий — берём из вакансии, либо по умолчанию 0.5/0.5
+    const vacCategoryWeights = (chat.vacancy as any)?.category_weights as Record<string, number> | undefined
+    const CATEGORY_WEIGHTS: Record<string, number> = vacCategoryWeights && typeof vacCategoryWeights === 'object'
+        ? vacCategoryWeights
+        : weightsDefault
 
     // Группировка по типам и средневзвешенные
     const byType = new Map<string, { sum: number; w: number }>();
