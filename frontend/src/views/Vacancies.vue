@@ -49,7 +49,6 @@ async function submit() {
 }
 
 function openCreate() {
-  console.log('openCreate', formDefaultValue)
   form.value = {...formDefaultValue}
   showCreate.value = true
 }

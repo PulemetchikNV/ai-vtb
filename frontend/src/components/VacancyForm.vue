@@ -21,7 +21,7 @@ const emit = defineEmits<{
 
 const reqTypes = REQUIREMENT_TYPES as unknown as Array<{ value: 'technical_skill' | 'soft_skill'; label: string }>
 const model = computed({
-  get: () => props.modelValue,
+  get: () => ({...props.modelValue}),
   set: (v: FormModel) => emit('update:modelValue', v)
 })
 
