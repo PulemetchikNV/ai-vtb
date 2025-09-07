@@ -4,6 +4,7 @@ import { chatEventBus } from '../services/chatEventBus';
 import { analyzer } from '../services/analyzer';
 import { dialogueService } from '../services/dialogue';
 import { factChecker } from '../services/factChecker';
+import { processSavedUserMessage, finishChat as flowFinishChat } from '../services/chatFlow'
 import { factsApi } from '../services/factsApi';
 import { ingestResumeFactsToChat } from '../services/resumeFacts';
 
@@ -128,32 +129,7 @@ export default async function chatRoutes(server: FastifyInstance) {
 
         // Run analysis and fact extraction in parallel
         try {
-            const previousAssistant = messageHistory.length >= 2 ? messageHistory[messageHistory.length - 2] : null;
-            const analyzerPromise = (async () => {
-                if (!previousAssistant) return null;
-                const { qualityAnalyzerChain } = await import('../chains/qualityAnalyzerChain');
-                const messageLimit = 6;
-                const lastMessageIndex = messageHistory.length >= messageLimit ? messageHistory.length - messageLimit : 0;
-                const lastFewMessages = messageHistory.slice(lastMessageIndex, messageHistory.length)
-                    .map(message => `${message.role}: ${message.content}`).join('\n');
-
-                return qualityAnalyzerChain.invoke({
-                    last_few_messages: lastFewMessages,
-                });
-            })();
-            const factCheckerPromise = factChecker.handleMessage({ content, chatId: id });
-
-            const [analyzerMeta] = await Promise.all([analyzerPromise, factCheckerPromise]);
-
-            const assistantText = await dialogueService.getNextMessage({ userMessage: content, messageHistory, chatId: id, analyzerMeta });
-            const assistantMsg = await prisma.message.create({
-                data: { chatId: id, role: 'assistant', content: assistantText }
-            });
-            chatEventBus.broadcastMessageCreated(assistantMsg);
-
-            if (assistantMsg.content.includes('*FINISH CALL*')) {
-                finishChat(id, async () => { }, 'Собеседник завершил разговор');
-            }
+            const { assistantMsg } = await processSavedUserMessage({ chatId: id, userContent: content })
 
             return reply.send({ user: userMsg, assistant: assistantMsg || null });
         } catch (e) {
@@ -176,6 +152,6 @@ export default async function chatRoutes(server: FastifyInstance) {
     server.post('/chat/:id/finish', async (req, reply) => {
         const { id } = req.params as { id: string };
         // пометить чат завершённым
-        finishChat(id, () => reply.code(204).send());
+        flowFinishChat(id, () => reply.code(204).send());
     });
 }

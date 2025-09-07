@@ -12,11 +12,11 @@ function getAudio(): HTMLAudioElement {
 
 export async function synthesizeAndPlay(text: string): Promise<void> {
     const base = (import.meta as any).env?.VITE_TTS_URL || 'http://localhost:8081'
-    const url = `${String(base).replace(/\/$/, '')}/synthesize`
+    const url = `${String(base).replace(/\/$/, '')}/synthesize-ya`
     const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, voice_name: 'Zephyr', temperature: 1.0 })
+        body: JSON.stringify({ text, voice: 'julia', role: 'strict' })
     })
     if (!res.ok) throw new Error(`tts http ${res.status}`)
     const buf = await res.arrayBuffer()

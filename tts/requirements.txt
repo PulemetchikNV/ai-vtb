@@ -2,3 +2,4 @@ google-genai
 pydub
 fastapi
 uvicorn[standard]
+yandex-speechkit

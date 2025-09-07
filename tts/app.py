@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from google import genai
 from google.genai import types
 from google.genai import errors
+from speechkit import model_repository, configure_credentials, creds
 
 
 app = FastAPI(title="VTB TTS Service", version="1.0.0")
@@ -109,6 +110,47 @@ def synthesize(payload: SynthesizeRequest) -> Response:
 
     return Response(content=audio_bytes, media_type=detected_mime)
 
+
+class YaSynthesizeRequest(BaseModel):
+    text: str
+    voice: str | None = 'jane'
+    role: str | None = 'good'
+
+
+@app.post("/synthesize-ya")
+def synthesize_ya(payload: YaSynthesizeRequest) -> Response:
+    iam_token = os.getenv("YANDEX_IAM_TOKEN") or os.getenv("IAM_TOKEN")
+    if not iam_token:
+        raise HTTPException(status_code=500, detail="YANDEX_IAM_TOKEN is not set")
+
+    try:
+        # Configure SpeechKit SDK with IAM token
+        configure_credentials(
+            yandex_credentials=creds.YandexCredentials(
+                iam_token=iam_token
+            )
+        )
+
+        model = model_repository.synthesis_model()
+        if payload.voice:
+            model.voice = payload.voice
+        if payload.role:
+            model.role = payload.role
+
+        result = model.synthesize(payload.text, raw_format=False)
+        # Export to bytes in WAV
+        wav_bytes = result.export_bytes('wav') if hasattr(result, 'export_bytes') else None
+        if wav_bytes is None:
+            # Fallback: export to temp file then read
+            import tempfile
+            with tempfile.NamedTemporaryFile(suffix='.wav', delete=True) as tmp:
+                result.export(tmp.name, 'wav')
+                tmp.seek(0)
+                wav_bytes = tmp.read()
+
+        return Response(content=wav_bytes, media_type='audio/wav')
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"SpeechKit error: {e}")
 
 def convert_to_wav(audio_data: bytes, mime_type: str) -> bytes:
     parameters = parse_audio_mime_type(mime_type)

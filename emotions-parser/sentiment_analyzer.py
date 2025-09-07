@@ -17,6 +17,7 @@ os.environ['HUGGINGFACE_HUB_TOKEN_PATH'] = token_path
 os.environ['HUGGING_FACE_HUB_TOKEN'] = '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'
 
 import speech_recognition as sr
+from speechkit import model_repository, configure_credentials, creds
 from transformers import pipeline
 
 # --- Глобальные переменные ---
@@ -94,14 +95,33 @@ def analyze_sentiment(audio_file_path):
     # 1. Анализ пауз
     pause_analysis = analyze_pauses(audio_file_path)
 
-    # 2. Распознавание речи
-    r = sr.Recognizer()
-    with sr.AudioFile(audio_file_path) as source:
-        audio_data = r.record(source)
-        try:
-            text = r.recognize_google(audio_data, language='ru-RU')
-        except (sr.UnknownValueError, sr.RequestError) as e:
-            text = f"Ошибка распознавания речи: {e}"
+    # 2. Распознавание речи (Yandex SpeechKit)
+    text = ''
+    try:
+        iam_token = os.environ.get('YANDEX_IAM_TOKEN') or os.environ.get('IAM_TOKEN')
+        if not iam_token:
+            raise RuntimeError('YANDEX_IAM_TOKEN is not set')
+        configure_credentials(yandex_credentials=creds.YandexCredentials(iam_token=iam_token))
+
+        # Загружаем WAV, конвертируем в raw PCM 16k mono
+        audio = AudioSegment.from_wav(audio_file_path).set_frame_rate(16000).set_channels(1).set_sample_width(2)
+        raw_bytes = audio.raw_data
+
+        asr = model_repository.recognition_model()
+        # Если SDK поддерживает прямую подачу байтов:
+        # asr.recognize(raw_audio=raw_bytes, format='lpcm', sampleRateHertz=16000)
+        # Универсально через временный файл
+        import tempfile
+        with tempfile.NamedTemporaryFile(suffix='.wav', delete=True) as tmp:
+            audio.export(tmp.name, format='wav')
+            result = asr.transcribe_file(tmp.name)
+            # Попробуем извлечь текст в распространённых полях результата
+            if isinstance(result, dict):
+                text = result.get('result', '') or result.get('text', '') or ''
+            else:
+                text = str(result)
+    except Exception as e:
+        text = f"Ошибка распознавания речи (YA): {e}"
 
     # 3. Анализ тональности
     sentiment_result = {"label": "unknown", "score": 0.0}

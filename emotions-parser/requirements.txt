@@ -5,3 +5,4 @@ transformers==4.44.2
 torch==2.4.1+cpu
 webrtcvad==2.0.10
 Flask==3.0.3
+yandex-speechkit

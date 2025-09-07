@@ -3,7 +3,7 @@ import { prisma } from '../prisma';
 import { Transcriber } from './transcriber';
 import { chatEventBus } from './chatEventBus';
 import { chatDebugLog } from './chatDebug';
-import { dialogueService } from './dialogue';
+import { processSavedUserMessage } from './chatFlow';
 
 export class StreamingAudioSession {
     private readonly logger: FastifyBaseLogger;
@@ -60,13 +60,9 @@ export class StreamingAudioSession {
             });
             await chatDebugLog(this.chatId, `получено голосовое сообщение: ${JSON.stringify(text)}`)
 
-            // Build assistant reply via dialogue service
-            const messageHistory = await prisma.message.findMany({ where: { chatId: this.chatId }, orderBy: { createdAt: 'asc' } });
-            const assistantText = await dialogueService.getNextMessage({ userMessage: text, messageHistory, chatId: this.chatId, analyzerMeta: null });
-            const assistantMsg = await prisma.message.create({
-                data: { chatId: this.chatId, role: 'assistant', content: assistantText }
-            });
-            chatEventBus.broadcastMessageCreated(assistantMsg);
+            // Build assistant reply using shared flow
+            const { assistantMsg } = await processSavedUserMessage({ chatId: this.chatId, userContent: text })
+            const assistantText = assistantMsg?.content || ''
             await chatDebugLog(this.chatId, `отправляем пользователю сообщение ${JSON.stringify(assistantText)}`)
 
             this.logger.info({ event: 'utterance-transcribed', chatId: this.chatId, userMsgId: userMsg.id });

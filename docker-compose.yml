@@ -35,8 +35,8 @@ services:
       - IS_IMAGE_GENERATION_ENABLED=${IS_IMAGE_GENERATION_ENABLED}
       - PROXY_API_KEY=${PROXY_API_KEY}
       - RAG_API_URL=http://resumeparsing:8000
-      - TTS_URL=${TTS_URL | http://tts:8081}
-      - EMOTIONS_URL=${EMOTIONS_URL | http://emotions:5000}
+      - TTS_URL=${TTS_URL:-http://tts:8081}
+      - EMOTIONS_URL=${EMOTIONS_URL:-http://emotions:5000}
     ports:
       - "3000:3000"
     volumes:
@@ -53,6 +53,7 @@ services:
     image: tts:latest
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY_TTS}
+      - YANDEX_IAM_TOKEN=${YANDEX_IAM_TOKEN}
     ports:
       - "8081:8081"
     restart: unless-stopped
@@ -67,36 +68,11 @@ services:
       - HF_HOME=/app/hf_cache
       - TRANSFORMERS_CACHE=/app/hf_cache
       - HUGGINGFACE_HUB_CACHE=/app/hf_cache
+      - YANDEX_IAM_TOKEN=${YANDEX_IAM_TOKEN}
     # - HUGGING_FACE_HUB_TOKEN=${HUGGING_FACE_HUB_TOKEN}
     ports:
       - "5000:5000"
     restart: unless-stopped
-
-  # transcriber:
-  #   build:
-  #     context: ./transcriber
-  #     dockerfile: Dockerfile
-  #   container_name: transcriber
-  #   image: transcriber:latest
-  #   environment:
-  #     - HF_HOME=/app/hf_cache
-  #     - TRANSFORMERS_CACHE=/app/hf_cache
-  #     - HUGGINGFACE_HUB_CACHE=/app/hf_cache
-  #   ports:
-  #     - "5544:5544"
-  #   restart: unless-stopped
-
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   container_name: frontend
-  #   image: hr-frontend:latest
-  #   depends_on:
-  #     - resumeparsing
-  #   ports:
-  #     - "5173:80"
-  #   restart: unless-stopped
 
   frontend-dev:
     image: node:20-alpine
