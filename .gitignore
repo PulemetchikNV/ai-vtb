@@ -35,3 +35,10 @@ tmp/
 .venv
 
 /data/chroma
+__pycache__/
+uploads/
+hf_cache/
+*.wav
+C/
+*.log
+*.tmp

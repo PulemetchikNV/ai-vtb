@@ -46,10 +46,10 @@ services:
     restart: unless-stopped
 
   backend-dev:
-    image: node:20
+    image: node:20-bullseye
     working_dir: /app
     container_name: backend-dev
-    command: sh -c "npm install && npm run dev"
+    command: sh -c "apt-get update && apt-get install -y --no-install-recommends ffmpeg && npm install && npm run dev"
     environment:
       - CHOKIDAR_USEPOLLING=true
       - NODE_ENV=development
@@ -85,6 +85,56 @@ services:
     depends_on:
       - resumeparsing-dev
     restart: unless-stopped
+
+  tts-dev:
+    build:
+      context: ./tts
+      dockerfile: Dockerfile
+    container_name: tts-dev
+    image: tts:latest
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY_TTS}
+    command: sh -c "uvicorn app:app --host 0.0.0.0 --port 8081 --reload"
+    volumes:
+      - ./tts:/app
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+
+  emotions-dev:
+    build:
+      context: ./emotions-parser
+      dockerfile: Dockerfile
+    container_name: emotions-dev
+    image: emotions-parser:latest
+    environment:
+      - HF_HOME=/app/hf_cache
+      - TRANSFORMERS_CACHE=/app/hf_cache
+      - HUGGINGFACE_HUB_CACHE=/app/hf_cache
+    # - HUGGING_FACE_HUB_TOKEN=${HUGGING_FACE_HUB_TOKEN}
+    volumes:
+      - ./emotions-parser:/app
+    ports:
+      - "5000:5000"
+    command: sh -c "python app.py"
+    restart: unless-stopped
+
+# transcriber-dev:
+#   build:
+#     context: ./transcriber
+#     dockerfile: Dockerfile
+#   container_name: transcriber-dev
+#   image: transcriber:latest
+#   environment:
+#     - HF_HOME=/app/hf_cache
+#     - TRANSFORMERS_CACHE=/app/hf_cache
+#     - HUGGINGFACE_HUB_CACHE=/app/hf_cache
+#   volumes:
+#     - ./transcriber:/app
+#   ports:
+#     - "5544:5544"
+#   command: sh -c "uvicorn main:app --host 0.0.0.0 --port 5544 --reload"
+#   restart: unless-stopped
 
 volumes:
   node_modules_cache:

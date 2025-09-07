@@ -2,6 +2,7 @@
 import { ref, onMounted, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 import { useChat } from '../composables/useChat'
+import { useVoiceChat } from '../composables/useVoiceChat'
 
 // PrimeVue components
 import Button from 'primevue/button'
@@ -41,68 +42,17 @@ async function handleSend() {
   inputText.value = ''
 }
 
-// Voice/WebSocket area
-const isRecording = ref(false)
-const statusText = ref('disconnected')
-const chunkCount = ref(0)
-const bytesSent = ref(0)
+// Voice/WebSocket area via composable
+const voice = useVoiceChat(() => currentChatId.value)
+const isRecording = voice.isRecording
+const statusText = voice.statusText
+const chunkCount = voice.chunkCount
+const bytesSent = voice.bytesSent
+const lastSegment = voice.lastSegment
+const lastAudioText = voice.lastAudioText
 
-let mediaRecorder: MediaRecorder | null = null
-let ws: WebSocket | null = null
-let stream: MediaStream | null = null
-
-async function startRecording() {
-  if (isRecording.value) return
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-
-    const cid = currentChatId.value
-    const wsUrl = `ws://localhost:3000/ws/audio${cid ? `?chatId=${encodeURIComponent(cid)}` : ''}`
-    ws = new WebSocket(wsUrl)
-    ws.binaryType = 'arraybuffer'
-
-    ws.onopen = () => {
-      statusText.value = 'connected'
-      mediaRecorder = new MediaRecorder(stream as MediaStream, { mimeType: 'audio/webm;codecs=opus' })
-      mediaRecorder.ondataavailable = (ev: BlobEvent) => {
-        if (!ev.data || ev.data.size === 0) return
-        ev.data.arrayBuffer().then((buf) => {
-          if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(buf)
-            chunkCount.value += 1
-            bytesSent.value += buf.byteLength
-          }
-        })
-      }
-      mediaRecorder.start(250)
-      isRecording.value = true
-    }
-
-    ws.onclose = () => {
-      statusText.value = 'closed'
-    }
-
-    ws.onerror = () => {
-      statusText.value = 'error'
-    }
-  } catch (err) {
-    statusText.value = 'permission-error'
-    console.error(err)
-  }
-}
-
-function stopRecording() {
-  if (!isRecording.value) return
-  mediaRecorder?.stop()
-  mediaRecorder = null
-  ws?.close()
-  ws = null
-  if (stream) {
-    stream.getTracks().forEach(t => t.stop())
-    stream = null
-  }
-  isRecording.value = false
-}
+function startRecording() { voice.startRecording() }
+function stopRecording() { voice.stopRecording() }
 
 function handleNewChat() {
   showNewChat.value = true
@@ -219,6 +169,32 @@ watchEffect(async () => {
                   </div>
 
                   <Divider class="my-12" />
+
+                  <div class="emotions" v-if="lastSegment">
+                    <div class="emo-row">
+                      <span class="label">Распознано:</span>
+                      <span class="value">{{ lastSegment?.recognized_text }}</span>
+                    </div>
+                    <div class="emo-row">
+                      <span class="label">Модель/уверенность:</span>
+                      <span class="value">{{ lastSegment?.sentiment_model || '-' }} / {{ lastSegment?.sentiment_confidence ?? '-' }}</span>
+                    </div>
+                    <div class="emo-row">
+                      <span class="label">Эмоция:</span>
+                      <span class="value">{{ lastSegment?.final_emotion?.label || '-' }}</span>
+                    </div>
+                    <div class="emo-row">
+                      <span class="label">Паузы:</span>
+                      <span class="value">{{ lastSegment?.pause_count ?? 0 }} (∑ {{ lastSegment?.total_pause_duration_seconds ?? 0 }}s)</span>
+                    </div>
+                  </div>
+
+                  <div class="tts" v-if="lastAudioText">
+                    <div class="emo-row">
+                      <span class="label">TTS ответ:</span>
+                      <span class="value">{{ lastAudioText }}</span>
+                    </div>
+                  </div>
 
                   <Messages :messages="messages" />
                 </div>

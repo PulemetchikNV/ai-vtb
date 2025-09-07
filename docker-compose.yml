@@ -43,6 +43,47 @@ services:
       - resumeparsing
     restart: unless-stopped
 
+  tts:
+    build:
+      context: ./tts
+      dockerfile: Dockerfile
+    container_name: tts
+    image: tts:latest
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY_TTS}
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+
+  emotions:
+    build:
+      context: ./emotions-parser
+      dockerfile: Dockerfile
+    container_name: emotions
+    image: emotions-parser:latest
+    environment:
+      - HF_HOME=/app/hf_cache
+      - TRANSFORMERS_CACHE=/app/hf_cache
+      - HUGGINGFACE_HUB_CACHE=/app/hf_cache
+    # - HUGGING_FACE_HUB_TOKEN=${HUGGING_FACE_HUB_TOKEN}
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+
+  # transcriber:
+  #   build:
+  #     context: ./transcriber
+  #     dockerfile: Dockerfile
+  #   container_name: transcriber
+  #   image: transcriber:latest
+  #   environment:
+  #     - HF_HOME=/app/hf_cache
+  #     - TRANSFORMERS_CACHE=/app/hf_cache
+  #     - HUGGINGFACE_HUB_CACHE=/app/hf_cache
+  #   ports:
+  #     - "5544:5544"
+  #   restart: unless-stopped
+
   # frontend:
   #   build:
   #     context: ./frontend

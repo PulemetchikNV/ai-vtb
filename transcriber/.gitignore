@@ -1,0 +1,10 @@
+# Virtual environment
+venv/
+
+# Downloaded audio files
+*.wav
+*.tmp
+
+# Model files
+whisper-podlodka-turbo-onnx/
+whisper-podlodka-turbo-onnx-local/

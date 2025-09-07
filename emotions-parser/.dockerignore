@@ -1,0 +1,7 @@
+__pycache__/
+uploads/
+hf_cache/
+*.wav
+C/
+*.log
+*.tmp

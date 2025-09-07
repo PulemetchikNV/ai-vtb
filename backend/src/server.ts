@@ -6,7 +6,7 @@ import type { IncomingMessage } from 'http';
 import chatRoutes from './routes/chat';
 import vacancyRoutes from './routes/vacancies';
 import resumeRoutes from './routes/resumes';
-import { StubTranscriber } from './services/transcriber';
+import { EmotionsParserTranscriber, StubTranscriber } from './services/transcriber';
 import { StreamingAudioSession } from './services/streamingSession';
 import { chatDebugLog } from './services/chatDebug';
 import { chatEventBus } from './services/chatEventBus';
@@ -84,7 +84,8 @@ async function start() {
             return;
         }
 
-        const transcriber = new StubTranscriber();
+        const emotionsUrl = process.env.EMOTIONS_URL || `http://emotions${process.env.NODE_ENV === 'development' ? '-dev' : ''}:5000`;
+        const transcriber = emotionsUrl ? new EmotionsParserTranscriber(emotionsUrl) : new StubTranscriber();
         const session = new StreamingAudioSession({ logger: server.log, transcriber, chatId });
         let chunkCount = 0;
         logger.info({ event: 'ws-connected', url: req.url, chatId });

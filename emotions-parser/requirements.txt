@@ -1,0 +1,7 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+SpeechRecognition==3.10.4
+pydub==0.25.1
+transformers==4.44.2
+torch==2.4.1+cpu
+webrtcvad==2.0.10
+Flask==3.0.3

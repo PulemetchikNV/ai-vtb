@@ -9,7 +9,28 @@ type ChatEvent =
     | { type: 'analysis.progress'; payload: any }
     | { type: 'analysis.completed'; payload: { chatId: string; items: any[]; categoryScores: Record<string, number>; finalScore: number; error?: boolean } }
     | { type: 'analysis.error'; payload: { chatId: string; message: string } }
-    | { type: 'message.deleted'; payload: string };
+    | { type: 'message.deleted'; payload: string }
+    | {
+        type: 'speech.segment'; payload: {
+            chatId: string;
+            segmentId: string;
+            recognized_text: string;
+            sentiment_model?: string | null;
+            sentiment_confidence?: number | null;
+            final_emotion?: { code: number | null; label: string | null; raw: string | null } | null;
+            pause_count?: number | null;
+            total_pause_duration_seconds?: number | null;
+            pauses_ms?: number[] | null;
+        }
+    }
+    | {
+        type: 'audio.ready'; payload: {
+            chatId: string;
+            segmentId: string;
+            text: string;
+            wavBase64: string; // audio/wav in base64 for client playback
+        }
+    };
 
 class ChatEventBus {
     private chatIdToClients: Map<ChatId, Set<WebSocket>> = new Map();
@@ -66,6 +87,24 @@ class ChatEventBus {
 
     broadcastAnalysisError(chatId: ChatId, message: string) {
         this.broadcast(chatId, { type: 'analysis.error', payload: { chatId, message } });
+    }
+
+    broadcastSpeechSegment(payload: {
+        chatId: string;
+        segmentId: string;
+        recognized_text: string;
+        sentiment_model?: string | null;
+        sentiment_confidence?: number | null;
+        final_emotion?: { code: number | null; label: string | null; raw: string | null } | null;
+        pause_count?: number | null;
+        total_pause_duration_seconds?: number | null;
+        pauses_ms?: number[] | null;
+    }) {
+        this.broadcast(payload.chatId, { type: 'speech.segment', payload });
+    }
+
+    broadcastAudioReady(payload: { chatId: string; segmentId: string; text: string; wavBase64: string }) {
+        this.broadcast(payload.chatId, { type: 'audio.ready', payload });
     }
 }
 

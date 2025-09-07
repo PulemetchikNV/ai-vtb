@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Результат анализа</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; padding: 2em; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1, h2 { color: #444; border-bottom: 2px solid #eee; padding-bottom: 0.3em; }
+        .result-block { margin-bottom: 1.5em; }
+        .text { font-style: italic; color: #555; background-color: #fafafa; padding: 1em; border-radius: 4px; }
+        .error { color: #d9534f; }
+        a { color: #007bff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Результат анализа</h1>
+        
+        <div class="result-block">
+            <h2>Распознанный текст</h2>
+            {% if result.recognized_text %}
+                <p class="text">"{{ result.recognized_text }}"</p>
+            {% else %}
+                <p class="error">Не удалось распознать речь.</p>
+            {% endif %}
+        </div>
+
+        <div class="result-block">
+            <h2>Анализ тональности</h2>
+            {% if result.sentiment_analysis %}
+                <p><strong>Результат модели:</strong> {{ result.sentiment_analysis.label }} (уверенность: {{ "%.2f"|format(result.sentiment_analysis.score) }})</p>
+                <p><strong>Итоговая эмоция:</strong> {{ result.sentiment_analysis.emotion }}</p>
+            {% else %}
+                <p class="error">Анализ тональности не проводился.</p>
+            {% endif %}
+        </div>
+
+        <div class="result-block">
+            <h2>Анализ пауз</h2>
+            {% if result.pause_analysis and not result.pause_analysis.error %}
+                <p><strong>Количество пауз:</strong> {{ result.pause_analysis.pause_count }}</p>
+                <p><strong>Общая длительность пауз:</strong> {{ "%.2f"|format(result.pause_analysis.total_pause_duration_ms / 1000) }} сек.</p>
+                {% if result.pause_analysis.pauses_ms %}
+                    <p><strong>Длительность каждой паузы (мс):</strong> {{ result.pause_analysis.pauses_ms }}</p>
+                {% endif %}
+            {% elif result.pause_analysis.error %}
+                 <p class="error">Ошибка: {{ result.pause_analysis.error }}</p>
+            {% else %}
+                <p class="error">Анализ пауз не проводился.</p>
+            {% endif %}
+        </div>
+        
+        <hr>
+        <a href="/">Анализировать другой файл</a>
+    </div>
+</body>
+</html>

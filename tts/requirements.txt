@@ -1,0 +1,4 @@
+google-genai
+pydub
+fastapi
+uvicorn[standard]
