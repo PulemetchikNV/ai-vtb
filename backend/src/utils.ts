@@ -5,6 +5,16 @@ export function extractJsonWithoutRegex(text: string) {
     const startIndex = text.indexOf(startMarker);
     // Если начальный маркер не найден, выходим
     if (startIndex === -1) {
+        let isJson = false;
+        try {
+            JSON.parse(text);
+            isJson = true;
+        } catch (e) {
+            isJson = false;
+        }
+        if (isJson) {
+            return text;
+        }
         return null;
     }
 

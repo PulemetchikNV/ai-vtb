@@ -126,6 +126,7 @@ exports.Prisma.ChatScalarFieldEnum = {
   id: 'id',
   title: 'title',
   vacancyId: 'vacancyId',
+  resumeId: 'resumeId',
   requirements_checklist: 'requirements_checklist',
   analysis: 'analysis',
   facts_meta: 'facts_meta',
@@ -151,6 +152,16 @@ exports.Prisma.VacancyScalarFieldEnum = {
   category_weights: 'category_weights',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ResumeScalarFieldEnum = {
+  id: 'id',
+  fileName: 'fileName',
+  text_raw: 'text_raw',
+  text: 'text',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  facts: 'facts'
 };
 
 exports.Prisma.SortOrder = {
@@ -187,7 +198,8 @@ exports.Prisma.NullsOrder = {
 exports.Prisma.ModelName = {
   Chat: 'Chat',
   Message: 'Message',
-  Vacancy: 'Vacancy'
+  Vacancy: 'Vacancy',
+  Resume: 'Resume'
 };
 
 /**

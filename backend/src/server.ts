@@ -1,9 +1,11 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { WebSocketServer, WebSocket, RawData } from 'ws';
+import multipart from '@fastify/multipart';
 import type { IncomingMessage } from 'http';
 import chatRoutes from './routes/chat';
 import vacancyRoutes from './routes/vacancies';
+import resumeRoutes from './routes/resumes';
 import { StubTranscriber } from './services/transcriber';
 import { StreamingAudioSession } from './services/streamingSession';
 import { chatDebugLog } from './services/chatDebug';
@@ -42,6 +44,7 @@ export const logger = server.log;
 
 async function start() {
     await server.register(cors, { origin: true });
+    await server.register(multipart);
 
     server.get('/health', async () => {
         return { status: 'ok' };
@@ -52,6 +55,9 @@ async function start() {
     });
     await server.register(async (s) => {
         await vacancyRoutes(s);
+    });
+    await server.register(async (s) => {
+        await resumeRoutes(s);
     });
 
     // WebSocket server for streaming audio chunks

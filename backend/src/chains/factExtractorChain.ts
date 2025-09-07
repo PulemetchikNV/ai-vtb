@@ -17,14 +17,14 @@ export const FactSchema = z.array(z.object({
 export type FactExtractorOutput = z.infer<typeof FactSchema>;
 
 const prompt = PromptTemplate.fromTemplate(
-    `Ты — извлекатель фактов из высказываний кандидата.
-Твоя задача — извлечь МАКСИМУМ 3 ключевое утверждение и кратко нормализовать его.
+    `Ты — извлекатель фактов из контекста.
+Твоя задача — извлечь МАКСИМУМ {max_facts} ключевых утверждений и кратко нормализовать его.
 
 Требования к ответу:
 - Верни СТРОГО МАССИВ В JSON без пояснений и комментариев.
 - Поля: [{{"fact": string, "topic": string}}]. Пример topic: "experience", "skill", "education".
 
-Фраза кандидата: "{candidate_sentence}"
+Контекст: "{context}"
 `
 );
 

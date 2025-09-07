@@ -4,17 +4,20 @@ import { prisma } from "../prisma"
 import type { Vacancy, Message } from "../../prisma/generated/client"
 import { chatDebugLog, chatDebugSeparator } from "./chatDebug"
 import type { QualityAnalyzerOutput } from "../chains/qualityAnalyzerChain"
+import type { ContradictingFactRef, Contradiction, FactsMeta } from "./factsMeta"
 
-type GetNextMessageParams = { 
-    userMessage: string, 
-    messageHistory: Message[], 
-    chatId: string, 
+type GetNextMessageParams = {
+    userMessage: string,
+    messageHistory: Message[],
+    chatId: string,
     analyzerMeta?: QualityAnalyzerOutput | null
 }
 
 export const dialogueService = {
-    async getInitialMessage({ vacancy }: { vacancy: Vacancy }) {
-        const prompt = INITIAL_DIALOG_PROMPT({ vacancy })
+    async getInitialMessage({ vacancy, resumeText }: { vacancy: Vacancy, resumeText?: string }) {
+        const basePrompt = INITIAL_DIALOG_PROMPT({ vacancy })
+        const prompt = resumeText ? `${basePrompt}
+\n[Контекст из резюме кандидата (используй как фактическую информацию):\n${resumeText}\n]` : basePrompt
         const initialMessage = await aiService.communicateWithGemini([{ role: 'user', content: prompt }], true)
 
         return {
@@ -25,18 +28,21 @@ export const dialogueService = {
     async getNextMessage({ userMessage, messageHistory, chatId, analyzerMeta }: GetNextMessageParams) {
         await chatDebugSeparator(chatId)
         // fetch latest contradictions
-        const chat = await prisma.chat.findUnique({ where: { id: chatId }, select: { facts_meta: true } })
-        const contradictions = (chat?.facts_meta as any)?.contradictions || []
-        const notSent = contradictions.filter((c: any) => !c.sent)
+        const chat = await prisma.chat.findUnique({ where: { id: chatId }, select: { facts_meta: true } }) as any
+        const contradictions = (chat?.facts_meta as FactsMeta)?.contradictions || []
+        const notSent = contradictions.filter((c: Contradiction) => !c.sent)
+        chatDebugLog(chatId, `обнаружены несостыковки: ${JSON.stringify(notSent)}`)
+
         const contradictionsNote = notSent.length ? `
         \n\n[Обнаружены несостыковки, упомяни их в ответе и строй дальнейшие рассуждения,
         основываясь на том, как пользователь отреагирует на их упоминание.
 
         Несостыковки:
             ${notSent.map(
-            (c: any) => `- ${c.explanation} 
-                    (факты, на котором этот вывод основан: ${c.conflicting_facts.map((f: any) => f.message_id).join(', ')})`
-        ).join('\n')
+            (c: Contradiction) => `- ${c.explanation} 
+                    (факты-основания: ${c.conflicting_facts
+                    .map((f: ContradictingFactRef) => `${f.fact}(${f.source === 'resume' ? 'кандидат указал в резюме' : 'кандидат упоминал в чате'})`).join(', ')})`
+            ).join('\n')
             }
         ]
         ` : ''
@@ -64,8 +70,8 @@ export const dialogueService = {
         await chatDebugLog(chatId, `отправляем пользователю сообщение ${JSON.stringify(aiResponse)}`)
         // mark contradictions as sent
         if (notSent.length) {
-            const current = (chat?.facts_meta as any) || {}
-            const updated = (current.contradictions || []).map((c: any) => ({ ...c, sent: true }))
+            const current = (chat?.facts_meta) || {}
+            const updated = (current.contradictions || []).map((c: Contradiction) => ({ ...c, sent: true }))
             await prisma.chat.update({ where: { id: chatId }, data: { facts_meta: { ...current, contradictions: updated } } })
         }
         return aiResponse

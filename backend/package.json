@@ -10,17 +10,24 @@
         "dev": "tsx watch src/server.ts",
         "prisma:generate": "prisma generate",
         "prisma:migrate": "prisma migrate dev --name init",
-        "prisma:push": "prisma db push"
+        "prisma:push": "prisma db push",
+        "db:sync": "prisma db push && prisma generate",
+        "db:migrate": "prisma migrate dev --name update && prisma generate"
     },
     "dependencies": {
         "@fastify/cors": "^8.5.0",
+        "@fastify/multipart": "^7.7.3",
         "@langchain/core": "^0.3.75",
         "@prisma/client": "^5.17.0",
         "dotenv": "^17.2.2",
         "fastify": "^4.28.1",
+        "iconv-lite": "^0.7.0",
         "langchain": "^0.3.33",
+        "mammoth": "^1.6.0",
         "node-fetch": "^3.3.2",
+        "pdf-parse": "^1.1.1",
         "pino-pretty": "^11.2.2",
+        "rtf-stream-parser": "^3.8.0",
         "ws": "^8.17.1"
     },
     "devDependencies": {

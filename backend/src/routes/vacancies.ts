@@ -2,6 +2,40 @@ import { FastifyInstance, FastifySchema } from 'fastify';
 import { prisma } from '../prisma';
 import { REQUIREMENT_TYPES } from '../__data__/constants';
 
+const vacancySchema = {
+    body: {
+        type: 'object',
+        required: ['title', 'description_text', 'requirements_checklist'],
+        properties: {
+            title: { type: 'string' },
+            description_text: { type: 'string' },
+            requirements_checklist: {
+                type: 'array',
+                items: {
+                    type: 'object',
+                    required: ['id', 'description', 'type', 'weight'],
+                    properties: {
+                        id: { type: 'string' },
+                        description: { type: 'string' },
+                        type: { type: 'string' },
+                        weight: { type: 'number', minimum: 0, maximum: 10 }
+                    },
+                    additionalProperties: false
+                }
+            },
+            category_weights: {
+                type: 'object',
+                properties: {
+                    technical_skill: { type: 'number', minimum: 0, maximum: 1 },
+                    soft_skill: { type: 'number', minimum: 0, maximum: 1 }
+                },
+                additionalProperties: true
+            }
+        },
+        additionalProperties: false
+    } as FastifySchema
+}
+
 export default async function vacancyRoutes(server: FastifyInstance) {
     server.get('/vacancies', async () => {
         const vacancies = await prisma.vacancy.findMany({
@@ -12,39 +46,7 @@ export default async function vacancyRoutes(server: FastifyInstance) {
     });
 
     server.post('/vacancies', {
-        schema: {
-            body: {
-                type: 'object',
-                required: ['title', 'description_text', 'requirements_checklist'],
-                properties: {
-                    title: { type: 'string' },
-                    description_text: { type: 'string' },
-                    requirements_checklist: {
-                        type: 'array',
-                        items: {
-                            type: 'object',
-                            required: ['id', 'description', 'type', 'weight'],
-                            properties: {
-                                id: { type: 'string' },
-                                description: { type: 'string' },
-                                type: { type: 'string', enum: REQUIREMENT_TYPES },
-                                weight: { type: 'number', minimum: 0, maximum: 10 }
-                            },
-                            additionalProperties: false
-                        }
-                    },
-                    category_weights: {
-                        type: 'object',
-                        properties: {
-                            technical_skill: { type: 'number', minimum: 0, maximum: 1 },
-                            soft_skill: { type: 'number', minimum: 0, maximum: 1 }
-                        },
-                        additionalProperties: true
-                    }
-                },
-                additionalProperties: false
-            } as FastifySchema
-        }
+        schema: vacancySchema
     }, async (req, reply) => {
         const body = req.body as { title: string; description_text: string; requirements_checklist: unknown; category_weights?: Record<string, number> };
         const vacancy = await prisma.vacancy.create({ data: body as any });
@@ -58,38 +60,7 @@ export default async function vacancyRoutes(server: FastifyInstance) {
     });
 
     server.put('/vacancies/:id', {
-        schema: {
-            body: {
-                type: 'object',
-                properties: {
-                    title: { type: 'string' },
-                    description_text: { type: 'string' },
-                    requirements_checklist: {
-                        type: 'array',
-                        items: {
-                            type: 'object',
-                            required: ['id', 'description', 'type', 'weight'],
-                            properties: {
-                                id: { type: 'string' },
-                                description: { type: 'string' },
-                                type: { type: 'string', enum: ['technical_skill', 'soft_skill'] },
-                                weight: { type: 'number', minimum: 0, maximum: 10 }
-                            },
-                            additionalProperties: false
-                        }
-                    },
-                    category_weights: {
-                        type: 'object',
-                        properties: {
-                            technical_skill: { type: 'number', minimum: 0, maximum: 1 },
-                            soft_skill: { type: 'number', minimum: 0, maximum: 1 }
-                        },
-                        additionalProperties: true
-                    }
-                },
-                additionalProperties: false
-            } as FastifySchema
-        }
+        schema: vacancySchema
     }, async (req, reply) => {
         const { id } = req.params as { id: string };
         const body = req.body as Partial<{ title: string; description_text: string; requirements_checklist: unknown; category_weights?: Record<string, number> }>;

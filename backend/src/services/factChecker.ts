@@ -6,6 +6,7 @@ import { chatDebugLog } from "./chatDebug";
 import { factsApi } from "./factsApi";
 import { factExtractorChain } from "../chains/factExtractorChain";
 import { factContradictionChain, type GuardianContradiction } from "../chains/factContradictionChain";
+import { appendContradictions, appendLedgerFacts, getFactsMeta, invalidateFact, type LedgerFact as MetaLedgerFact } from './factsMeta'
 
 type ExtractedFact = {
     fact: string;
@@ -24,6 +25,7 @@ export const factChecker = {
         const searchRes = await factsApi.search(chatId, { query: fact.fact, top_k: 3, where: { "status": { "$eq": "active" } } }) as any;
 
         const neighbors: string[] = searchRes?.documents?.[0] || [];
+        const neighborMetas: any[] = searchRes?.metadatas?.[0] || [];
         if (!neighbors.length) return;
 
         // 2) Ask LLM via chain to extract contradictions
@@ -35,19 +37,23 @@ export const factChecker = {
             logger.info({ event: 'guardian_contradictions', chatId, count: Array.isArray(extracted) ? extracted.length : 0 }, 'Guardian extracted contradictions')
             await chatDebugLog(chatId, `(страж) финальные противоречащие друг другу факты для ответа: ${JSON.stringify(extracted)}`)
             if (Array.isArray(extracted) && extracted.length > 0) {
-                // fetch latest facts_meta to avoid stale overwrites
-                const chat = await prisma.chat.findUnique({ where: { id: chatId }, select: { facts_meta: true } });
-                const current = chat?.facts_meta as any;
-                const prepared = extracted.map((c) => ({ ...c, sent: false }));
-                await prisma.chat.update({
-                    where: { id: chatId },
-                    data: {
-                        facts_meta: {
-                            fact_ledger: [...(current?.fact_ledger || [])],
-                            contradictions: [...(current?.contradictions || []), ...prepared]
-                        }
-                    }
+                // map neighbor text -> source from metadatas
+                const textToSource = new Map<string, string>();
+                neighbors.forEach((txt, i) => {
+                    const meta = neighborMetas[i] || {};
+                    const src = meta?.source || 'chat';
+                    textToSource.set(txt, src);
                 });
+
+                const prepared = extracted.map((c) => ({
+                    ...c,
+                    sent: false,
+                    conflicting_facts: (c.conflicting_facts || []).map((f: any) => ({
+                        ...f,
+                        source: textToSource.get(f.fact) || 'chat'
+                    }))
+                }))
+                await appendContradictions(chatId, prepared as any)
             }
         } catch (e) {
             console.error('Guardian LLM failed:', e);
@@ -57,7 +63,12 @@ export const factChecker = {
     handleMessage: async ({ content, chatId }: { content: string, chatId: string }) => {
         await chatDebugLog(chatId, `получили сообщение: ${JSON.stringify(content)}`)
         try {
-            const extracted = await factExtractorChain.invoke({ candidate_sentence: content });
+            const extracted = await factExtractorChain.invoke({
+                context: content,
+                doc_type: 'выссказываний',
+                max_facts: 3
+            });
+
             console.log('=== EXTRACTED FACTS ===', extracted)
             await chatDebugLog(chatId, `получены факты (raw): ${JSON.stringify(extracted)}`)
             const parsed: ExtractedFact[] = extracted ? extracted.map(f => ({ fact: f.fact, topic: f.topic, message_id: null })) : [];
@@ -66,9 +77,6 @@ export const factChecker = {
             if (!parsed.length) {
                 return;
             }
-
-            const chat = await prisma.chat.findUnique({ where: { id: chatId }, select: { facts_meta: true, id: true } });
-            const currentFactsMeta = chat?.facts_meta as any;
 
             const now = Date.now()
             const currentBatchId = `${chatId}_${now}`
@@ -81,17 +89,7 @@ export const factChecker = {
                 invalidated_by: null,
             }))
 
-            await prisma.chat.update({
-                where: { id: chatId }, data: {
-                    facts_meta: {
-                        fact_ledger: [
-                            ...((currentFactsMeta?.fact_ledger || []) as any[]),
-                            ...newLedgerFacts,
-                        ],
-                        contradictions: [...(currentFactsMeta?.contradictions || [])]
-                    }
-                }
-            });
+            await appendLedgerFacts(chatId, newLedgerFacts as MetaLedgerFact[])
             await chatDebugLog(chatId, `факты занесены в базу`)
 
             // Ensure per-chat facts collection exists and append facts as documents
@@ -100,7 +98,7 @@ export const factChecker = {
                 // add each fact as separate document
                 for (let i = 0; i < newLedgerFacts.length; i++) {
                     const f = newLedgerFacts[i] as any;
-                    chatDebugLog(chatId, `(арбитратор) --| добавляем факт ${f.fact_id} в базу`)
+                    chatDebugLog(chatId, `(арбитратор) --| добавляем факт ${f.fact} (${f.fact_id}) в базу`)
 
                     await factsApi.addDocument(chatId, { id: f.fact_id, text: f.fact, meta: { topic: f.topic, status: 'active', ingest_batch: currentBatchId } });
 
@@ -122,12 +120,7 @@ export const factChecker = {
                     logger.info({ event: 'adjudicator_decision', chatId, fact_id: f.fact_id, decision }, 'Adjudicator decision')
 
                     if (decision.action === 'INVALIDATE_OLD' && (decision as any).target_fact_id) {
-                        // invalidate in DB
-                        const latest = (await prisma.chat.findUnique({ where: { id: chatId }, select: { facts_meta: true } }))?.facts_meta as any
-                        const updatedLedger = (latest?.fact_ledger || []).map((lf: any) => lf.fact_id === (decision as any).target_fact_id
-                            ? { ...lf, status: 'invalidated', invalidated_by: f.fact_id }
-                            : lf)
-                        await prisma.chat.update({ where: { id: chatId }, data: { facts_meta: { ...(latest || {}), fact_ledger: updatedLedger } } })
+                        await invalidateFact(chatId, (decision as any).target_fact_id, f.fact_id)
                         // invalidate in vectorstore
                         await factsApi.updateMetadata(chatId, { ids: [(decision as any).target_fact_id], metadatas: [{ status: 'invalidated', invalidated_by: f.fact_id }] })
                     }

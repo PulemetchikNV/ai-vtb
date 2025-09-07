@@ -28,6 +28,11 @@ export type Message = $Result.DefaultSelection<Prisma.$MessagePayload>
  * 
  */
 export type Vacancy = $Result.DefaultSelection<Prisma.$VacancyPayload>
+/**
+ * Model Resume
+ * 
+ */
+export type Resume = $Result.DefaultSelection<Prisma.$ResumePayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -181,6 +186,16 @@ export class PrismaClient<
     * ```
     */
   get vacancy(): Prisma.VacancyDelegate<ExtArgs>;
+
+  /**
+   * `prisma.resume`: Exposes CRUD operations for the **Resume** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Resumes
+    * const resumes = await prisma.resume.findMany()
+    * ```
+    */
+  get resume(): Prisma.ResumeDelegate<ExtArgs>;
 }
 
 export namespace Prisma {
@@ -624,7 +639,8 @@ export namespace Prisma {
   export const ModelName: {
     Chat: 'Chat',
     Message: 'Message',
-    Vacancy: 'Vacancy'
+    Vacancy: 'Vacancy',
+    Resume: 'Resume'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -640,7 +656,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "chat" | "message" | "vacancy"
+      modelProps: "chat" | "message" | "vacancy" | "resume"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -851,6 +867,76 @@ export namespace Prisma {
           count: {
             args: Prisma.VacancyCountArgs<ExtArgs>
             result: $Utils.Optional<VacancyCountAggregateOutputType> | number
+          }
+        }
+      }
+      Resume: {
+        payload: Prisma.$ResumePayload<ExtArgs>
+        fields: Prisma.ResumeFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ResumeFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ResumePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ResumeFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ResumePayload>
+          }
+          findFirst: {
+            args: Prisma.ResumeFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ResumePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ResumeFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ResumePayload>
+          }
+          findMany: {
+            args: Prisma.ResumeFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ResumePayload>[]
+          }
+          create: {
+            args: Prisma.ResumeCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ResumePayload>
+          }
+          createMany: {
+            args: Prisma.ResumeCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ResumeCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ResumePayload>[]
+          }
+          delete: {
+            args: Prisma.ResumeDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ResumePayload>
+          }
+          update: {
+            args: Prisma.ResumeUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ResumePayload>
+          }
+          deleteMany: {
+            args: Prisma.ResumeDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ResumeUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.ResumeUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ResumePayload>
+          }
+          aggregate: {
+            args: Prisma.ResumeAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateResume>
+          }
+          groupBy: {
+            args: Prisma.ResumeGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ResumeGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ResumeCountArgs<ExtArgs>
+            result: $Utils.Optional<ResumeCountAggregateOutputType> | number
           }
         }
       }
@@ -1073,6 +1159,37 @@ export namespace Prisma {
 
 
   /**
+   * Count Type ResumeCountOutputType
+   */
+
+  export type ResumeCountOutputType = {
+    chats: number
+  }
+
+  export type ResumeCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    chats?: boolean | ResumeCountOutputTypeCountChatsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * ResumeCountOutputType without action
+   */
+  export type ResumeCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ResumeCountOutputType
+     */
+    select?: ResumeCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * ResumeCountOutputType without action
+   */
+  export type ResumeCountOutputTypeCountChatsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ChatWhereInput
+  }
+
+
+  /**
    * Models
    */
 
@@ -1090,6 +1207,7 @@ export namespace Prisma {
     id: string | null
     title: string | null
     vacancyId: string | null
+    resumeId: string | null
     is_finished: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -1099,6 +1217,7 @@ export namespace Prisma {
     id: string | null
     title: string | null
     vacancyId: string | null
+    resumeId: string | null
     is_finished: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -1108,6 +1227,7 @@ export namespace Prisma {
     id: number
     title: number
     vacancyId: number
+    resumeId: number
     requirements_checklist: number
     analysis: number
     facts_meta: number
@@ -1122,6 +1242,7 @@ export namespace Prisma {
     id?: true
     title?: true
     vacancyId?: true
+    resumeId?: true
     is_finished?: true
     createdAt?: true
     updatedAt?: true
@@ -1131,6 +1252,7 @@ export namespace Prisma {
     id?: true
     title?: true
     vacancyId?: true
+    resumeId?: true
     is_finished?: true
     createdAt?: true
     updatedAt?: true
@@ -1140,6 +1262,7 @@ export namespace Prisma {
     id?: true
     title?: true
     vacancyId?: true
+    resumeId?: true
     requirements_checklist?: true
     analysis?: true
     facts_meta?: true
@@ -1225,6 +1348,7 @@ export namespace Prisma {
     id: string
     title: string | null
     vacancyId: string | null
+    resumeId: string | null
     requirements_checklist: JsonValue | null
     analysis: JsonValue | null
     facts_meta: JsonValue | null
@@ -1254,6 +1378,7 @@ export namespace Prisma {
     id?: boolean
     title?: boolean
     vacancyId?: boolean
+    resumeId?: boolean
     requirements_checklist?: boolean
     analysis?: boolean
     facts_meta?: boolean
@@ -1261,6 +1386,7 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     vacancy?: boolean | Chat$vacancyArgs<ExtArgs>
+    resume?: boolean | Chat$resumeArgs<ExtArgs>
     messages?: boolean | Chat$messagesArgs<ExtArgs>
     _count?: boolean | ChatCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["chat"]>
@@ -1269,6 +1395,7 @@ export namespace Prisma {
     id?: boolean
     title?: boolean
     vacancyId?: boolean
+    resumeId?: boolean
     requirements_checklist?: boolean
     analysis?: boolean
     facts_meta?: boolean
@@ -1276,12 +1403,14 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     vacancy?: boolean | Chat$vacancyArgs<ExtArgs>
+    resume?: boolean | Chat$resumeArgs<ExtArgs>
   }, ExtArgs["result"]["chat"]>
 
   export type ChatSelectScalar = {
     id?: boolean
     title?: boolean
     vacancyId?: boolean
+    resumeId?: boolean
     requirements_checklist?: boolean
     analysis?: boolean
     facts_meta?: boolean
@@ -1292,23 +1421,27 @@ export namespace Prisma {
 
   export type ChatInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     vacancy?: boolean | Chat$vacancyArgs<ExtArgs>
+    resume?: boolean | Chat$resumeArgs<ExtArgs>
     messages?: boolean | Chat$messagesArgs<ExtArgs>
     _count?: boolean | ChatCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type ChatIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     vacancy?: boolean | Chat$vacancyArgs<ExtArgs>
+    resume?: boolean | Chat$resumeArgs<ExtArgs>
   }
 
   export type $ChatPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Chat"
     objects: {
       vacancy: Prisma.$VacancyPayload<ExtArgs> | null
+      resume: Prisma.$ResumePayload<ExtArgs> | null
       messages: Prisma.$MessagePayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       title: string | null
       vacancyId: string | null
+      resumeId: string | null
       requirements_checklist: Prisma.JsonValue | null
       analysis: Prisma.JsonValue | null
       facts_meta: Prisma.JsonValue | null
@@ -1680,6 +1813,7 @@ export namespace Prisma {
   export interface Prisma__ChatClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     vacancy<T extends Chat$vacancyArgs<ExtArgs> = {}>(args?: Subset<T, Chat$vacancyArgs<ExtArgs>>): Prisma__VacancyClient<$Result.GetResult<Prisma.$VacancyPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    resume<T extends Chat$resumeArgs<ExtArgs> = {}>(args?: Subset<T, Chat$resumeArgs<ExtArgs>>): Prisma__ResumeClient<$Result.GetResult<Prisma.$ResumePayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     messages<T extends Chat$messagesArgs<ExtArgs> = {}>(args?: Subset<T, Chat$messagesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MessagePayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1713,6 +1847,7 @@ export namespace Prisma {
     readonly id: FieldRef<"Chat", 'String'>
     readonly title: FieldRef<"Chat", 'String'>
     readonly vacancyId: FieldRef<"Chat", 'String'>
+    readonly resumeId: FieldRef<"Chat", 'String'>
     readonly requirements_checklist: FieldRef<"Chat", 'Json'>
     readonly analysis: FieldRef<"Chat", 'Json'>
     readonly facts_meta: FieldRef<"Chat", 'Json'>
@@ -2049,6 +2184,21 @@ export namespace Prisma {
      */
     include?: VacancyInclude<ExtArgs> | null
     where?: VacancyWhereInput
+  }
+
+  /**
+   * Chat.resume
+   */
+  export type Chat$resumeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Resume
+     */
+    select?: ResumeSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ResumeInclude<ExtArgs> | null
+    where?: ResumeWhereInput
   }
 
   /**
@@ -3996,6 +4146,974 @@ export namespace Prisma {
 
 
   /**
+   * Model Resume
+   */
+
+  export type AggregateResume = {
+    _count: ResumeCountAggregateOutputType | null
+    _min: ResumeMinAggregateOutputType | null
+    _max: ResumeMaxAggregateOutputType | null
+  }
+
+  export type ResumeMinAggregateOutputType = {
+    id: string | null
+    fileName: string | null
+    text_raw: string | null
+    text: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ResumeMaxAggregateOutputType = {
+    id: string | null
+    fileName: string | null
+    text_raw: string | null
+    text: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ResumeCountAggregateOutputType = {
+    id: number
+    fileName: number
+    text_raw: number
+    text: number
+    createdAt: number
+    updatedAt: number
+    facts: number
+    _all: number
+  }
+
+
+  export type ResumeMinAggregateInputType = {
+    id?: true
+    fileName?: true
+    text_raw?: true
+    text?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ResumeMaxAggregateInputType = {
+    id?: true
+    fileName?: true
+    text_raw?: true
+    text?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ResumeCountAggregateInputType = {
+    id?: true
+    fileName?: true
+    text_raw?: true
+    text?: true
+    createdAt?: true
+    updatedAt?: true
+    facts?: true
+    _all?: true
+  }
+
+  export type ResumeAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Resume to aggregate.
+     */
+    where?: ResumeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Resumes to fetch.
+     */
+    orderBy?: ResumeOrderByWithRelationInput | ResumeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ResumeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Resumes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Resumes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Resumes
+    **/
+    _count?: true | ResumeCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ResumeMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ResumeMaxAggregateInputType
+  }
+
+  export type GetResumeAggregateType<T extends ResumeAggregateArgs> = {
+        [P in keyof T & keyof AggregateResume]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateResume[P]>
+      : GetScalarType<T[P], AggregateResume[P]>
+  }
+
+
+
+
+  export type ResumeGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ResumeWhereInput
+    orderBy?: ResumeOrderByWithAggregationInput | ResumeOrderByWithAggregationInput[]
+    by: ResumeScalarFieldEnum[] | ResumeScalarFieldEnum
+    having?: ResumeScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ResumeCountAggregateInputType | true
+    _min?: ResumeMinAggregateInputType
+    _max?: ResumeMaxAggregateInputType
+  }
+
+  export type ResumeGroupByOutputType = {
+    id: string
+    fileName: string
+    text_raw: string | null
+    text: string | null
+    createdAt: Date
+    updatedAt: Date
+    facts: JsonValue | null
+    _count: ResumeCountAggregateOutputType | null
+    _min: ResumeMinAggregateOutputType | null
+    _max: ResumeMaxAggregateOutputType | null
+  }
+
+  type GetResumeGroupByPayload<T extends ResumeGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ResumeGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ResumeGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ResumeGroupByOutputType[P]>
+            : GetScalarType<T[P], ResumeGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ResumeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    fileName?: boolean
+    text_raw?: boolean
+    text?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    facts?: boolean
+    chats?: boolean | Resume$chatsArgs<ExtArgs>
+    _count?: boolean | ResumeCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["resume"]>
+
+  export type ResumeSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    fileName?: boolean
+    text_raw?: boolean
+    text?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    facts?: boolean
+  }, ExtArgs["result"]["resume"]>
+
+  export type ResumeSelectScalar = {
+    id?: boolean
+    fileName?: boolean
+    text_raw?: boolean
+    text?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    facts?: boolean
+  }
+
+  export type ResumeInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    chats?: boolean | Resume$chatsArgs<ExtArgs>
+    _count?: boolean | ResumeCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type ResumeIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $ResumePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Resume"
+    objects: {
+      chats: Prisma.$ChatPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      fileName: string
+      text_raw: string | null
+      text: string | null
+      createdAt: Date
+      updatedAt: Date
+      facts: Prisma.JsonValue | null
+    }, ExtArgs["result"]["resume"]>
+    composites: {}
+  }
+
+  type ResumeGetPayload<S extends boolean | null | undefined | ResumeDefaultArgs> = $Result.GetResult<Prisma.$ResumePayload, S>
+
+  type ResumeCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<ResumeFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: ResumeCountAggregateInputType | true
+    }
+
+  export interface ResumeDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Resume'], meta: { name: 'Resume' } }
+    /**
+     * Find zero or one Resume that matches the filter.
+     * @param {ResumeFindUniqueArgs} args - Arguments to find a Resume
+     * @example
+     * // Get one Resume
+     * const resume = await prisma.resume.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ResumeFindUniqueArgs>(args: SelectSubset<T, ResumeFindUniqueArgs<ExtArgs>>): Prisma__ResumeClient<$Result.GetResult<Prisma.$ResumePayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one Resume that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {ResumeFindUniqueOrThrowArgs} args - Arguments to find a Resume
+     * @example
+     * // Get one Resume
+     * const resume = await prisma.resume.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ResumeFindUniqueOrThrowArgs>(args: SelectSubset<T, ResumeFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ResumeClient<$Result.GetResult<Prisma.$ResumePayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first Resume that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ResumeFindFirstArgs} args - Arguments to find a Resume
+     * @example
+     * // Get one Resume
+     * const resume = await prisma.resume.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ResumeFindFirstArgs>(args?: SelectSubset<T, ResumeFindFirstArgs<ExtArgs>>): Prisma__ResumeClient<$Result.GetResult<Prisma.$ResumePayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first Resume that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ResumeFindFirstOrThrowArgs} args - Arguments to find a Resume
+     * @example
+     * // Get one Resume
+     * const resume = await prisma.resume.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ResumeFindFirstOrThrowArgs>(args?: SelectSubset<T, ResumeFindFirstOrThrowArgs<ExtArgs>>): Prisma__ResumeClient<$Result.GetResult<Prisma.$ResumePayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more Resumes that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ResumeFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Resumes
+     * const resumes = await prisma.resume.findMany()
+     * 
+     * // Get first 10 Resumes
+     * const resumes = await prisma.resume.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const resumeWithIdOnly = await prisma.resume.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ResumeFindManyArgs>(args?: SelectSubset<T, ResumeFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ResumePayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a Resume.
+     * @param {ResumeCreateArgs} args - Arguments to create a Resume.
+     * @example
+     * // Create one Resume
+     * const Resume = await prisma.resume.create({
+     *   data: {
+     *     // ... data to create a Resume
+     *   }
+     * })
+     * 
+     */
+    create<T extends ResumeCreateArgs>(args: SelectSubset<T, ResumeCreateArgs<ExtArgs>>): Prisma__ResumeClient<$Result.GetResult<Prisma.$ResumePayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many Resumes.
+     * @param {ResumeCreateManyArgs} args - Arguments to create many Resumes.
+     * @example
+     * // Create many Resumes
+     * const resume = await prisma.resume.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ResumeCreateManyArgs>(args?: SelectSubset<T, ResumeCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Resumes and returns the data saved in the database.
+     * @param {ResumeCreateManyAndReturnArgs} args - Arguments to create many Resumes.
+     * @example
+     * // Create many Resumes
+     * const resume = await prisma.resume.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Resumes and only return the `id`
+     * const resumeWithIdOnly = await prisma.resume.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ResumeCreateManyAndReturnArgs>(args?: SelectSubset<T, ResumeCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ResumePayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a Resume.
+     * @param {ResumeDeleteArgs} args - Arguments to delete one Resume.
+     * @example
+     * // Delete one Resume
+     * const Resume = await prisma.resume.delete({
+     *   where: {
+     *     // ... filter to delete one Resume
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ResumeDeleteArgs>(args: SelectSubset<T, ResumeDeleteArgs<ExtArgs>>): Prisma__ResumeClient<$Result.GetResult<Prisma.$ResumePayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one Resume.
+     * @param {ResumeUpdateArgs} args - Arguments to update one Resume.
+     * @example
+     * // Update one Resume
+     * const resume = await prisma.resume.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ResumeUpdateArgs>(args: SelectSubset<T, ResumeUpdateArgs<ExtArgs>>): Prisma__ResumeClient<$Result.GetResult<Prisma.$ResumePayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more Resumes.
+     * @param {ResumeDeleteManyArgs} args - Arguments to filter Resumes to delete.
+     * @example
+     * // Delete a few Resumes
+     * const { count } = await prisma.resume.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ResumeDeleteManyArgs>(args?: SelectSubset<T, ResumeDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Resumes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ResumeUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Resumes
+     * const resume = await prisma.resume.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ResumeUpdateManyArgs>(args: SelectSubset<T, ResumeUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one Resume.
+     * @param {ResumeUpsertArgs} args - Arguments to update or create a Resume.
+     * @example
+     * // Update or create a Resume
+     * const resume = await prisma.resume.upsert({
+     *   create: {
+     *     // ... data to create a Resume
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Resume we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ResumeUpsertArgs>(args: SelectSubset<T, ResumeUpsertArgs<ExtArgs>>): Prisma__ResumeClient<$Result.GetResult<Prisma.$ResumePayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of Resumes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ResumeCountArgs} args - Arguments to filter Resumes to count.
+     * @example
+     * // Count the number of Resumes
+     * const count = await prisma.resume.count({
+     *   where: {
+     *     // ... the filter for the Resumes we want to count
+     *   }
+     * })
+    **/
+    count<T extends ResumeCountArgs>(
+      args?: Subset<T, ResumeCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ResumeCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Resume.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ResumeAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ResumeAggregateArgs>(args: Subset<T, ResumeAggregateArgs>): Prisma.PrismaPromise<GetResumeAggregateType<T>>
+
+    /**
+     * Group by Resume.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ResumeGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ResumeGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ResumeGroupByArgs['orderBy'] }
+        : { orderBy?: ResumeGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ResumeGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetResumeGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Resume model
+   */
+  readonly fields: ResumeFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Resume.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ResumeClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    chats<T extends Resume$chatsArgs<ExtArgs> = {}>(args?: Subset<T, Resume$chatsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ChatPayload<ExtArgs>, T, "findMany"> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Resume model
+   */ 
+  interface ResumeFieldRefs {
+    readonly id: FieldRef<"Resume", 'String'>
+    readonly fileName: FieldRef<"Resume", 'String'>
+    readonly text_raw: FieldRef<"Resume", 'String'>
+    readonly text: FieldRef<"Resume", 'String'>
+    readonly createdAt: FieldRef<"Resume", 'DateTime'>
+    readonly updatedAt: FieldRef<"Resume", 'DateTime'>
+    readonly facts: FieldRef<"Resume", 'Json'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Resume findUnique
+   */
+  export type ResumeFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Resume
+     */
+    select?: ResumeSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ResumeInclude<ExtArgs> | null
+    /**
+     * Filter, which Resume to fetch.
+     */
+    where: ResumeWhereUniqueInput
+  }
+
+  /**
+   * Resume findUniqueOrThrow
+   */
+  export type ResumeFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Resume
+     */
+    select?: ResumeSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ResumeInclude<ExtArgs> | null
+    /**
+     * Filter, which Resume to fetch.
+     */
+    where: ResumeWhereUniqueInput
+  }
+
+  /**
+   * Resume findFirst
+   */
+  export type ResumeFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Resume
+     */
+    select?: ResumeSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ResumeInclude<ExtArgs> | null
+    /**
+     * Filter, which Resume to fetch.
+     */
+    where?: ResumeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Resumes to fetch.
+     */
+    orderBy?: ResumeOrderByWithRelationInput | ResumeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Resumes.
+     */
+    cursor?: ResumeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Resumes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Resumes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Resumes.
+     */
+    distinct?: ResumeScalarFieldEnum | ResumeScalarFieldEnum[]
+  }
+
+  /**
+   * Resume findFirstOrThrow
+   */
+  export type ResumeFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Resume
+     */
+    select?: ResumeSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ResumeInclude<ExtArgs> | null
+    /**
+     * Filter, which Resume to fetch.
+     */
+    where?: ResumeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Resumes to fetch.
+     */
+    orderBy?: ResumeOrderByWithRelationInput | ResumeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Resumes.
+     */
+    cursor?: ResumeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Resumes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Resumes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Resumes.
+     */
+    distinct?: ResumeScalarFieldEnum | ResumeScalarFieldEnum[]
+  }
+
+  /**
+   * Resume findMany
+   */
+  export type ResumeFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Resume
+     */
+    select?: ResumeSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ResumeInclude<ExtArgs> | null
+    /**
+     * Filter, which Resumes to fetch.
+     */
+    where?: ResumeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Resumes to fetch.
+     */
+    orderBy?: ResumeOrderByWithRelationInput | ResumeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Resumes.
+     */
+    cursor?: ResumeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Resumes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Resumes.
+     */
+    skip?: number
+    distinct?: ResumeScalarFieldEnum | ResumeScalarFieldEnum[]
+  }
+
+  /**
+   * Resume create
+   */
+  export type ResumeCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Resume
+     */
+    select?: ResumeSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ResumeInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Resume.
+     */
+    data: XOR<ResumeCreateInput, ResumeUncheckedCreateInput>
+  }
+
+  /**
+   * Resume createMany
+   */
+  export type ResumeCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Resumes.
+     */
+    data: ResumeCreateManyInput | ResumeCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Resume createManyAndReturn
+   */
+  export type ResumeCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Resume
+     */
+    select?: ResumeSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many Resumes.
+     */
+    data: ResumeCreateManyInput | ResumeCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Resume update
+   */
+  export type ResumeUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Resume
+     */
+    select?: ResumeSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ResumeInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Resume.
+     */
+    data: XOR<ResumeUpdateInput, ResumeUncheckedUpdateInput>
+    /**
+     * Choose, which Resume to update.
+     */
+    where: ResumeWhereUniqueInput
+  }
+
+  /**
+   * Resume updateMany
+   */
+  export type ResumeUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Resumes.
+     */
+    data: XOR<ResumeUpdateManyMutationInput, ResumeUncheckedUpdateManyInput>
+    /**
+     * Filter which Resumes to update
+     */
+    where?: ResumeWhereInput
+  }
+
+  /**
+   * Resume upsert
+   */
+  export type ResumeUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Resume
+     */
+    select?: ResumeSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ResumeInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Resume to update in case it exists.
+     */
+    where: ResumeWhereUniqueInput
+    /**
+     * In case the Resume found by the `where` argument doesn't exist, create a new Resume with this data.
+     */
+    create: XOR<ResumeCreateInput, ResumeUncheckedCreateInput>
+    /**
+     * In case the Resume was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ResumeUpdateInput, ResumeUncheckedUpdateInput>
+  }
+
+  /**
+   * Resume delete
+   */
+  export type ResumeDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Resume
+     */
+    select?: ResumeSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ResumeInclude<ExtArgs> | null
+    /**
+     * Filter which Resume to delete.
+     */
+    where: ResumeWhereUniqueInput
+  }
+
+  /**
+   * Resume deleteMany
+   */
+  export type ResumeDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Resumes to delete
+     */
+    where?: ResumeWhereInput
+  }
+
+  /**
+   * Resume.chats
+   */
+  export type Resume$chatsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Chat
+     */
+    select?: ChatSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ChatInclude<ExtArgs> | null
+    where?: ChatWhereInput
+    orderBy?: ChatOrderByWithRelationInput | ChatOrderByWithRelationInput[]
+    cursor?: ChatWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ChatScalarFieldEnum | ChatScalarFieldEnum[]
+  }
+
+  /**
+   * Resume without action
+   */
+  export type ResumeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Resume
+     */
+    select?: ResumeSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ResumeInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -4013,6 +5131,7 @@ export namespace Prisma {
     id: 'id',
     title: 'title',
     vacancyId: 'vacancyId',
+    resumeId: 'resumeId',
     requirements_checklist: 'requirements_checklist',
     analysis: 'analysis',
     facts_meta: 'facts_meta',
@@ -4047,6 +5166,19 @@ export namespace Prisma {
   };
 
   export type VacancyScalarFieldEnum = (typeof VacancyScalarFieldEnum)[keyof typeof VacancyScalarFieldEnum]
+
+
+  export const ResumeScalarFieldEnum: {
+    id: 'id',
+    fileName: 'fileName',
+    text_raw: 'text_raw',
+    text: 'text',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    facts: 'facts'
+  };
+
+  export type ResumeScalarFieldEnum = (typeof ResumeScalarFieldEnum)[keyof typeof ResumeScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -4168,6 +5300,7 @@ export namespace Prisma {
     id?: StringFilter<"Chat"> | string
     title?: StringNullableFilter<"Chat"> | string | null
     vacancyId?: StringNullableFilter<"Chat"> | string | null
+    resumeId?: StringNullableFilter<"Chat"> | string | null
     requirements_checklist?: JsonNullableFilter<"Chat">
     analysis?: JsonNullableFilter<"Chat">
     facts_meta?: JsonNullableFilter<"Chat">
@@ -4175,6 +5308,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Chat"> | Date | string
     updatedAt?: DateTimeFilter<"Chat"> | Date | string
     vacancy?: XOR<VacancyNullableRelationFilter, VacancyWhereInput> | null
+    resume?: XOR<ResumeNullableRelationFilter, ResumeWhereInput> | null
     messages?: MessageListRelationFilter
   }
 
@@ -4182,6 +5316,7 @@ export namespace Prisma {
     id?: SortOrder
     title?: SortOrderInput | SortOrder
     vacancyId?: SortOrderInput | SortOrder
+    resumeId?: SortOrderInput | SortOrder
     requirements_checklist?: SortOrderInput | SortOrder
     analysis?: SortOrderInput | SortOrder
     facts_meta?: SortOrderInput | SortOrder
@@ -4189,6 +5324,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     vacancy?: VacancyOrderByWithRelationInput
+    resume?: ResumeOrderByWithRelationInput
     messages?: MessageOrderByRelationAggregateInput
   }
 
@@ -4199,6 +5335,7 @@ export namespace Prisma {
     NOT?: ChatWhereInput | ChatWhereInput[]
     title?: StringNullableFilter<"Chat"> | string | null
     vacancyId?: StringNullableFilter<"Chat"> | string | null
+    resumeId?: StringNullableFilter<"Chat"> | string | null
     requirements_checklist?: JsonNullableFilter<"Chat">
     analysis?: JsonNullableFilter<"Chat">
     facts_meta?: JsonNullableFilter<"Chat">
@@ -4206,6 +5343,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Chat"> | Date | string
     updatedAt?: DateTimeFilter<"Chat"> | Date | string
     vacancy?: XOR<VacancyNullableRelationFilter, VacancyWhereInput> | null
+    resume?: XOR<ResumeNullableRelationFilter, ResumeWhereInput> | null
     messages?: MessageListRelationFilter
   }, "id">
 
@@ -4213,6 +5351,7 @@ export namespace Prisma {
     id?: SortOrder
     title?: SortOrderInput | SortOrder
     vacancyId?: SortOrderInput | SortOrder
+    resumeId?: SortOrderInput | SortOrder
     requirements_checklist?: SortOrderInput | SortOrder
     analysis?: SortOrderInput | SortOrder
     facts_meta?: SortOrderInput | SortOrder
@@ -4231,6 +5370,7 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"Chat"> | string
     title?: StringNullableWithAggregatesFilter<"Chat"> | string | null
     vacancyId?: StringNullableWithAggregatesFilter<"Chat"> | string | null
+    resumeId?: StringNullableWithAggregatesFilter<"Chat"> | string | null
     requirements_checklist?: JsonNullableWithAggregatesFilter<"Chat">
     analysis?: JsonNullableWithAggregatesFilter<"Chat">
     facts_meta?: JsonNullableWithAggregatesFilter<"Chat">
@@ -4364,6 +5504,71 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"Vacancy"> | Date | string
   }
 
+  export type ResumeWhereInput = {
+    AND?: ResumeWhereInput | ResumeWhereInput[]
+    OR?: ResumeWhereInput[]
+    NOT?: ResumeWhereInput | ResumeWhereInput[]
+    id?: StringFilter<"Resume"> | string
+    fileName?: StringFilter<"Resume"> | string
+    text_raw?: StringNullableFilter<"Resume"> | string | null
+    text?: StringNullableFilter<"Resume"> | string | null
+    createdAt?: DateTimeFilter<"Resume"> | Date | string
+    updatedAt?: DateTimeFilter<"Resume"> | Date | string
+    facts?: JsonNullableFilter<"Resume">
+    chats?: ChatListRelationFilter
+  }
+
+  export type ResumeOrderByWithRelationInput = {
+    id?: SortOrder
+    fileName?: SortOrder
+    text_raw?: SortOrderInput | SortOrder
+    text?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    facts?: SortOrderInput | SortOrder
+    chats?: ChatOrderByRelationAggregateInput
+  }
+
+  export type ResumeWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: ResumeWhereInput | ResumeWhereInput[]
+    OR?: ResumeWhereInput[]
+    NOT?: ResumeWhereInput | ResumeWhereInput[]
+    fileName?: StringFilter<"Resume"> | string
+    text_raw?: StringNullableFilter<"Resume"> | string | null
+    text?: StringNullableFilter<"Resume"> | string | null
+    createdAt?: DateTimeFilter<"Resume"> | Date | string
+    updatedAt?: DateTimeFilter<"Resume"> | Date | string
+    facts?: JsonNullableFilter<"Resume">
+    chats?: ChatListRelationFilter
+  }, "id">
+
+  export type ResumeOrderByWithAggregationInput = {
+    id?: SortOrder
+    fileName?: SortOrder
+    text_raw?: SortOrderInput | SortOrder
+    text?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    facts?: SortOrderInput | SortOrder
+    _count?: ResumeCountOrderByAggregateInput
+    _max?: ResumeMaxOrderByAggregateInput
+    _min?: ResumeMinOrderByAggregateInput
+  }
+
+  export type ResumeScalarWhereWithAggregatesInput = {
+    AND?: ResumeScalarWhereWithAggregatesInput | ResumeScalarWhereWithAggregatesInput[]
+    OR?: ResumeScalarWhereWithAggregatesInput[]
+    NOT?: ResumeScalarWhereWithAggregatesInput | ResumeScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Resume"> | string
+    fileName?: StringWithAggregatesFilter<"Resume"> | string
+    text_raw?: StringNullableWithAggregatesFilter<"Resume"> | string | null
+    text?: StringNullableWithAggregatesFilter<"Resume"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"Resume"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Resume"> | Date | string
+    facts?: JsonNullableWithAggregatesFilter<"Resume">
+  }
+
   export type ChatCreateInput = {
     id?: string
     title?: string | null
@@ -4374,6 +5579,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     vacancy?: VacancyCreateNestedOneWithoutChatsInput
+    resume?: ResumeCreateNestedOneWithoutChatsInput
     messages?: MessageCreateNestedManyWithoutChatInput
   }
 
@@ -4381,6 +5587,7 @@ export namespace Prisma {
     id?: string
     title?: string | null
     vacancyId?: string | null
+    resumeId?: string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
     facts_meta?: NullableJsonNullValueInput | InputJsonValue
@@ -4400,6 +5607,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     vacancy?: VacancyUpdateOneWithoutChatsNestedInput
+    resume?: ResumeUpdateOneWithoutChatsNestedInput
     messages?: MessageUpdateManyWithoutChatNestedInput
   }
 
@@ -4407,6 +5615,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: NullableStringFieldUpdateOperationsInput | string | null
     vacancyId?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeId?: NullableStringFieldUpdateOperationsInput | string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
     facts_meta?: NullableJsonNullValueInput | InputJsonValue
@@ -4420,6 +5629,7 @@ export namespace Prisma {
     id?: string
     title?: string | null
     vacancyId?: string | null
+    resumeId?: string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
     facts_meta?: NullableJsonNullValueInput | InputJsonValue
@@ -4443,6 +5653,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: NullableStringFieldUpdateOperationsInput | string | null
     vacancyId?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeId?: NullableStringFieldUpdateOperationsInput | string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
     facts_meta?: NullableJsonNullValueInput | InputJsonValue
@@ -4587,6 +5798,80 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type ResumeCreateInput = {
+    id?: string
+    fileName: string
+    text_raw?: string | null
+    text?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    facts?: NullableJsonNullValueInput | InputJsonValue
+    chats?: ChatCreateNestedManyWithoutResumeInput
+  }
+
+  export type ResumeUncheckedCreateInput = {
+    id?: string
+    fileName: string
+    text_raw?: string | null
+    text?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    facts?: NullableJsonNullValueInput | InputJsonValue
+    chats?: ChatUncheckedCreateNestedManyWithoutResumeInput
+  }
+
+  export type ResumeUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    text_raw?: NullableStringFieldUpdateOperationsInput | string | null
+    text?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    facts?: NullableJsonNullValueInput | InputJsonValue
+    chats?: ChatUpdateManyWithoutResumeNestedInput
+  }
+
+  export type ResumeUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    text_raw?: NullableStringFieldUpdateOperationsInput | string | null
+    text?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    facts?: NullableJsonNullValueInput | InputJsonValue
+    chats?: ChatUncheckedUpdateManyWithoutResumeNestedInput
+  }
+
+  export type ResumeCreateManyInput = {
+    id?: string
+    fileName: string
+    text_raw?: string | null
+    text?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    facts?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type ResumeUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    text_raw?: NullableStringFieldUpdateOperationsInput | string | null
+    text?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    facts?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type ResumeUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    text_raw?: NullableStringFieldUpdateOperationsInput | string | null
+    text?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    facts?: NullableJsonNullValueInput | InputJsonValue
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -4660,6 +5945,11 @@ export namespace Prisma {
     isNot?: VacancyWhereInput | null
   }
 
+  export type ResumeNullableRelationFilter = {
+    is?: ResumeWhereInput | null
+    isNot?: ResumeWhereInput | null
+  }
+
   export type MessageListRelationFilter = {
     every?: MessageWhereInput
     some?: MessageWhereInput
@@ -4679,6 +5969,7 @@ export namespace Prisma {
     id?: SortOrder
     title?: SortOrder
     vacancyId?: SortOrder
+    resumeId?: SortOrder
     requirements_checklist?: SortOrder
     analysis?: SortOrder
     facts_meta?: SortOrder
@@ -4691,6 +5982,7 @@ export namespace Prisma {
     id?: SortOrder
     title?: SortOrder
     vacancyId?: SortOrder
+    resumeId?: SortOrder
     is_finished?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -4700,6 +5992,7 @@ export namespace Prisma {
     id?: SortOrder
     title?: SortOrder
     vacancyId?: SortOrder
+    resumeId?: SortOrder
     is_finished?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -4903,10 +6196,44 @@ export namespace Prisma {
     _max?: NestedJsonFilter<$PrismaModel>
   }
 
+  export type ResumeCountOrderByAggregateInput = {
+    id?: SortOrder
+    fileName?: SortOrder
+    text_raw?: SortOrder
+    text?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    facts?: SortOrder
+  }
+
+  export type ResumeMaxOrderByAggregateInput = {
+    id?: SortOrder
+    fileName?: SortOrder
+    text_raw?: SortOrder
+    text?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ResumeMinOrderByAggregateInput = {
+    id?: SortOrder
+    fileName?: SortOrder
+    text_raw?: SortOrder
+    text?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
   export type VacancyCreateNestedOneWithoutChatsInput = {
     create?: XOR<VacancyCreateWithoutChatsInput, VacancyUncheckedCreateWithoutChatsInput>
     connectOrCreate?: VacancyCreateOrConnectWithoutChatsInput
     connect?: VacancyWhereUniqueInput
+  }
+
+  export type ResumeCreateNestedOneWithoutChatsInput = {
+    create?: XOR<ResumeCreateWithoutChatsInput, ResumeUncheckedCreateWithoutChatsInput>
+    connectOrCreate?: ResumeCreateOrConnectWithoutChatsInput
+    connect?: ResumeWhereUniqueInput
   }
 
   export type MessageCreateNestedManyWithoutChatInput = {
@@ -4947,6 +6274,16 @@ export namespace Prisma {
     delete?: VacancyWhereInput | boolean
     connect?: VacancyWhereUniqueInput
     update?: XOR<XOR<VacancyUpdateToOneWithWhereWithoutChatsInput, VacancyUpdateWithoutChatsInput>, VacancyUncheckedUpdateWithoutChatsInput>
+  }
+
+  export type ResumeUpdateOneWithoutChatsNestedInput = {
+    create?: XOR<ResumeCreateWithoutChatsInput, ResumeUncheckedCreateWithoutChatsInput>
+    connectOrCreate?: ResumeCreateOrConnectWithoutChatsInput
+    upsert?: ResumeUpsertWithoutChatsInput
+    disconnect?: ResumeWhereInput | boolean
+    delete?: ResumeWhereInput | boolean
+    connect?: ResumeWhereUniqueInput
+    update?: XOR<XOR<ResumeUpdateToOneWithWhereWithoutChatsInput, ResumeUpdateWithoutChatsInput>, ResumeUncheckedUpdateWithoutChatsInput>
   }
 
   export type MessageUpdateManyWithoutChatNestedInput = {
@@ -5030,6 +6367,48 @@ export namespace Prisma {
     connect?: ChatWhereUniqueInput | ChatWhereUniqueInput[]
     update?: ChatUpdateWithWhereUniqueWithoutVacancyInput | ChatUpdateWithWhereUniqueWithoutVacancyInput[]
     updateMany?: ChatUpdateManyWithWhereWithoutVacancyInput | ChatUpdateManyWithWhereWithoutVacancyInput[]
+    deleteMany?: ChatScalarWhereInput | ChatScalarWhereInput[]
+  }
+
+  export type ChatCreateNestedManyWithoutResumeInput = {
+    create?: XOR<ChatCreateWithoutResumeInput, ChatUncheckedCreateWithoutResumeInput> | ChatCreateWithoutResumeInput[] | ChatUncheckedCreateWithoutResumeInput[]
+    connectOrCreate?: ChatCreateOrConnectWithoutResumeInput | ChatCreateOrConnectWithoutResumeInput[]
+    createMany?: ChatCreateManyResumeInputEnvelope
+    connect?: ChatWhereUniqueInput | ChatWhereUniqueInput[]
+  }
+
+  export type ChatUncheckedCreateNestedManyWithoutResumeInput = {
+    create?: XOR<ChatCreateWithoutResumeInput, ChatUncheckedCreateWithoutResumeInput> | ChatCreateWithoutResumeInput[] | ChatUncheckedCreateWithoutResumeInput[]
+    connectOrCreate?: ChatCreateOrConnectWithoutResumeInput | ChatCreateOrConnectWithoutResumeInput[]
+    createMany?: ChatCreateManyResumeInputEnvelope
+    connect?: ChatWhereUniqueInput | ChatWhereUniqueInput[]
+  }
+
+  export type ChatUpdateManyWithoutResumeNestedInput = {
+    create?: XOR<ChatCreateWithoutResumeInput, ChatUncheckedCreateWithoutResumeInput> | ChatCreateWithoutResumeInput[] | ChatUncheckedCreateWithoutResumeInput[]
+    connectOrCreate?: ChatCreateOrConnectWithoutResumeInput | ChatCreateOrConnectWithoutResumeInput[]
+    upsert?: ChatUpsertWithWhereUniqueWithoutResumeInput | ChatUpsertWithWhereUniqueWithoutResumeInput[]
+    createMany?: ChatCreateManyResumeInputEnvelope
+    set?: ChatWhereUniqueInput | ChatWhereUniqueInput[]
+    disconnect?: ChatWhereUniqueInput | ChatWhereUniqueInput[]
+    delete?: ChatWhereUniqueInput | ChatWhereUniqueInput[]
+    connect?: ChatWhereUniqueInput | ChatWhereUniqueInput[]
+    update?: ChatUpdateWithWhereUniqueWithoutResumeInput | ChatUpdateWithWhereUniqueWithoutResumeInput[]
+    updateMany?: ChatUpdateManyWithWhereWithoutResumeInput | ChatUpdateManyWithWhereWithoutResumeInput[]
+    deleteMany?: ChatScalarWhereInput | ChatScalarWhereInput[]
+  }
+
+  export type ChatUncheckedUpdateManyWithoutResumeNestedInput = {
+    create?: XOR<ChatCreateWithoutResumeInput, ChatUncheckedCreateWithoutResumeInput> | ChatCreateWithoutResumeInput[] | ChatUncheckedCreateWithoutResumeInput[]
+    connectOrCreate?: ChatCreateOrConnectWithoutResumeInput | ChatCreateOrConnectWithoutResumeInput[]
+    upsert?: ChatUpsertWithWhereUniqueWithoutResumeInput | ChatUpsertWithWhereUniqueWithoutResumeInput[]
+    createMany?: ChatCreateManyResumeInputEnvelope
+    set?: ChatWhereUniqueInput | ChatWhereUniqueInput[]
+    disconnect?: ChatWhereUniqueInput | ChatWhereUniqueInput[]
+    delete?: ChatWhereUniqueInput | ChatWhereUniqueInput[]
+    connect?: ChatWhereUniqueInput | ChatWhereUniqueInput[]
+    update?: ChatUpdateWithWhereUniqueWithoutResumeInput | ChatUpdateWithWhereUniqueWithoutResumeInput[]
+    updateMany?: ChatUpdateManyWithWhereWithoutResumeInput | ChatUpdateManyWithWhereWithoutResumeInput[]
     deleteMany?: ChatScalarWhereInput | ChatScalarWhereInput[]
   }
 
@@ -5224,6 +6603,31 @@ export namespace Prisma {
     create: XOR<VacancyCreateWithoutChatsInput, VacancyUncheckedCreateWithoutChatsInput>
   }
 
+  export type ResumeCreateWithoutChatsInput = {
+    id?: string
+    fileName: string
+    text_raw?: string | null
+    text?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    facts?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type ResumeUncheckedCreateWithoutChatsInput = {
+    id?: string
+    fileName: string
+    text_raw?: string | null
+    text?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    facts?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type ResumeCreateOrConnectWithoutChatsInput = {
+    where: ResumeWhereUniqueInput
+    create: XOR<ResumeCreateWithoutChatsInput, ResumeUncheckedCreateWithoutChatsInput>
+  }
+
   export type MessageCreateWithoutChatInput = {
     id?: string
     role: string
@@ -5281,6 +6685,37 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type ResumeUpsertWithoutChatsInput = {
+    update: XOR<ResumeUpdateWithoutChatsInput, ResumeUncheckedUpdateWithoutChatsInput>
+    create: XOR<ResumeCreateWithoutChatsInput, ResumeUncheckedCreateWithoutChatsInput>
+    where?: ResumeWhereInput
+  }
+
+  export type ResumeUpdateToOneWithWhereWithoutChatsInput = {
+    where?: ResumeWhereInput
+    data: XOR<ResumeUpdateWithoutChatsInput, ResumeUncheckedUpdateWithoutChatsInput>
+  }
+
+  export type ResumeUpdateWithoutChatsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    text_raw?: NullableStringFieldUpdateOperationsInput | string | null
+    text?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    facts?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type ResumeUncheckedUpdateWithoutChatsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    text_raw?: NullableStringFieldUpdateOperationsInput | string | null
+    text?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    facts?: NullableJsonNullValueInput | InputJsonValue
+  }
+
   export type MessageUpsertWithWhereUniqueWithoutChatInput = {
     where: MessageWhereUniqueInput
     update: XOR<MessageUpdateWithoutChatInput, MessageUncheckedUpdateWithoutChatInput>
@@ -5319,12 +6754,14 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     vacancy?: VacancyCreateNestedOneWithoutChatsInput
+    resume?: ResumeCreateNestedOneWithoutChatsInput
   }
 
   export type ChatUncheckedCreateWithoutMessagesInput = {
     id?: string
     title?: string | null
     vacancyId?: string | null
+    resumeId?: string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
     facts_meta?: NullableJsonNullValueInput | InputJsonValue
@@ -5359,12 +6796,14 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     vacancy?: VacancyUpdateOneWithoutChatsNestedInput
+    resume?: ResumeUpdateOneWithoutChatsNestedInput
   }
 
   export type ChatUncheckedUpdateWithoutMessagesInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: NullableStringFieldUpdateOperationsInput | string | null
     vacancyId?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeId?: NullableStringFieldUpdateOperationsInput | string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
     facts_meta?: NullableJsonNullValueInput | InputJsonValue
@@ -5382,12 +6821,14 @@ export namespace Prisma {
     is_finished?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
+    resume?: ResumeCreateNestedOneWithoutChatsInput
     messages?: MessageCreateNestedManyWithoutChatInput
   }
 
   export type ChatUncheckedCreateWithoutVacancyInput = {
     id?: string
     title?: string | null
+    resumeId?: string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
     facts_meta?: NullableJsonNullValueInput | InputJsonValue
@@ -5430,12 +6871,65 @@ export namespace Prisma {
     id?: StringFilter<"Chat"> | string
     title?: StringNullableFilter<"Chat"> | string | null
     vacancyId?: StringNullableFilter<"Chat"> | string | null
+    resumeId?: StringNullableFilter<"Chat"> | string | null
     requirements_checklist?: JsonNullableFilter<"Chat">
     analysis?: JsonNullableFilter<"Chat">
     facts_meta?: JsonNullableFilter<"Chat">
     is_finished?: BoolFilter<"Chat"> | boolean
     createdAt?: DateTimeFilter<"Chat"> | Date | string
     updatedAt?: DateTimeFilter<"Chat"> | Date | string
+  }
+
+  export type ChatCreateWithoutResumeInput = {
+    id?: string
+    title?: string | null
+    requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
+    analysis?: NullableJsonNullValueInput | InputJsonValue
+    facts_meta?: NullableJsonNullValueInput | InputJsonValue
+    is_finished?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    vacancy?: VacancyCreateNestedOneWithoutChatsInput
+    messages?: MessageCreateNestedManyWithoutChatInput
+  }
+
+  export type ChatUncheckedCreateWithoutResumeInput = {
+    id?: string
+    title?: string | null
+    vacancyId?: string | null
+    requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
+    analysis?: NullableJsonNullValueInput | InputJsonValue
+    facts_meta?: NullableJsonNullValueInput | InputJsonValue
+    is_finished?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    messages?: MessageUncheckedCreateNestedManyWithoutChatInput
+  }
+
+  export type ChatCreateOrConnectWithoutResumeInput = {
+    where: ChatWhereUniqueInput
+    create: XOR<ChatCreateWithoutResumeInput, ChatUncheckedCreateWithoutResumeInput>
+  }
+
+  export type ChatCreateManyResumeInputEnvelope = {
+    data: ChatCreateManyResumeInput | ChatCreateManyResumeInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ChatUpsertWithWhereUniqueWithoutResumeInput = {
+    where: ChatWhereUniqueInput
+    update: XOR<ChatUpdateWithoutResumeInput, ChatUncheckedUpdateWithoutResumeInput>
+    create: XOR<ChatCreateWithoutResumeInput, ChatUncheckedCreateWithoutResumeInput>
+  }
+
+  export type ChatUpdateWithWhereUniqueWithoutResumeInput = {
+    where: ChatWhereUniqueInput
+    data: XOR<ChatUpdateWithoutResumeInput, ChatUncheckedUpdateWithoutResumeInput>
+  }
+
+  export type ChatUpdateManyWithWhereWithoutResumeInput = {
+    where: ChatScalarWhereInput
+    data: XOR<ChatUpdateManyMutationInput, ChatUncheckedUpdateManyWithoutResumeInput>
   }
 
   export type MessageCreateManyChatInput = {
@@ -5473,6 +6967,7 @@ export namespace Prisma {
   export type ChatCreateManyVacancyInput = {
     id?: string
     title?: string | null
+    resumeId?: string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
     facts_meta?: NullableJsonNullValueInput | InputJsonValue
@@ -5490,12 +6985,14 @@ export namespace Prisma {
     is_finished?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    resume?: ResumeUpdateOneWithoutChatsNestedInput
     messages?: MessageUpdateManyWithoutChatNestedInput
   }
 
   export type ChatUncheckedUpdateWithoutVacancyInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeId?: NullableStringFieldUpdateOperationsInput | string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
     facts_meta?: NullableJsonNullValueInput | InputJsonValue
@@ -5508,6 +7005,57 @@ export namespace Prisma {
   export type ChatUncheckedUpdateManyWithoutVacancyInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeId?: NullableStringFieldUpdateOperationsInput | string | null
+    requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
+    analysis?: NullableJsonNullValueInput | InputJsonValue
+    facts_meta?: NullableJsonNullValueInput | InputJsonValue
+    is_finished?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ChatCreateManyResumeInput = {
+    id?: string
+    title?: string | null
+    vacancyId?: string | null
+    requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
+    analysis?: NullableJsonNullValueInput | InputJsonValue
+    facts_meta?: NullableJsonNullValueInput | InputJsonValue
+    is_finished?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ChatUpdateWithoutResumeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: NullableStringFieldUpdateOperationsInput | string | null
+    requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
+    analysis?: NullableJsonNullValueInput | InputJsonValue
+    facts_meta?: NullableJsonNullValueInput | InputJsonValue
+    is_finished?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    vacancy?: VacancyUpdateOneWithoutChatsNestedInput
+    messages?: MessageUpdateManyWithoutChatNestedInput
+  }
+
+  export type ChatUncheckedUpdateWithoutResumeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: NullableStringFieldUpdateOperationsInput | string | null
+    vacancyId?: NullableStringFieldUpdateOperationsInput | string | null
+    requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
+    analysis?: NullableJsonNullValueInput | InputJsonValue
+    facts_meta?: NullableJsonNullValueInput | InputJsonValue
+    is_finished?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    messages?: MessageUncheckedUpdateManyWithoutChatNestedInput
+  }
+
+  export type ChatUncheckedUpdateManyWithoutResumeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: NullableStringFieldUpdateOperationsInput | string | null
+    vacancyId?: NullableStringFieldUpdateOperationsInput | string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
     facts_meta?: NullableJsonNullValueInput | InputJsonValue
@@ -5530,6 +7078,10 @@ export namespace Prisma {
      */
     export type VacancyCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = VacancyCountOutputTypeDefaultArgs<ExtArgs>
     /**
+     * @deprecated Use ResumeCountOutputTypeDefaultArgs instead
+     */
+    export type ResumeCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ResumeCountOutputTypeDefaultArgs<ExtArgs>
+    /**
      * @deprecated Use ChatDefaultArgs instead
      */
     export type ChatArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ChatDefaultArgs<ExtArgs>
@@ -5541,6 +7093,10 @@ export namespace Prisma {
      * @deprecated Use VacancyDefaultArgs instead
      */
     export type VacancyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = VacancyDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use ResumeDefaultArgs instead
+     */
+    export type ResumeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ResumeDefaultArgs<ExtArgs>
 
   /**
    * Batch Payload for updateMany & deleteMany & createMany

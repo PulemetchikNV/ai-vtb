@@ -49,11 +49,11 @@ export function useChat() {
     const loading = ref(false)
     const error = ref<string | null>(null)
 
-    async function startChat(title?: string | null, vacancyId?: string | null) {
+    async function startChat(title?: string | null, vacancyId?: string | null, resumeId?: string | null) {
         loading.value = true
         error.value = null
         try {
-            const res = await api.post<Chat>('/chat', { title: title ?? null, vacancyId: vacancyId ?? null })
+            const res = await api.post<Chat>('/chat', { title: title ?? null, vacancyId: vacancyId ?? null, resumeId: resumeId ?? null })
             currentChatId.value = res.data.id
             chat.value = res.data
             messages.value = []

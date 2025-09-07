@@ -4,6 +4,8 @@ import { chatEventBus } from '../services/chatEventBus';
 import { analyzer } from '../services/analyzer';
 import { dialogueService } from '../services/dialogue';
 import { factChecker } from '../services/factChecker';
+import { factsApi } from '../services/factsApi';
+import { ingestResumeFactsToChat } from '../services/resumeFacts';
 
 async function finishChat(chatId: string, callback: () => any, finishMessage?: string) {
     const originalChat = await prisma.chat.findUnique({ where: { id: chatId } });
@@ -46,13 +48,14 @@ export default async function chatRoutes(server: FastifyInstance) {
                 type: 'object',
                 properties: {
                     title: { type: ['string', 'null'] },
-                    vacancyId: { type: ['string', 'null'] }
+                    vacancyId: { type: ['string', 'null'] },
+                    resumeId: { type: ['string', 'null'] }
                 },
                 additionalProperties: false
             } as FastifySchema
         }
     }, async (req, reply) => {
-        const body = (req.body as { title?: string | null; vacancyId?: string | null }) || {};
+        const body = (req.body as { title?: string | null; vacancyId?: string | null; resumeId?: string | null }) || {};
         const vacancy = body.vacancyId ? await prisma.vacancy.findUnique({ where: { id: body.vacancyId } }) : null;
         const initialChecklist = vacancy?.requirements_checklist || [];
 
@@ -63,13 +66,25 @@ export default async function chatRoutes(server: FastifyInstance) {
                 ...(body.vacancyId
                     ? { vacancy: { connect: { id: body.vacancyId } } }
                     : {}),
+                ...(body.resumeId
+                    ? { resume: { connect: { id: body.resumeId } } }
+                    : {}),
                 facts_meta: { fact_ledger: [], contradictions: [] } as any
             }
         });
 
+        // If resume selected, push its facts into per-chat vectorstore and ledger
+        if (body.resumeId) {
+            await ingestResumeFactsToChat({ chatId: chat.id, resumeId: body.resumeId }).catch(e => console.error('Failed to ingest resume facts:', e))
+        }
+
         if (vacancy) {
             try {
-                const { systemPrompt, initialMessage } = await dialogueService.getInitialMessage({ vacancy });
+                // Подмешаем строковое резюме, если оно привязано
+                const resume = body.resumeId ? (await prisma.resume.findUnique({ where: { id: body.resumeId } })) : null;
+
+                const resumeText = resume?.text ?? resume?.text_raw ?? '';
+                const { systemPrompt, initialMessage } = await dialogueService.getInitialMessage({ vacancy, resumeText });
                 await prisma.message.create({ data: { chatId: chat.id, role: 'user', content: ``, hiddenContent: systemPrompt } });
                 await prisma.message.create({ data: { chatId: chat.id, role: 'assistant', content: initialMessage } });
             } catch (e) {

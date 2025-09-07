@@ -57,7 +57,7 @@ function openDrawer() {
       </template>
       <div class="sidebar">
         <nav class="nav">
-          <RouterLink to="/" class="link" @click="!isDesktop && (drawerOpen = false)">Загрузка резюме</RouterLink>
+          <RouterLink to="/resumes" class="link" @click="!isDesktop && (drawerOpen = false)">Загрузка резюме</RouterLink>
           <RouterLink to="/voice-chat" class="link" @click="!isDesktop && (drawerOpen = false)">Чат</RouterLink>
           <RouterLink to="/vacancies" class="link" @click="!isDesktop && (drawerOpen = false)">Вакансии</RouterLink>
         </nav>

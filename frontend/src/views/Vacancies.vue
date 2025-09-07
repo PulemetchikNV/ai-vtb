@@ -36,7 +36,11 @@ function addReq() {
 }
 function delReq(idx: number) { 
   form.value.requirements.splice(idx, 1)
- }
+}
+
+function shortenDescription(text: string) {
+  return text.length > 100 ? text.slice(0, 100) + '...' : text
+}
 
 async function submit() {
   const checklist = form.value.requirements.map(it => ({ id: it.id, description: it.description, type: it.type, weight: it.weight }))
@@ -104,12 +108,12 @@ onMounted(load)
       >
         <template #title>{{ v.title }}</template>
         <template #content>
-          <p class="desc">{{ v.description_text }}</p>
-          <ul class="reqs">
+          <p class="desc">{{ shortenDescription(v.description_text) }}</p>
+          <!-- <ul class="reqs">
             <li v-for="(val, key) in v.requirements_checklist" :key="key"> {{
                 val.description
               }}</li>
-          </ul>
+          </ul> -->
         </template>
         <template #footer>
           <div class="buttons">
@@ -118,15 +122,11 @@ onMounted(load)
           </div>
         </template>
       </Card>
+      <p v-if="!vacancies.length">Нет вакансий</p>
     </div>
 
     <Dialog v-model:visible="showCreate" modal header="Новая вакансия" :style="{ width: '720px' }">
-      <VacancyForm v-model="form" @add-req="addReq" @del-req="delReq" @submit="submit">
-        <template #actions>
-          <Button label="Отмена" severity="secondary" @click="showCreate = false" />
-          <Button label="Создать" @click="submit" :disabled="!form.title.trim()" />
-        </template>
-      </VacancyForm>
+      <VacancyForm v-model="form" @add-req="addReq" @del-req="delReq" @submit="submit" />
     </Dialog>
 
     <Dialog v-model:visible="showEdit" modal header="Редактировать вакансию" :style="{ width: '720px' }">

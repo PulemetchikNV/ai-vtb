@@ -18,6 +18,7 @@ import Messages from '../components/Messages.vue'
 import Dropdown from 'primevue/dropdown'
 import Dialog from 'primevue/dialog'
 import { useVacancies } from '../composables/useVacancies'
+import { useResumes } from '../composables/useResumes'
 import AnalysisView from '../components/AnalysisView.vue'
 
 // Chat composable
@@ -28,8 +29,10 @@ const router = useRouter()
 const activeTab = ref('text')
 const inputText = ref('')
 const selectedVacancyId = ref<string | null>(null)
+const selectedResumeId = ref<string | null>(null)
 const showNewChat = ref(false)
 const { vacancies, load: loadVacancies } = useVacancies()
+const { resumes, load: loadResumes } = useResumes()
 
 async function handleSend() {
   const text = inputText.value.trim()
@@ -107,7 +110,7 @@ function handleNewChat() {
 
 async function confirmStartChat() {
   if (!selectedVacancyId.value) return
-  const chat = await startChat(`Собеседование (${selectedVacancyId.value})`, selectedVacancyId.value)
+  const chat = await startChat(`Собеседование (${selectedVacancyId.value})`, selectedVacancyId.value, selectedResumeId.value || undefined)
   showNewChat.value = false
   router.push({ path: `/voice-chat/${chat.id}` })
   loadChatHistory()
@@ -128,6 +131,7 @@ async function handleDeleteChat(id: string) {
 // Autostart chat on first mount
 onMounted(async () => {
   await loadVacancies()
+  await loadResumes()
   if (currentChatId.value) {
     router.replace({ name: undefined, params: { chatId: currentChatId.value } as any })
   }
@@ -243,6 +247,8 @@ watchEffect(async () => {
     <div class="new-chat-form">
       <label>Выберите вакансию</label>
       <Dropdown v-model="selectedVacancyId" :options="vacancies" optionLabel="title" optionValue="id" placeholder="Выбор вакансии" class="w-full" style="width: 100%" />
+      <label class="mt-12">Выберите резюме (опционально)</label>
+      <Dropdown v-model="selectedResumeId" :options="resumes" optionLabel="fileName" optionValue="id" placeholder="Выбор резюме" class="w-full" style="width: 100%" />
       <div class="actions mt-12">
         <Button label="Отмена" severity="secondary" @click="showNewChat = false" />
         <Button label="Начать" icon="pi pi-arrow-right" @click="confirmStartChat" :disabled="!selectedVacancyId" />
