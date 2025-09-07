@@ -10,7 +10,7 @@ export type Resume = {
 }
 
 const api = axios.create({
-    baseURL: (import.meta as any).env?.VITE_BACKEND_URL || 'http://localhost:3000'
+    baseURL: (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000'
 })
 
 export function useResumes() {
