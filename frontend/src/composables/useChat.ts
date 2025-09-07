@@ -1,4 +1,5 @@
 import { computed, ref, watch } from 'vue'
+import { synthesizeAndPlay } from '../services/ttsClient'
 import axios from 'axios'
 import { useRoute } from 'vue-router'
 import router from '../router'
@@ -25,6 +26,8 @@ export type Message = {
 const api = axios.create({
     baseURL: (import.meta as any).env?.VITE_BACKEND_URL || 'http://localhost:3000'
 })
+
+const isTtsClientMode = !!((import.meta as any).env?.VITE_TTS_CLIENT_MODE ?? 'true')
 
 export function useChat() {
     const route = useRoute()
@@ -171,6 +174,10 @@ export function useChat() {
                     const msg: Message = evt.payload
                     if (msg.chatId === (currentChatId.value as string | null)) {
                         messages.value = [...messages.value, msg]
+
+                        if (isTtsClientMode && msg.role === 'assistant' && typeof msg.content === 'string' && msg.content.trim().length > 0) {
+                            synthesizeAndPlay(msg.content).catch(() => { /* ignore */ })
+                        }
                     }
                 } else if (evt?.type === 'analysis.started') {
                     analysis.value = { status: 'running' }

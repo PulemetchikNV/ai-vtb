@@ -26,6 +26,7 @@ export function useVoiceChat(getChatId: () => string | null) {
     const bytesSent = ref(0)
     const lastSegment = ref<SpeechSegmentPayload | null>(null)
     const lastAudioText = ref<string>('')
+    const playbackError = ref<string>('')
 
     let mediaRecorder: MediaRecorder | null = null
     let micStream: MediaStream | null = null
@@ -34,6 +35,11 @@ export function useVoiceChat(getChatId: () => string | null) {
 
     // Simple audio player for TTS
     const audioEl = new Audio()
+    audioEl.autoplay = true
+    audioEl.muted = false
+    // object url tracking was used for client TTS here; now handled in services/ttsClient
+
+    // Client-side TTS mode — moved to useChat via ttsClient service
 
     function disconnectWsAudio() {
         if (wsAudio) {
@@ -66,18 +72,26 @@ export function useVoiceChat(getChatId: () => string | null) {
             wsChat = new WebSocket(`${wsBase}/ws/chat?chatId=${encodeURIComponent(chatId)}`)
             wsChat.onmessage = (ev) => {
                 try {
-                    const evt = JSON.parse(ev.data)
-                    if (evt?.type === 'speech.segment') {
-                        lastSegment.value = evt.payload as SpeechSegmentPayload
-                    } else if (evt?.type === 'audio.ready') {
-                        const p = evt.payload as AudioReadyPayload
+                    console.log({ ev })
+                    const raw = JSON.parse(ev.data)
+                    const type = raw?.type ?? raw?.payload?.type
+                    const payload = raw?.payload ?? raw
+
+                    console.log('=== EVENT ===', { type, payload })
+                    if (type === 'speech.segment') {
+                        lastSegment.value = payload as SpeechSegmentPayload
+                    } else if (type === 'audio.ready') {
+                        const p = payload as AudioReadyPayload
                         lastAudioText.value = p.text
                         const wavBlob = b64ToBlob(p.wavBase64, 'audio/wav')
                         const url = URL.createObjectURL(wavBlob)
                         audioEl.src = url
-                        audioEl.play().catch(() => { })
+                        console.log('=== PLAYING AUDIO ===', url)
+                        audioEl.play().then(() => { playbackError.value = '' }).catch((e) => { playbackError.value = e?.message || 'playback blocked' })
                     }
-                } catch { }
+                } catch (e) {
+                    console.error(e)
+                }
             }
 
             wsAudio.onopen = () => {
@@ -135,7 +149,7 @@ export function useVoiceChat(getChatId: () => string | null) {
         stopRecording()
     })
 
-    return { isRecording, statusText, chunkCount, bytesSent, lastSegment, lastAudioText, startRecording, stopRecording }
+    return { isRecording, statusText, chunkCount, bytesSent, lastSegment, lastAudioText, playbackError, startRecording, stopRecording }
 }
 
 

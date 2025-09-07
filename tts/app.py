@@ -4,6 +4,7 @@ import struct
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel
 from google import genai
@@ -12,6 +13,15 @@ from google.genai import errors
 
 
 app = FastAPI(title="VTB TTS Service", version="1.0.0")
+
+# CORS (dev): разрешаем запросы с фронтенда
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class SynthesizeRequest(BaseModel):

@@ -35,6 +35,8 @@ services:
       - IS_IMAGE_GENERATION_ENABLED=${IS_IMAGE_GENERATION_ENABLED}
       - PROXY_API_KEY=${PROXY_API_KEY}
       - RAG_API_URL=http://resumeparsing:8000
+      - TTS_URL=${TTS_URL | http://tts:8081}
+      - EMOTIONS_URL=${EMOTIONS_URL | http://emotions:5000}
     ports:
       - "3000:3000"
     volumes:

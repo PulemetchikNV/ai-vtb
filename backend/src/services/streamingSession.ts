@@ -4,7 +4,6 @@ import { Transcriber } from './transcriber';
 import { chatEventBus } from './chatEventBus';
 import { chatDebugLog } from './chatDebug';
 import { dialogueService } from './dialogue';
-import fetch from 'node-fetch';
 
 export class StreamingAudioSession {
     private readonly logger: FastifyBaseLogger;
@@ -69,26 +68,6 @@ export class StreamingAudioSession {
             });
             chatEventBus.broadcastMessageCreated(assistantMsg);
             await chatDebugLog(this.chatId, `отправляем пользователю сообщение ${JSON.stringify(assistantText)}`)
-
-            // TTS synthesize
-            try {
-                const ttsUrl = (process.env.TTS_URL || 'http://localhost:8081').replace(/\/$/, '') + '/synthesize';
-                const ttsReq = { text: assistantText, voice_name: 'Zephyr', temperature: 1.0 };
-                const res = await fetch(ttsUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(ttsReq)
-                });
-                if (!res.ok) {
-                    await chatDebugLog(this.chatId, `tts error: ${res.status}`)
-                } else {
-                    const wavBuffer = Buffer.from(await res.arrayBuffer());
-                    const wavBase64 = wavBuffer.toString('base64');
-                    chatEventBus.broadcastAudioReady({ chatId: this.chatId, segmentId, text: assistantText, wavBase64 });
-                }
-            } catch (e: any) {
-                await chatDebugLog(this.chatId, `tts exception: ${e?.message || e}`)
-            }
 
             this.logger.info({ event: 'utterance-transcribed', chatId: this.chatId, userMsgId: userMsg.id });
         } catch (err) {
