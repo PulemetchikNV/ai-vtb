@@ -62,6 +62,7 @@ services:
       - RAG_API_URL=http://resumeparsing-dev:8000
       - TTS_URL=${TTS_URL:-http://tts-dev:8081}
       - EMOTIONS_URL=${EMOTIONS_URL:-http://emotions-dev:5000}
+      - BOT_API_URL=http://bot-dev:8000
     ports:
       - "3000:3000"
     volumes:
@@ -125,6 +126,24 @@ services:
     ports:
       - "5000:5000"
     command: sh -c "python app.py"
+    restart: unless-stopped
+
+  bot-dev:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    container_name: bot-dev
+    image: telegram-bot:latest
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - BOT_API_URL=http://backend-dev:3000
+    volumes:
+      - ./bot:/app
+    ports:
+      - "8002:8000"
+    command: sh -c "python message_bot.py"
+    depends_on:
+      - backend-dev
     restart: unless-stopped
 
 volumes:

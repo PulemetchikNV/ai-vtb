@@ -5401,6 +5401,7 @@ export namespace Prisma {
     email: string | null
     password: string | null
     role: $Enums.Role | null
+    telegram_id: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -5410,6 +5411,7 @@ export namespace Prisma {
     email: string | null
     password: string | null
     role: $Enums.Role | null
+    telegram_id: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -5419,6 +5421,7 @@ export namespace Prisma {
     email: number
     password: number
     role: number
+    telegram_id: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -5430,6 +5433,7 @@ export namespace Prisma {
     email?: true
     password?: true
     role?: true
+    telegram_id?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -5439,6 +5443,7 @@ export namespace Prisma {
     email?: true
     password?: true
     role?: true
+    telegram_id?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -5448,6 +5453,7 @@ export namespace Prisma {
     email?: true
     password?: true
     role?: true
+    telegram_id?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -5530,6 +5536,7 @@ export namespace Prisma {
     email: string
     password: string
     role: $Enums.Role
+    telegram_id: string | null
     createdAt: Date
     updatedAt: Date
     _count: UserCountAggregateOutputType | null
@@ -5556,6 +5563,7 @@ export namespace Prisma {
     email?: boolean
     password?: boolean
     role?: boolean
+    telegram_id?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     chats?: boolean | User$chatsArgs<ExtArgs>
@@ -5569,6 +5577,7 @@ export namespace Prisma {
     email?: boolean
     password?: boolean
     role?: boolean
+    telegram_id?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["user"]>
@@ -5578,6 +5587,7 @@ export namespace Prisma {
     email?: boolean
     password?: boolean
     role?: boolean
+    telegram_id?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
@@ -5602,6 +5612,7 @@ export namespace Prisma {
       email: string
       password: string
       role: $Enums.Role
+      telegram_id: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["user"]>
@@ -6004,6 +6015,7 @@ export namespace Prisma {
     readonly email: FieldRef<"User", 'String'>
     readonly password: FieldRef<"User", 'String'>
     readonly role: FieldRef<"User", 'Role'>
+    readonly telegram_id: FieldRef<"User", 'String'>
     readonly createdAt: FieldRef<"User", 'DateTime'>
     readonly updatedAt: FieldRef<"User", 'DateTime'>
   }
@@ -6471,6 +6483,7 @@ export namespace Prisma {
     email: 'email',
     password: 'password',
     role: 'role',
+    telegram_id: 'telegram_id',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -6917,6 +6930,7 @@ export namespace Prisma {
     email?: StringFilter<"User"> | string
     password?: StringFilter<"User"> | string
     role?: EnumRoleFilter<"User"> | $Enums.Role
+    telegram_id?: StringNullableFilter<"User"> | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     chats?: ChatListRelationFilter
@@ -6929,6 +6943,7 @@ export namespace Prisma {
     email?: SortOrder
     password?: SortOrder
     role?: SortOrder
+    telegram_id?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     chats?: ChatOrderByRelationAggregateInput
@@ -6939,6 +6954,7 @@ export namespace Prisma {
   export type UserWhereUniqueInput = Prisma.AtLeast<{
     id?: string
     email?: string
+    telegram_id?: string
     AND?: UserWhereInput | UserWhereInput[]
     OR?: UserWhereInput[]
     NOT?: UserWhereInput | UserWhereInput[]
@@ -6949,13 +6965,14 @@ export namespace Prisma {
     chats?: ChatListRelationFilter
     vacancies?: VacancyListRelationFilter
     resumes?: ResumeListRelationFilter
-  }, "id" | "email">
+  }, "id" | "email" | "telegram_id">
 
   export type UserOrderByWithAggregationInput = {
     id?: SortOrder
     email?: SortOrder
     password?: SortOrder
     role?: SortOrder
+    telegram_id?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: UserCountOrderByAggregateInput
@@ -6971,6 +6988,7 @@ export namespace Prisma {
     email?: StringWithAggregatesFilter<"User"> | string
     password?: StringWithAggregatesFilter<"User"> | string
     role?: EnumRoleWithAggregatesFilter<"User"> | $Enums.Role
+    telegram_id?: StringNullableWithAggregatesFilter<"User"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
   }
@@ -7308,6 +7326,7 @@ export namespace Prisma {
     email: string
     password: string
     role?: $Enums.Role
+    telegram_id?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     chats?: ChatCreateNestedManyWithoutUserInput
@@ -7320,6 +7339,7 @@ export namespace Prisma {
     email: string
     password: string
     role?: $Enums.Role
+    telegram_id?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     chats?: ChatUncheckedCreateNestedManyWithoutUserInput
@@ -7332,6 +7352,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    telegram_id?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     chats?: ChatUpdateManyWithoutUserNestedInput
@@ -7344,6 +7365,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    telegram_id?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     chats?: ChatUncheckedUpdateManyWithoutUserNestedInput
@@ -7356,6 +7378,7 @@ export namespace Prisma {
     email: string
     password: string
     role?: $Enums.Role
+    telegram_id?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -7365,6 +7388,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    telegram_id?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -7374,6 +7398,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    telegram_id?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -7779,6 +7804,7 @@ export namespace Prisma {
     email?: SortOrder
     password?: SortOrder
     role?: SortOrder
+    telegram_id?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -7788,6 +7814,7 @@ export namespace Prisma {
     email?: SortOrder
     password?: SortOrder
     role?: SortOrder
+    telegram_id?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -7797,6 +7824,7 @@ export namespace Prisma {
     email?: SortOrder
     password?: SortOrder
     role?: SortOrder
+    telegram_id?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -8419,6 +8447,7 @@ export namespace Prisma {
     email: string
     password: string
     role?: $Enums.Role
+    telegram_id?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     vacancies?: VacancyCreateNestedManyWithoutUserInput
@@ -8430,6 +8459,7 @@ export namespace Prisma {
     email: string
     password: string
     role?: $Enums.Role
+    telegram_id?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     vacancies?: VacancyUncheckedCreateNestedManyWithoutUserInput
@@ -8549,6 +8579,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    telegram_id?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     vacancies?: VacancyUpdateManyWithoutUserNestedInput
@@ -8560,6 +8591,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    telegram_id?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     vacancies?: VacancyUncheckedUpdateManyWithoutUserNestedInput
@@ -8715,6 +8747,7 @@ export namespace Prisma {
     email: string
     password: string
     role?: $Enums.Role
+    telegram_id?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     chats?: ChatCreateNestedManyWithoutUserInput
@@ -8726,6 +8759,7 @@ export namespace Prisma {
     email: string
     password: string
     role?: $Enums.Role
+    telegram_id?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     chats?: ChatUncheckedCreateNestedManyWithoutUserInput
@@ -8787,6 +8821,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    telegram_id?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     chats?: ChatUpdateManyWithoutUserNestedInput
@@ -8798,6 +8833,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    telegram_id?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     chats?: ChatUncheckedUpdateManyWithoutUserNestedInput
@@ -8849,6 +8885,7 @@ export namespace Prisma {
     email: string
     password: string
     role?: $Enums.Role
+    telegram_id?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     chats?: ChatCreateNestedManyWithoutUserInput
@@ -8860,6 +8897,7 @@ export namespace Prisma {
     email: string
     password: string
     role?: $Enums.Role
+    telegram_id?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     chats?: ChatUncheckedCreateNestedManyWithoutUserInput
@@ -8903,6 +8941,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    telegram_id?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     chats?: ChatUpdateManyWithoutUserNestedInput
@@ -8914,6 +8953,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    telegram_id?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     chats?: ChatUncheckedUpdateManyWithoutUserNestedInput

@@ -37,6 +37,7 @@ services:
       - RAG_API_URL=http://resumeparsing:8000
       - TTS_URL=${TTS_URL:-http://tts:8081}
       - EMOTIONS_URL=${EMOTIONS_URL:-http://emotions:5000}
+      - BOT_API_URL=http://bot:8000
     ports:
       - "3000:3000"
     volumes:
@@ -74,6 +75,21 @@ services:
     # - HUGGING_FACE_HUB_TOKEN=${HUGGING_FACE_HUB_TOKEN}
     ports:
       - "5000:5000"
+    restart: unless-stopped
+
+  bot:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    container_name: telegram-bot
+    image: telegram-bot:latest
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - BACKEND_API_URL=http://backend:3000
+    ports:
+      - "8002:8000"
+    depends_on:
+      - backend
     restart: unless-stopped
 
   frontend-dev:

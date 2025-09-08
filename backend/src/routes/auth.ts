@@ -71,6 +71,48 @@ export default async function authRoutes(server: FastifyInstance) {
 
         return reply.send({ ...updated, token: newToken })
     })
+
+    // Связывание пользователя с Telegram ID
+    server.post('/connect-tg', {
+        schema: {
+            querystring: {
+                type: 'object',
+                required: ['code', 'telegramId'],
+                properties: {
+                    code: { type: 'string' },
+                    telegramId: { type: 'string' }
+                },
+                additionalProperties: false
+            } as FastifySchema
+        }
+    }, async (req, reply) => {
+        const { code, telegramId } = req.query as { code: string; telegramId: string }
+
+        // Находим пользователя по его ID (code)
+        const user = await prisma.user.findUnique({ where: { id: code } })
+        if (!user) {
+            return reply.code(404).send({ error: 'User not found' })
+        }
+
+        // Проверяем, не привязан ли уже этот Telegram ID к другому пользователю
+        const existingTelegramUser = await prisma.user.findUnique({ where: { telegram_id: telegramId } })
+        if (existingTelegramUser && existingTelegramUser.id !== code) {
+            return reply.code(409).send({ error: 'Telegram ID already connected to another user' })
+        }
+
+        // Обновляем пользователя, добавляя telegram_id
+        const updatedUser = await prisma.user.update({
+            where: { id: code },
+            data: { telegram_id: telegramId },
+            select: { id: true, email: true, role: true, telegram_id: true }
+        })
+
+        return reply.send({
+            success: true,
+            message: 'Telegram successfully connected',
+            user: updatedUser
+        })
+    })
 }
 
 
