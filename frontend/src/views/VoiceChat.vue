@@ -29,6 +29,8 @@ const { startChat, sendMessage, fetchChat, chat, finishChat, currentChatId, mess
 const route = useRoute()
 const router = useRouter()
 
+const isMobile = ref(document.documentElement.clientWidth < 600)
+
 // UI state
 const activeTab = ref('voice') // Дефолт - звуковая вкладка
 const inputText = ref('')
@@ -247,10 +249,10 @@ watchEffect(() => {
             <span class="chat-id" v-if="currentChatId">#{{ currentChatId?.slice(0, 6) }}</span>
           </div>
           <div class="actions" v-if="!isHrViewMode">
-            <Button label="Новый" icon="pi pi-plus" size="small" @click="handleNewChat" :disabled="loading" />
-            <Button label="Удалить" icon="pi pi-trash" size="small" severity="danger" class="ml-8" @click="handleDeleteChat(currentChatId as string)" :disabled="!currentChatId || loading" />
+            <Button :label="isMobile ? '' : 'Новый'" icon="pi pi-plus" size="small" @click="handleNewChat" :disabled="loading" />
+            <Button :label="isMobile ? '' : 'Удалить'" icon="pi pi-trash" size="small" severity="danger" class="ml-8" @click="handleDeleteChat(currentChatId as string)" :disabled="!currentChatId || loading" />
             <Button 
-              :label="chat?.is_finished ? 'Перегенерировать анализ' : 'Завершить'"
+              :label="isMobile ? '' : (chat?.is_finished ? 'Перегенерировать анализ' : 'Завершить')"
               icon="pi pi-check-circle"
               size="small"
               severity="success"
@@ -982,6 +984,9 @@ watchEffect(() => {
 
 /* Mobile tweaks */
 @media (max-width: 600px) {
+  .chat-page {
+    padding: 0;
+  }
   .chat-container { padding: 8px; border: none; border-radius: 0; }
   .messages { height: 50vh; }
   .msg .bubble { max-width: 90%; }

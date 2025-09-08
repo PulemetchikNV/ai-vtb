@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useVacancies } from '../composables/useVacancies'
 import { useAuth } from '../composables/useAuth'
@@ -9,8 +9,23 @@ import Card from 'primevue/card'
 import { REQUIREMENT_TYPES } from '../__data__/constants'
 import VacancyForm from '../components/VacancyForm.vue'
 
+// Mobile detection
+const isMobile = ref(window.innerWidth < 768)
+const updateMobile = () => {
+  isMobile.value = window.innerWidth < 768
+}
+
+onMounted(() => {
+  window.addEventListener('resize', updateMobile)
+  load()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateMobile)
+})
+
 const { vacancies, load, create, remove, update, loading } = useVacancies()
-const { user, isHr } = useAuth()
+const { isHr } = useAuth()
 const router = useRouter()
 
 const reqTypes = REQUIREMENT_TYPES as unknown as Array<{ value: 'technical_skill' | 'soft_skill'; label: string }>
@@ -105,7 +120,7 @@ function startChatWithVacancy(vacancyId: string) {
   })
 }
 
-onMounted(load)
+// Moved to the mobile detection onMounted above
 </script>
 
 <template>
@@ -114,13 +129,17 @@ onMounted(load)
       <h2>Вакансии</h2>
       <Button 
         v-if="isHr" 
-        label="Создать" 
+        :label="isMobile ? '' : 'Создать'"
         icon="pi pi-plus" 
         @click="openCreate" 
-        :disabled="loading" 
+        :disabled="loading"
+        :class="{ 'mobile-btn': isMobile }"
+        v-tooltip.left="isMobile ? 'Создать вакансию' : ''"
       />
       <div v-else class="user-info">
-        <span class="info-text">Выберите вакансию для начала собеседования</span>
+        <span class="info-text" :class="{ 'mobile-text': isMobile }">
+          {{ isMobile ? 'Выберите вакансию' : 'Выберите вакансию для начала собеседования' }}
+        </span>
       </div>
     </div>
 
@@ -145,7 +164,7 @@ onMounted(load)
             <!-- HR buttons -->
             <template v-if="isHr">
               <Button 
-                size="small" 
+                :size="isMobile ? 'small' : 'small'"
                 icon="pi pi-eye" 
                 severity="secondary"
                 outlined
@@ -154,13 +173,28 @@ onMounted(load)
                 :disabled="loading"
                 v-tooltip.top="'Аналитика'"
               />
-              <Button size="small" icon="pi pi-pencil" class="mr-2" @click="openEdit(v)" :disabled="loading" />
-              <Button size="small" variant="text" icon="pi pi-trash" severity="danger" @click="remove(v.id)" :disabled="loading" />
+              <Button 
+                size="small" 
+                icon="pi pi-pencil" 
+                class="mr-2" 
+                @click="openEdit(v)" 
+                :disabled="loading"
+                v-tooltip.top="'Редактировать'"
+              />
+              <Button 
+                size="small" 
+                variant="text" 
+                icon="pi pi-trash" 
+                severity="danger" 
+                @click="remove(v.id)" 
+                :disabled="loading"
+                v-tooltip.top="'Удалить'"
+              />
             </template>
             <!-- User button -->
             <template v-else>
               <Button 
-                label="Начать чат" 
+                :label="isMobile ? 'Чат' : 'Начать чат'"
                 icon="pi pi-comments" 
                 size="small" 
                 class="start-chat-btn"
@@ -176,11 +210,29 @@ onMounted(load)
 
     <!-- HR-only dialogs -->
     <template v-if="isHr">
-      <Dialog v-model:visible="showCreate" modal header="Новая вакансия" :style="{ width: '720px' }">
+      <Dialog 
+        v-model:visible="showCreate" 
+        modal 
+        header="Новая вакансия" 
+        :style="isMobile ? { width: '95vw', height: '90vh' } : { width: '720px' }"
+        :breakpoints="{ '960px': '75vw', '640px': '95vw' }"
+        :maximizable="!isMobile"
+        :dismissableMask="!isMobile"
+        class="vacancy-dialog"
+      >
         <VacancyForm v-model="form" @add-req="addReq" @del-req="delReq" @submit="submit" />
       </Dialog>
 
-      <Dialog v-model:visible="showEdit" modal header="Редактировать вакансию" :style="{ width: '720px' }">
+      <Dialog 
+        v-model:visible="showEdit" 
+        modal 
+        header="Редактировать вакансию" 
+        :style="isMobile ? { width: '95vw', height: '90vh' } : { width: '720px' }"
+        :breakpoints="{ '960px': '75vw', '640px': '95vw' }"
+        :maximizable="!isMobile"
+        :dismissableMask="!isMobile"
+        class="vacancy-dialog"
+      >
         <VacancyForm v-model="form" @add-req="addReq" @del-req="delReq" @submit="submitEdit" />
       </Dialog>
     </template>
@@ -188,42 +240,197 @@ onMounted(load)
 </template>
 
 <style scoped>
-.page { padding: 12px; }
-.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
-.desc { white-space: pre-wrap; }
-.reqs { margin: 8px 0 0; padding-left: 16px; }
-.form { display: grid; gap: 10px; }
-.weights { display: grid; gap: 8px; margin-bottom: 4px; }
-.w-row { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; }
-.w-label { min-width: 110px; }
-.w-slider { width: 100%; }
-.req-list { display: grid; gap: 8px; }
-.req-row { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 8px; align-items: center; }
-.actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
-.buttons { display: flex; justify-content: flex-end; gap: 8px; }
+.page { 
+  padding: 12px; 
+}
+
+.header { 
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between; 
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.grid { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
+  gap: 12px; 
+}
+
+.desc { 
+  white-space: pre-wrap; 
+  line-height: 1.5;
+}
+
+.reqs { 
+  margin: 8px 0 0; 
+  padding-left: 16px; 
+}
+
+.form { 
+  display: grid; 
+  gap: 10px; 
+}
+
+.weights { 
+  display: grid; 
+  gap: 8px; 
+  margin-bottom: 4px; 
+}
+
+.w-row { 
+  display: grid; 
+  grid-template-columns: auto 1fr auto; 
+  gap: 8px; 
+  align-items: center; 
+}
+
+.w-label { 
+  min-width: 110px; 
+}
+
+.w-slider { 
+  width: 100%; 
+}
+
+.req-list { 
+  display: grid; 
+  gap: 8px; 
+}
+
+.req-row { 
+  display: grid; 
+  grid-template-columns: 1fr 1fr auto auto; 
+  gap: 8px; 
+  align-items: center; 
+}
+
+.actions { 
+  display: flex; 
+  justify-content: flex-end; 
+  gap: 8px; 
+  margin-top: 8px; 
+}
+
+.buttons { 
+  display: flex; 
+  justify-content: flex-end; 
+  gap: 8px; 
+  flex-wrap: wrap;
+}
 
 /* User info styling */
 .user-info {
   display: flex;
   align-items: center;
+  flex: 1;
+  justify-content: flex-end;
 }
 
 .info-text {
   font-size: 0.9rem;
   color: var(--text-color-secondary);
   font-style: italic;
+  text-align: right;
 }
 
-/* Start chat button styling */
+.mobile-text {
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+/* Button styling */
+.mobile-btn {
+  min-width: 44px;
+  height: 44px;
+}
+
 .start-chat-btn {
   background: var(--p-primary-color);
   border-color: var(--p-primary-color);
   color: white;
+  flex: 1;
+  justify-content: center;
 }
 
 .start-chat-btn:hover {
   background: var(--p-primary-600);
   border-color: var(--p-primary-600);
+}
+
+/* Dialog styling */
+:deep(.vacancy-dialog) {
+  margin: 0;
+}
+
+:deep(.vacancy-dialog .p-dialog-content) {
+  padding: 1rem;
+  overflow-y: auto;
+  max-height: calc(90vh - 120px);
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .page {
+    padding: 8px;
+  }
+  
+  .header {
+    margin-bottom: 16px;
+  }
+  
+  .header h2 {
+    font-size: 1.5rem;
+    margin: 0;
+  }
+  
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .buttons {
+    gap: 6px;
+  }
+  
+  .user-info {
+    width: 100%;
+    justify-content: center;
+    margin-top: 8px;
+  }
+  
+  .info-text {
+    text-align: center;
+  }
+  
+  .start-chat-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: 4px;
+  }
+  
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .header h2 {
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  
+  .grid {
+    gap: 12px;
+  }
+  
+  .buttons {
+    justify-content: center;
+  }
 }
 </style>
