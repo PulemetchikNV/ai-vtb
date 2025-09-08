@@ -156,4 +156,56 @@ export default async function vacancyRoutes(server: FastifyInstance) {
             recentChats: chats.slice(0, 10) // Last 10 chats for additional insights
         };
     });
+
+    // Get chats for specific date and vacancy (HR only)
+    server.get('/vacancy/:id/chats/:date', async (req, reply) => {
+        const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
+        if (!requireRole(user, 'hr', reply)) return
+        const { id, date } = req.params as { id: string; date: string };
+
+        // Parse date and create date range for the specific day
+        const targetDate = new Date(date);
+        const startOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+        const endOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate() + 1);
+
+        const chats = await prisma.chat.findMany({
+            where: {
+                vacancyId: id,
+                createdAt: {
+                    gte: startOfDay,
+                    lt: endOfDay
+                }
+            },
+            select: {
+                id: true,
+                title: true,
+                createdAt: true,
+                is_finished: true,
+                analysis: true,
+                user: {
+                    select: {
+                        id: true,
+                        email: true
+                    }
+                },
+                resume: {
+                    select: {
+                        id: true,
+                        fileName: true
+                    }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        // Calculate score from analysis if available
+        const chatsWithScores = chats.map(chat => ({
+            ...chat,
+            score: chat.analysis && typeof chat.analysis === 'object' && 'overallScore' in chat.analysis
+                ? (chat.analysis as any).overallScore
+                : null
+        }));
+
+        return chatsWithScores;
+    });
 }

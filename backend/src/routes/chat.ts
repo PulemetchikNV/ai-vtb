@@ -151,9 +151,18 @@ export default async function chatRoutes(server: FastifyInstance) {
     server.get('/chat/:id', async (req, reply) => {
         const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
         const { id } = req.params as { id: string };
+
+        // HR can access any chat, users can only access their own chats
+        const whereCondition = user.role === 'hr' ? { id } : { id, userId: user.id };
+
         const chat = await prisma.chat.findFirst({
-            where: { id, userId: user.id } as any,
-            include: { messages: { orderBy: { createdAt: 'asc' } } }
+            where: whereCondition as any,
+            include: {
+                messages: { orderBy: { createdAt: 'asc' } },
+                user: { select: { id: true, email: true } },
+                resume: { select: { id: true, fileName: true } },
+                vacancy: { select: { id: true, title: true } }
+            }
         });
         return chat;
     });
