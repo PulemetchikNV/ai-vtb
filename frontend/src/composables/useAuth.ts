@@ -1,6 +1,6 @@
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { loginApi, registerApi, getMeApi, toggleRoleApi, type User, type LoginRequest, type RegisterRequest } from '../services/auth'
+import { loginApi, registerApi, getMeApi, toggleRoleApi, type User, type LoginRequest, type RegisterRequest, type ToggleRoleResponse } from '../services/auth'
 import { TOKEN_KEY } from '../__data__/constants'
 import { isAuthorized } from '../__data__/store'
 
@@ -78,7 +78,19 @@ async function toggleRole() {
 
     try {
         loading.value = true
-        user.value = await toggleRoleApi()
+        const response = await toggleRoleApi()
+
+        // Обновляем токен, если он был возвращен
+        if (response.token) {
+            localStorage.setItem(TOKEN_KEY, response.token)
+        }
+
+        // Обновляем данные пользователя
+        user.value = {
+            id: response.id,
+            email: response.email,
+            role: response.role
+        }
     } catch (error) {
         console.error('Toggle role failed:', error)
         throw error

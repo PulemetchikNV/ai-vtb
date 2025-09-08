@@ -65,7 +65,11 @@ export default async function authRoutes(server: FastifyInstance) {
         if (!current) return reply.code(404).send({ error: 'User not found' })
         const nextRole = (current.role === 'hr' ? 'user' : 'hr') as any
         const updated = await prisma.user.update({ where: { id: payload.sub }, data: { role: nextRole }, select: { id: true, email: true, role: true } as any })
-        return reply.send(updated)
+
+        // Генерируем новый токен с обновленной ролью
+        const newToken = signJwt({ sub: updated.id, role: updated.role as any })
+
+        return reply.send({ ...updated, token: newToken })
     })
 }
 

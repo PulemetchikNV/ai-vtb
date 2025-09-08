@@ -37,7 +37,11 @@ export async function getMeApi(): Promise<User> {
     return response.data
 }
 
-export async function toggleRoleApi(): Promise<User> {
+export type ToggleRoleResponse = User & {
+    token?: string
+}
+
+export async function toggleRoleApi(): Promise<ToggleRoleResponse> {
     const response = await axiosInstance.post('/auth/toggle-role')
     return response.data
 }

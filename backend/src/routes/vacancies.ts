@@ -99,7 +99,9 @@ export default async function vacancyRoutes(server: FastifyInstance) {
 
     // Get vacancy analytics (HR only)
     server.get('/vacancy/:id/analytics', async (req, reply) => {
-        const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
+        const user = requireAuth(req); 
+        console.log('user', user)
+        if (!user) return reply.code(401).send({ error: 'Unauthorized' })
         if (!requireRole(user, 'hr', reply)) return
         const { id } = req.params as { id: string };
 
