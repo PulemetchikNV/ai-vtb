@@ -169,7 +169,7 @@ function startChatWithVacancy(vacancyId: string) {
                 severity="secondary"
                 outlined
                 class="mr-2" 
-                @click="router.push(`/vacancy/${v.id}/analytics`)" 
+                @click="router.push(`/vacancies/${v.id}/analytics`)" 
                 :disabled="loading"
                 v-tooltip.top="'Аналитика'"
               />

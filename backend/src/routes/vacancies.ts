@@ -38,6 +38,11 @@ const vacancySchema = {
 }
 
 export default async function vacancyRoutes(server: FastifyInstance) {
+    // Explicit OPTIONS handlers for problematic routes
+    server.options('/vacancies/:id', async (req, reply) => {
+        return reply.code(204).send();
+    });
+
     server.get('/vacancies', async (req, reply) => {
         const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
         const vacancies = await prisma.vacancy.findMany({
@@ -57,27 +62,8 @@ export default async function vacancyRoutes(server: FastifyInstance) {
         return reply.code(201).send(vacancy);
     });
 
-    server.delete('/vacancies/:id', async (req, reply) => {
-        const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
-        if (!requireRole(user, 'hr', reply)) return
-        const { id } = req.params as { id: string };
-        await prisma.vacancy.delete({ where: { id } });
-        return reply.code(204).send();
-    });
-
-    server.put('/vacancies/:id', {
-        schema: vacancySchema
-    }, async (req, reply) => {
-        const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
-        if (!requireRole(user, 'hr', reply)) return
-        const { id } = req.params as { id: string };
-        const body = req.body as Partial<{ title: string; description_text: string; requirements_checklist: unknown; category_weights?: Record<string, number> }>;
-        const vacancy = await prisma.vacancy.update({ where: { id }, data: body as any });
-        return reply.code(200).send(vacancy);
-    });
-
-    // Get single vacancy details
-    server.get('/vacancy/:id', async (req, reply) => {
+    // Get single vacancy details (must be before PUT to avoid conflicts)
+    server.get('/vacancies/:id', async (req, reply) => {
         const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
         const { id } = req.params as { id: string };
         const vacancy = await prisma.vacancy.findUnique({
@@ -97,9 +83,28 @@ export default async function vacancyRoutes(server: FastifyInstance) {
         return vacancy;
     });
 
+    server.put('/vacancies/:id', {
+        schema: vacancySchema
+    }, async (req, reply) => {
+        const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
+        if (!requireRole(user, 'hr', reply)) return
+        const { id } = req.params as { id: string };
+        const body = req.body as Partial<{ title: string; description_text: string; requirements_checklist: unknown; category_weights?: Record<string, number> }>;
+        const vacancy = await prisma.vacancy.update({ where: { id }, data: body as any });
+        return reply.code(200).send(vacancy);
+    });
+
+    server.delete('/vacancies/:id', async (req, reply) => {
+        const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
+        if (!requireRole(user, 'hr', reply)) return
+        const { id } = req.params as { id: string };
+        await prisma.vacancy.delete({ where: { id } });
+        return reply.code(204).send();
+    });
+
     // Get vacancy analytics (HR only)
-    server.get('/vacancy/:id/analytics', async (req, reply) => {
-        const user = requireAuth(req); 
+    server.get('/vacancies/:id/analytics', async (req, reply) => {
+        const user = requireAuth(req);
         console.log('user', user)
         if (!user) return reply.code(401).send({ error: 'Unauthorized' })
         if (!requireRole(user, 'hr', reply)) return
@@ -160,7 +165,7 @@ export default async function vacancyRoutes(server: FastifyInstance) {
     });
 
     // Get chats for specific date and vacancy (HR only)
-    server.get('/vacancy/:id/chats/:date', async (req, reply) => {
+    server.get('/vacancies/:id/chats/:date', async (req, reply) => {
         const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
         if (!requireRole(user, 'hr', reply)) return
         const { id, date } = req.params as { id: string; date: string };

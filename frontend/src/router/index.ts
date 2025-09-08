@@ -13,7 +13,7 @@ const router = createRouter({
         { path: '/login', component: Login },
         { path: '/voice-chat/:chatId?', component: VoiceChat },
         { path: '/vacancies', component: Vacancies },
-        { path: '/vacancy/:id/analytics', component: VacancyAnalytics },
+        { path: '/vacancies/:id/analytics', component: VacancyAnalytics },
         { path: '/resumes', component: Resumes },
         { path: '/profile', component: Profile },
     ],

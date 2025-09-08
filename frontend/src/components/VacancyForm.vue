@@ -6,9 +6,8 @@ import InputNumber from 'primevue/inputnumber'
 import Slider from 'primevue/slider'
 import Button from 'primevue/button'
 import FloatLabel from 'primevue/floatlabel'
-import { InputText as InputTextPrime } from 'primevue'
 import { REQUIREMENT_TYPES } from '../__data__/constants'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 type ReqRow = { id: string; description: string; type: 'technical_skill' | 'soft_skill'; weight: number }
 type FormModel = { title: string; description_text: string; requirements: Array<ReqRow>; weights: Record<string, number> }
@@ -24,6 +23,52 @@ const emit = defineEmits<{
 const reqTypes = REQUIREMENT_TYPES as unknown as Array<{ value: 'technical_skill' | 'soft_skill'; label: string }>
 const model = ref<FormModel>({...props.modelValue})
 
+// Отслеживаем изменения весов и корректируем пропорции
+function adjustWeights(changedType: string, newValue: number) {
+  const weights = { ...model.value.weights }
+  
+  // Устанавливаем новое значение
+  weights[changedType] = Math.max(0, Math.min(1, newValue))
+  
+  // Получаем остальные типы
+  const otherTypes = reqTypes.filter(type => type.value !== changedType)
+  
+  if (otherTypes.length === 0) return weights
+  
+  // Вычисляем остаток для распределения
+  const remaining = 1 - weights[changedType]
+  
+  // Получаем сумму остальных весов
+  const otherSum = otherTypes.reduce((sum, type) => sum + weights[type.value], 0)
+  
+  if (otherSum > 0) {
+    // Пропорционально распределяем остаток
+    otherTypes.forEach(type => {
+      const proportion = weights[type.value] / otherSum
+      weights[type.value] = remaining * proportion
+    })
+  } else {
+    // Если остальные веса равны 0, распределяем поровну
+    const equalShare = remaining / otherTypes.length
+    otherTypes.forEach(type => {
+      weights[type.value] = equalShare
+    })
+  }
+  
+  model.value.weights = weights
+  emit('update:modelValue', model.value)
+}
+
+// Функция для обновления веса конкретного типа
+function updateWeight(type: string, value: number) {
+  adjustWeights(type, value)
+}
+
+// Получаем процентное значение для отображения
+function getPercentage(value: number): string {
+  return `${Math.round(value * 100)}%`
+}
+
 function addReq() { 
   emit('add-req')
 }
@@ -35,6 +80,11 @@ function delReq(idx: number) {
 function submit() {
   emit('submit', model.value)
 }
+
+// Следим за изменениями props и обновляем модель
+watch(() => props.modelValue, (newValue) => {
+  model.value = {...newValue}
+}, { deep: true })
 </script>
 
 <template>
@@ -45,22 +95,35 @@ function submit() {
     <label>Описание</label>
     <Textarea v-model="model.description_text" rows="4" autoResize placeholder="Короткое описание позиции" />
 
-    <label>Вес категорий</label>
+    <label>Соотношение категорий</label>
     <div class="weights">
       <div v-for="type in reqTypes" :key="type.value" class="w-row">
         <span class="w-label">{{ type.label }}</span>
-        <Slider v-model="model.weights[type.value]" :min="0" :max="1" :step="0.05" class="w-slider"/>
-        <FloatLabel variant="on">
+        <Slider 
+          :modelValue="model.weights[type.value]" 
+          @update:modelValue="(value) => updateWeight(type.value, Array.isArray(value) ? value[0] : value)"
+          :min="0" 
+          :max="1" 
+          :step="0.01" 
+          class="w-slider"
+        />
+        <div class="weight-display">
           <InputNumber 
-            v-model="model.weights[type.value]"
+            :modelValue="Math.round(model.weights[type.value] * 100)"
+            @update:modelValue="(value) => updateWeight(type.value, (value || 0) / 100)"
             :min="0"
-            :max="1"
-            :step="0.05"
+            :max="100"
+            :step="1"
             mode="decimal"
-            id="weight"
+            suffix="%"
+            :id="`weight-${type.value}`"
+            class="weight-input"
           />
-          <label for="weight">Вес</label>
-        </FloatLabel>
+        </div>
+      </div>
+      <div class="total-display">
+        <span class="total-label">Общая сумма:</span>
+        <span class="total-value">{{ getPercentage(Object.values(model.weights).reduce((sum, val) => sum + val, 0)) }}</span>
       </div>
     </div>
 
@@ -123,6 +186,38 @@ function submit() {
 
 .w-slider { 
   width: 100%;
+}
+
+.weight-display {
+  display: flex;
+  align-items: center;
+}
+
+.weight-input {
+  width: 80px;
+}
+
+.total-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--surface-ground);
+  border: 1px solid var(--surface-border);
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.total-label {
+  font-weight: 600;
+  color: var(--text-color-secondary);
+}
+
+.total-value {
+  font-weight: 700;
+  color: var(--primary-color);
+  font-size: 16px;
 }
 
 .req-list { 

@@ -31,7 +31,7 @@ const chartOptions = computed(() => ({
       show: false
     },
     events: {
-      dataPointSelection: (event: any, chartContext: any, config: any) => {
+      dataPointSelection: (_event: any, _chartContext: any, config: any) => {
         if (!useTestData.value) {
           handleHeatmapClick(config.seriesIndex, config.dataPointIndex)
         }
@@ -254,7 +254,7 @@ async function handleHeatmapClick(seriesIndex: number, dataPointIndex: number) {
 async function loadChatsForDate(dateStr: string) {
   try {
     loadingChats.value = true
-    const response = await axiosInstance.get(`/vacancy/${vacancyId}/chats/${dateStr}`)
+    const response = await axiosInstance.get(`/vacancies/${vacancyId}/chats/${dateStr}`)
     selectedDateChats.value = response.data
   } catch (error: any) {
     console.error('Failed to load chats for date:', error)
@@ -288,8 +288,8 @@ async function loadData() {
     
     // Load vacancy details and analytics in parallel
     const [vacancyResponse, analyticsResponse] = await Promise.all([
-      axiosInstance.get(`/vacancy/${vacancyId}`),
-      axiosInstance.get(`/vacancy/${vacancyId}/analytics`)
+      axiosInstance.get(`/vacancies/${vacancyId}`),
+      axiosInstance.get(`/vacancies/${vacancyId}/analytics`)
     ])
     
     vacancy.value = vacancyResponse.data
@@ -522,7 +522,7 @@ onMounted(loadData)
                         :key="category"
                         class="weight-item"
                       >
-                        <span class="weight-label">{{ getRequirementTypeLabel(category as string) }}</span>
+                        <span class="weight-label">{{ getRequirementTypeLabel(String(category)) }}</span>
                         <div class="weight-bar">
                           <div 
                             class="weight-fill" 
