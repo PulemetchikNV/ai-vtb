@@ -1,5 +1,4 @@
 import { computed, ref, watch } from 'vue'
-import { synthesizeAndPlay } from '../services/ttsClient'
 import { useRoute } from 'vue-router'
 import router from '../router'
 import { chatHistory } from '../__data__/store'
@@ -9,6 +8,7 @@ import { addMessage } from '../__data__/notifications'
 export type Chat = {
     id: string
     title: string | null
+    lang: string
     createdAt: string
     updatedAt: string
     messages: Message[]
@@ -141,7 +141,7 @@ export function useChat() {
     const wsConnected = ref(false)
     const wsReconnecting = ref(false)
 
-    async function startChat(title?: string | null, vacancyId?: string | null, resumeId?: string | null) {
+    async function startChat(title?: string | null, vacancyId?: string | null, resumeId?: string | null, lang?: string) {
         loading.value = true
         error.value = null
         try {
@@ -157,6 +157,7 @@ export function useChat() {
 
             const res = await api.post<Chat>('/chat', {
                 title: title?.trim() || null,
+                lang: lang || 'ru',
                 vacancyId,
                 resumeId: resumeId || null
             })
@@ -197,6 +198,7 @@ export function useChat() {
         error.value = null
         try {
             const res = await api.get<{ id: string; messages: Message[]; analysis?: any } & any>(`/chat/${id}`)
+            if(!res.data.id) throw new Error('Chat not found')
             currentChatId.value = res.data.id
             chat.value = res.data
             if (res.data.analysis) {

@@ -82,9 +82,13 @@ def analyze_pauses(audio_file_path, aggressiveness=1, frame_duration_ms=30, min_
         "pauses_ms": pauses
     }
 
-def analyze_sentiment(audio_file_path):
+def analyze_sentiment(audio_file_path, lang='ru'):
     """
     Анализирует тональность и паузы в аудиофайле.
+    
+    Args:
+        audio_file_path: путь к WAV файлу
+        lang: язык для распознавания ('ru', 'en', etc.)
     """
     if not os.path.exists(audio_file_path):
         return {"error": f"Файл не найден: {audio_file_path}"}
@@ -114,6 +118,33 @@ def analyze_sentiment(audio_file_path):
         raw_bytes = audio.raw_data
 
         asr = model_repository.recognition_model()
+        
+        # Задаём настройки распознавания
+        asr.model = 'general'
+        # Преобразуем код языка в формат Яндекса
+        if lang == 'en':
+            asr.language = 'en-US'
+        elif lang == 'ru':
+            asr.language = 'ru-RU'
+        else:
+            asr.language = 'ru-RU'  # по умолчанию русский
+        
+        # Попробуем разные варианты импорта и установки AudioProcessingType
+        try:
+            from speechkit import AudioProcessingType
+            asr.audio_processing_type = AudioProcessingType.Full
+        except ImportError:
+            try:
+                from speechkit.stt import AudioProcessingType
+                asr.audio_processing_type = AudioProcessingType.Full
+            except ImportError:
+                try:
+                    # Попробуем установить как строку
+                    asr.audio_processing_type = 'Full'
+                except Exception:
+                    # Если ничего не работает, пропускаем этот параметр
+                    print("Warning: AudioProcessingType not available, skipping audio_processing_type setting")
+        
         # Если SDK поддерживает прямую подачу байтов:
         # asr.recognize(raw_audio=raw_bytes, format='lpcm', sampleRateHertz=16000)
         # Универсально через временный файл

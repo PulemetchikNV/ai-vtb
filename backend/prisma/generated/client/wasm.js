@@ -125,6 +125,7 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
 exports.Prisma.ChatScalarFieldEnum = {
   id: 'id',
   title: 'title',
+  lang: 'lang',
   vacancyId: 'vacancyId',
   resumeId: 'resumeId',
   requirements_checklist: 'requirements_checklist',
@@ -172,7 +173,6 @@ exports.Prisma.UserScalarFieldEnum = {
   email: 'email',
   password: 'password',
   role: 'role',
-  telegram_id: 'telegram_id',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

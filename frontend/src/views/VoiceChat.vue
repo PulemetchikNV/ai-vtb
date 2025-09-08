@@ -23,9 +23,11 @@ import { useVacancies } from '../composables/useVacancies'
 import { useResumes } from '../composables/useResumes'
 import AnalysisView from '../components/AnalysisView.vue'
 import { synthesizeAndPlay } from '../services/ttsClient'
+import type { Lang } from '../types/common'
+import { LANG_OPTIONS } from '../__data__/constants'
 
 // Chat composable
-const { startChat, sendMessage, fetchChat, chat, finishChat, currentChatId, messages, loadChatHistory, loading, analysis, analysisError, error: chatError, wsConnected, wsReconnecting, getErrorMessage } = useChat()
+const { startChat, deleteChat, sendMessage, fetchChat, chat, finishChat, currentChatId, messages, loadChatHistory, loading, analysis, analysisError, error: chatError, wsConnected, wsReconnecting, getErrorMessage } = useChat()
 const route = useRoute()
 const router = useRouter()
 
@@ -36,6 +38,7 @@ const activeTab = ref('voice') // Дефолт - звуковая вкладка
 const inputText = ref('')
 const selectedVacancyId = ref<string | null>(null)
 const selectedResumeId = ref<string | null>(null)
+const selectedLang = ref<Lang>('ru')
 const showNewChat = ref(false)
 const { vacancies, load: loadVacancies } = useVacancies()
 const { resumes, load: loadResumes } = useResumes()
@@ -61,6 +64,7 @@ async function handleSend() {
 }
 
 // Voice/WebSocket area via composable
+const lang = ref<Lang>('ru')
 const voice = useVoiceChat(() => currentChatId.value)
 const isRecording = voice.isRecording
 const lastSegment = voice.lastSegment
@@ -116,22 +120,24 @@ function handleNewChat() {
 
 async function confirmStartChat() {
   if (!selectedVacancyId.value) return
-  const chat = await startChat(`Собеседование (${selectedVacancyId.value})`, selectedVacancyId.value, selectedResumeId.value || undefined)
+  const chat = await startChat(`Собеседование (${selectedVacancyId.value})`, selectedVacancyId.value, selectedResumeId.value || undefined, selectedLang.value)
   showNewChat.value = false
+  if(!chat) return
+
   router.push({ path: `/voice-chat/${chat.id}` })
   loadChatHistory()
 }
 
 async function handleDeleteChat(id: string) {
   if (currentChatId.value === id) {
-    router.replace({ path: `/voice-chat` })
+    router.push({ path: `/voice-chat` })
     chat.value = null
     messages.value = []
     analysis.value = null
     analysisError.value = false
-
-    loadChatHistory()
   }
+
+  loadChatHistory()
 }
 
 // Обработчик TTS событий
@@ -141,7 +147,7 @@ function handleTTSMessage(event: CustomEvent) {
   // Начинаем воспроизведение и синхронизацию
   isAssistantSpeaking.value = true
   
-  synthesizeAndPlay(text, {
+  synthesizeAndPlay(text, lang.value, {
     onStart: () => {
       startTypingEffect(text)
     },
@@ -211,6 +217,11 @@ watchEffect(async () => {
     analysis.value = null
     analysisError.value = false
     await fetchChat(currentChatId.value)
+    
+    // Устанавливаем язык из полученного чата
+    if (chat.value?.lang) {
+      lang.value = chat.value.lang as Lang
+    }
   }
 })
 
@@ -250,7 +261,7 @@ watchEffect(() => {
           </div>
           <div class="actions" v-if="!isHrViewMode">
             <Button :label="isMobile ? '' : 'Новый'" icon="pi pi-plus" size="small" @click="handleNewChat" :disabled="loading" />
-            <Button :label="isMobile ? '' : 'Удалить'" icon="pi pi-trash" size="small" severity="danger" class="ml-8" @click="handleDeleteChat(currentChatId as string)" :disabled="!currentChatId || loading" />
+            <Button :label="isMobile ? '' : 'Удалить'" icon="pi pi-trash" size="small" severity="danger" class="ml-8" @click="deleteChat(currentChatId as string); handleDeleteChat(currentChatId as string)" :disabled="!currentChatId || loading" />
             <Button 
               :label="isMobile ? '' : (chat?.is_finished ? 'Перегенерировать анализ' : 'Завершить')"
               icon="pi pi-check-circle"
@@ -534,6 +545,20 @@ watchEffect(() => {
       />
       <small class="help-text">
         Резюме поможет AI лучше понять кандидата
+      </small>
+      
+      <label class="mt-12">Язык собеседования *</label>
+      <Dropdown 
+        v-model="selectedLang" 
+        :options="LANG_OPTIONS as any" 
+        optionLabel="label" 
+        optionValue="value" 
+        placeholder="Выбор языка" 
+        class="w-full" 
+        style="width: 100%" 
+      />
+      <small class="help-text">
+        Выберите язык для распознавания речи и синтеза голоса
       </small>
       
       <div class="actions mt-12">

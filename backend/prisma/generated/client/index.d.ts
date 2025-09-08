@@ -1358,6 +1358,7 @@ export namespace Prisma {
   export type ChatMinAggregateOutputType = {
     id: string | null
     title: string | null
+    lang: string | null
     vacancyId: string | null
     resumeId: string | null
     is_finished: boolean | null
@@ -1369,6 +1370,7 @@ export namespace Prisma {
   export type ChatMaxAggregateOutputType = {
     id: string | null
     title: string | null
+    lang: string | null
     vacancyId: string | null
     resumeId: string | null
     is_finished: boolean | null
@@ -1380,6 +1382,7 @@ export namespace Prisma {
   export type ChatCountAggregateOutputType = {
     id: number
     title: number
+    lang: number
     vacancyId: number
     resumeId: number
     requirements_checklist: number
@@ -1396,6 +1399,7 @@ export namespace Prisma {
   export type ChatMinAggregateInputType = {
     id?: true
     title?: true
+    lang?: true
     vacancyId?: true
     resumeId?: true
     is_finished?: true
@@ -1407,6 +1411,7 @@ export namespace Prisma {
   export type ChatMaxAggregateInputType = {
     id?: true
     title?: true
+    lang?: true
     vacancyId?: true
     resumeId?: true
     is_finished?: true
@@ -1418,6 +1423,7 @@ export namespace Prisma {
   export type ChatCountAggregateInputType = {
     id?: true
     title?: true
+    lang?: true
     vacancyId?: true
     resumeId?: true
     requirements_checklist?: true
@@ -1505,6 +1511,7 @@ export namespace Prisma {
   export type ChatGroupByOutputType = {
     id: string
     title: string | null
+    lang: string
     vacancyId: string | null
     resumeId: string | null
     requirements_checklist: JsonValue | null
@@ -1536,6 +1543,7 @@ export namespace Prisma {
   export type ChatSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     title?: boolean
+    lang?: boolean
     vacancyId?: boolean
     resumeId?: boolean
     requirements_checklist?: boolean
@@ -1555,6 +1563,7 @@ export namespace Prisma {
   export type ChatSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     title?: boolean
+    lang?: boolean
     vacancyId?: boolean
     resumeId?: boolean
     requirements_checklist?: boolean
@@ -1572,6 +1581,7 @@ export namespace Prisma {
   export type ChatSelectScalar = {
     id?: boolean
     title?: boolean
+    lang?: boolean
     vacancyId?: boolean
     resumeId?: boolean
     requirements_checklist?: boolean
@@ -1607,6 +1617,7 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: string
       title: string | null
+      lang: string
       vacancyId: string | null
       resumeId: string | null
       requirements_checklist: Prisma.JsonValue | null
@@ -2015,6 +2026,7 @@ export namespace Prisma {
   interface ChatFieldRefs {
     readonly id: FieldRef<"Chat", 'String'>
     readonly title: FieldRef<"Chat", 'String'>
+    readonly lang: FieldRef<"Chat", 'String'>
     readonly vacancyId: FieldRef<"Chat", 'String'>
     readonly resumeId: FieldRef<"Chat", 'String'>
     readonly requirements_checklist: FieldRef<"Chat", 'Json'>
@@ -5389,7 +5401,6 @@ export namespace Prisma {
     email: string | null
     password: string | null
     role: $Enums.Role | null
-    telegram_id: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -5399,7 +5410,6 @@ export namespace Prisma {
     email: string | null
     password: string | null
     role: $Enums.Role | null
-    telegram_id: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -5409,7 +5419,6 @@ export namespace Prisma {
     email: number
     password: number
     role: number
-    telegram_id: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -5421,7 +5430,6 @@ export namespace Prisma {
     email?: true
     password?: true
     role?: true
-    telegram_id?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -5431,7 +5439,6 @@ export namespace Prisma {
     email?: true
     password?: true
     role?: true
-    telegram_id?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -5441,7 +5448,6 @@ export namespace Prisma {
     email?: true
     password?: true
     role?: true
-    telegram_id?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -5524,7 +5530,6 @@ export namespace Prisma {
     email: string
     password: string
     role: $Enums.Role
-    telegram_id: string | null
     createdAt: Date
     updatedAt: Date
     _count: UserCountAggregateOutputType | null
@@ -5551,7 +5556,6 @@ export namespace Prisma {
     email?: boolean
     password?: boolean
     role?: boolean
-    telegram_id?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     chats?: boolean | User$chatsArgs<ExtArgs>
@@ -5565,7 +5569,6 @@ export namespace Prisma {
     email?: boolean
     password?: boolean
     role?: boolean
-    telegram_id?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["user"]>
@@ -5575,7 +5578,6 @@ export namespace Prisma {
     email?: boolean
     password?: boolean
     role?: boolean
-    telegram_id?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
@@ -5600,7 +5602,6 @@ export namespace Prisma {
       email: string
       password: string
       role: $Enums.Role
-      telegram_id: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["user"]>
@@ -6003,7 +6004,6 @@ export namespace Prisma {
     readonly email: FieldRef<"User", 'String'>
     readonly password: FieldRef<"User", 'String'>
     readonly role: FieldRef<"User", 'Role'>
-    readonly telegram_id: FieldRef<"User", 'String'>
     readonly createdAt: FieldRef<"User", 'DateTime'>
     readonly updatedAt: FieldRef<"User", 'DateTime'>
   }
@@ -6411,6 +6411,7 @@ export namespace Prisma {
   export const ChatScalarFieldEnum: {
     id: 'id',
     title: 'title',
+    lang: 'lang',
     vacancyId: 'vacancyId',
     resumeId: 'resumeId',
     requirements_checklist: 'requirements_checklist',
@@ -6470,7 +6471,6 @@ export namespace Prisma {
     email: 'email',
     password: 'password',
     role: 'role',
-    telegram_id: 'telegram_id',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -6610,6 +6610,7 @@ export namespace Prisma {
     NOT?: ChatWhereInput | ChatWhereInput[]
     id?: StringFilter<"Chat"> | string
     title?: StringNullableFilter<"Chat"> | string | null
+    lang?: StringFilter<"Chat"> | string
     vacancyId?: StringNullableFilter<"Chat"> | string | null
     resumeId?: StringNullableFilter<"Chat"> | string | null
     requirements_checklist?: JsonNullableFilter<"Chat">
@@ -6628,6 +6629,7 @@ export namespace Prisma {
   export type ChatOrderByWithRelationInput = {
     id?: SortOrder
     title?: SortOrderInput | SortOrder
+    lang?: SortOrder
     vacancyId?: SortOrderInput | SortOrder
     resumeId?: SortOrderInput | SortOrder
     requirements_checklist?: SortOrderInput | SortOrder
@@ -6649,6 +6651,7 @@ export namespace Prisma {
     OR?: ChatWhereInput[]
     NOT?: ChatWhereInput | ChatWhereInput[]
     title?: StringNullableFilter<"Chat"> | string | null
+    lang?: StringFilter<"Chat"> | string
     vacancyId?: StringNullableFilter<"Chat"> | string | null
     resumeId?: StringNullableFilter<"Chat"> | string | null
     requirements_checklist?: JsonNullableFilter<"Chat">
@@ -6667,6 +6670,7 @@ export namespace Prisma {
   export type ChatOrderByWithAggregationInput = {
     id?: SortOrder
     title?: SortOrderInput | SortOrder
+    lang?: SortOrder
     vacancyId?: SortOrderInput | SortOrder
     resumeId?: SortOrderInput | SortOrder
     requirements_checklist?: SortOrderInput | SortOrder
@@ -6687,6 +6691,7 @@ export namespace Prisma {
     NOT?: ChatScalarWhereWithAggregatesInput | ChatScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"Chat"> | string
     title?: StringNullableWithAggregatesFilter<"Chat"> | string | null
+    lang?: StringWithAggregatesFilter<"Chat"> | string
     vacancyId?: StringNullableWithAggregatesFilter<"Chat"> | string | null
     resumeId?: StringNullableWithAggregatesFilter<"Chat"> | string | null
     requirements_checklist?: JsonNullableWithAggregatesFilter<"Chat">
@@ -6912,7 +6917,6 @@ export namespace Prisma {
     email?: StringFilter<"User"> | string
     password?: StringFilter<"User"> | string
     role?: EnumRoleFilter<"User"> | $Enums.Role
-    telegram_id?: StringNullableFilter<"User"> | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     chats?: ChatListRelationFilter
@@ -6925,7 +6929,6 @@ export namespace Prisma {
     email?: SortOrder
     password?: SortOrder
     role?: SortOrder
-    telegram_id?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     chats?: ChatOrderByRelationAggregateInput
@@ -6936,7 +6939,6 @@ export namespace Prisma {
   export type UserWhereUniqueInput = Prisma.AtLeast<{
     id?: string
     email?: string
-    telegram_id?: string
     AND?: UserWhereInput | UserWhereInput[]
     OR?: UserWhereInput[]
     NOT?: UserWhereInput | UserWhereInput[]
@@ -6947,14 +6949,13 @@ export namespace Prisma {
     chats?: ChatListRelationFilter
     vacancies?: VacancyListRelationFilter
     resumes?: ResumeListRelationFilter
-  }, "id" | "email" | "telegram_id">
+  }, "id" | "email">
 
   export type UserOrderByWithAggregationInput = {
     id?: SortOrder
     email?: SortOrder
     password?: SortOrder
     role?: SortOrder
-    telegram_id?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: UserCountOrderByAggregateInput
@@ -6970,7 +6971,6 @@ export namespace Prisma {
     email?: StringWithAggregatesFilter<"User"> | string
     password?: StringWithAggregatesFilter<"User"> | string
     role?: EnumRoleWithAggregatesFilter<"User"> | $Enums.Role
-    telegram_id?: StringNullableWithAggregatesFilter<"User"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
   }
@@ -6978,6 +6978,7 @@ export namespace Prisma {
   export type ChatCreateInput = {
     id?: string
     title?: string | null
+    lang?: string
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
     facts_meta?: NullableJsonNullValueInput | InputJsonValue
@@ -6993,6 +6994,7 @@ export namespace Prisma {
   export type ChatUncheckedCreateInput = {
     id?: string
     title?: string | null
+    lang?: string
     vacancyId?: string | null
     resumeId?: string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
@@ -7008,6 +7010,7 @@ export namespace Prisma {
   export type ChatUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: NullableStringFieldUpdateOperationsInput | string | null
+    lang?: StringFieldUpdateOperationsInput | string
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
     facts_meta?: NullableJsonNullValueInput | InputJsonValue
@@ -7023,6 +7026,7 @@ export namespace Prisma {
   export type ChatUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: NullableStringFieldUpdateOperationsInput | string | null
+    lang?: StringFieldUpdateOperationsInput | string
     vacancyId?: NullableStringFieldUpdateOperationsInput | string | null
     resumeId?: NullableStringFieldUpdateOperationsInput | string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
@@ -7038,6 +7042,7 @@ export namespace Prisma {
   export type ChatCreateManyInput = {
     id?: string
     title?: string | null
+    lang?: string
     vacancyId?: string | null
     resumeId?: string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
@@ -7052,6 +7057,7 @@ export namespace Prisma {
   export type ChatUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: NullableStringFieldUpdateOperationsInput | string | null
+    lang?: StringFieldUpdateOperationsInput | string
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
     facts_meta?: NullableJsonNullValueInput | InputJsonValue
@@ -7063,6 +7069,7 @@ export namespace Prisma {
   export type ChatUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: NullableStringFieldUpdateOperationsInput | string | null
+    lang?: StringFieldUpdateOperationsInput | string
     vacancyId?: NullableStringFieldUpdateOperationsInput | string | null
     resumeId?: NullableStringFieldUpdateOperationsInput | string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
@@ -7301,7 +7308,6 @@ export namespace Prisma {
     email: string
     password: string
     role?: $Enums.Role
-    telegram_id?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     chats?: ChatCreateNestedManyWithoutUserInput
@@ -7314,7 +7320,6 @@ export namespace Prisma {
     email: string
     password: string
     role?: $Enums.Role
-    telegram_id?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     chats?: ChatUncheckedCreateNestedManyWithoutUserInput
@@ -7327,7 +7332,6 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    telegram_id?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     chats?: ChatUpdateManyWithoutUserNestedInput
@@ -7340,7 +7344,6 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    telegram_id?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     chats?: ChatUncheckedUpdateManyWithoutUserNestedInput
@@ -7353,7 +7356,6 @@ export namespace Prisma {
     email: string
     password: string
     role?: $Enums.Role
-    telegram_id?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -7363,7 +7365,6 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    telegram_id?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -7373,7 +7374,6 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    telegram_id?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -7479,6 +7479,7 @@ export namespace Prisma {
   export type ChatCountOrderByAggregateInput = {
     id?: SortOrder
     title?: SortOrder
+    lang?: SortOrder
     vacancyId?: SortOrder
     resumeId?: SortOrder
     requirements_checklist?: SortOrder
@@ -7493,6 +7494,7 @@ export namespace Prisma {
   export type ChatMaxOrderByAggregateInput = {
     id?: SortOrder
     title?: SortOrder
+    lang?: SortOrder
     vacancyId?: SortOrder
     resumeId?: SortOrder
     is_finished?: SortOrder
@@ -7504,6 +7506,7 @@ export namespace Prisma {
   export type ChatMinOrderByAggregateInput = {
     id?: SortOrder
     title?: SortOrder
+    lang?: SortOrder
     vacancyId?: SortOrder
     resumeId?: SortOrder
     is_finished?: SortOrder
@@ -7776,7 +7779,6 @@ export namespace Prisma {
     email?: SortOrder
     password?: SortOrder
     role?: SortOrder
-    telegram_id?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -7786,7 +7788,6 @@ export namespace Prisma {
     email?: SortOrder
     password?: SortOrder
     role?: SortOrder
-    telegram_id?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -7796,7 +7797,6 @@ export namespace Prisma {
     email?: SortOrder
     password?: SortOrder
     role?: SortOrder
-    telegram_id?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -8419,7 +8419,6 @@ export namespace Prisma {
     email: string
     password: string
     role?: $Enums.Role
-    telegram_id?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     vacancies?: VacancyCreateNestedManyWithoutUserInput
@@ -8431,7 +8430,6 @@ export namespace Prisma {
     email: string
     password: string
     role?: $Enums.Role
-    telegram_id?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     vacancies?: VacancyUncheckedCreateNestedManyWithoutUserInput
@@ -8551,7 +8549,6 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    telegram_id?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     vacancies?: VacancyUpdateManyWithoutUserNestedInput
@@ -8563,7 +8560,6 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    telegram_id?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     vacancies?: VacancyUncheckedUpdateManyWithoutUserNestedInput
@@ -8601,6 +8597,7 @@ export namespace Prisma {
   export type ChatCreateWithoutMessagesInput = {
     id?: string
     title?: string | null
+    lang?: string
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
     facts_meta?: NullableJsonNullValueInput | InputJsonValue
@@ -8615,6 +8612,7 @@ export namespace Prisma {
   export type ChatUncheckedCreateWithoutMessagesInput = {
     id?: string
     title?: string | null
+    lang?: string
     vacancyId?: string | null
     resumeId?: string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
@@ -8645,6 +8643,7 @@ export namespace Prisma {
   export type ChatUpdateWithoutMessagesInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: NullableStringFieldUpdateOperationsInput | string | null
+    lang?: StringFieldUpdateOperationsInput | string
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
     facts_meta?: NullableJsonNullValueInput | InputJsonValue
@@ -8659,6 +8658,7 @@ export namespace Prisma {
   export type ChatUncheckedUpdateWithoutMessagesInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: NullableStringFieldUpdateOperationsInput | string | null
+    lang?: StringFieldUpdateOperationsInput | string
     vacancyId?: NullableStringFieldUpdateOperationsInput | string | null
     resumeId?: NullableStringFieldUpdateOperationsInput | string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
@@ -8673,6 +8673,7 @@ export namespace Prisma {
   export type ChatCreateWithoutVacancyInput = {
     id?: string
     title?: string | null
+    lang?: string
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
     facts_meta?: NullableJsonNullValueInput | InputJsonValue
@@ -8687,6 +8688,7 @@ export namespace Prisma {
   export type ChatUncheckedCreateWithoutVacancyInput = {
     id?: string
     title?: string | null
+    lang?: string
     resumeId?: string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
@@ -8713,7 +8715,6 @@ export namespace Prisma {
     email: string
     password: string
     role?: $Enums.Role
-    telegram_id?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     chats?: ChatCreateNestedManyWithoutUserInput
@@ -8725,7 +8726,6 @@ export namespace Prisma {
     email: string
     password: string
     role?: $Enums.Role
-    telegram_id?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     chats?: ChatUncheckedCreateNestedManyWithoutUserInput
@@ -8759,6 +8759,7 @@ export namespace Prisma {
     NOT?: ChatScalarWhereInput | ChatScalarWhereInput[]
     id?: StringFilter<"Chat"> | string
     title?: StringNullableFilter<"Chat"> | string | null
+    lang?: StringFilter<"Chat"> | string
     vacancyId?: StringNullableFilter<"Chat"> | string | null
     resumeId?: StringNullableFilter<"Chat"> | string | null
     requirements_checklist?: JsonNullableFilter<"Chat">
@@ -8786,7 +8787,6 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    telegram_id?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     chats?: ChatUpdateManyWithoutUserNestedInput
@@ -8798,7 +8798,6 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    telegram_id?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     chats?: ChatUncheckedUpdateManyWithoutUserNestedInput
@@ -8808,6 +8807,7 @@ export namespace Prisma {
   export type ChatCreateWithoutResumeInput = {
     id?: string
     title?: string | null
+    lang?: string
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
     facts_meta?: NullableJsonNullValueInput | InputJsonValue
@@ -8822,6 +8822,7 @@ export namespace Prisma {
   export type ChatUncheckedCreateWithoutResumeInput = {
     id?: string
     title?: string | null
+    lang?: string
     vacancyId?: string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
@@ -8848,7 +8849,6 @@ export namespace Prisma {
     email: string
     password: string
     role?: $Enums.Role
-    telegram_id?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     chats?: ChatCreateNestedManyWithoutUserInput
@@ -8860,7 +8860,6 @@ export namespace Prisma {
     email: string
     password: string
     role?: $Enums.Role
-    telegram_id?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     chats?: ChatUncheckedCreateNestedManyWithoutUserInput
@@ -8904,7 +8903,6 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    telegram_id?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     chats?: ChatUpdateManyWithoutUserNestedInput
@@ -8916,7 +8914,6 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    telegram_id?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     chats?: ChatUncheckedUpdateManyWithoutUserNestedInput
@@ -8926,6 +8923,7 @@ export namespace Prisma {
   export type ChatCreateWithoutUserInput = {
     id?: string
     title?: string | null
+    lang?: string
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
     facts_meta?: NullableJsonNullValueInput | InputJsonValue
@@ -8940,6 +8938,7 @@ export namespace Prisma {
   export type ChatUncheckedCreateWithoutUserInput = {
     id?: string
     title?: string | null
+    lang?: string
     vacancyId?: string | null
     resumeId?: string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
@@ -9136,6 +9135,7 @@ export namespace Prisma {
   export type ChatCreateManyVacancyInput = {
     id?: string
     title?: string | null
+    lang?: string
     resumeId?: string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
@@ -9149,6 +9149,7 @@ export namespace Prisma {
   export type ChatUpdateWithoutVacancyInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: NullableStringFieldUpdateOperationsInput | string | null
+    lang?: StringFieldUpdateOperationsInput | string
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
     facts_meta?: NullableJsonNullValueInput | InputJsonValue
@@ -9163,6 +9164,7 @@ export namespace Prisma {
   export type ChatUncheckedUpdateWithoutVacancyInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: NullableStringFieldUpdateOperationsInput | string | null
+    lang?: StringFieldUpdateOperationsInput | string
     resumeId?: NullableStringFieldUpdateOperationsInput | string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
@@ -9177,6 +9179,7 @@ export namespace Prisma {
   export type ChatUncheckedUpdateManyWithoutVacancyInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: NullableStringFieldUpdateOperationsInput | string | null
+    lang?: StringFieldUpdateOperationsInput | string
     resumeId?: NullableStringFieldUpdateOperationsInput | string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
@@ -9190,6 +9193,7 @@ export namespace Prisma {
   export type ChatCreateManyResumeInput = {
     id?: string
     title?: string | null
+    lang?: string
     vacancyId?: string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
@@ -9203,6 +9207,7 @@ export namespace Prisma {
   export type ChatUpdateWithoutResumeInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: NullableStringFieldUpdateOperationsInput | string | null
+    lang?: StringFieldUpdateOperationsInput | string
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
     facts_meta?: NullableJsonNullValueInput | InputJsonValue
@@ -9217,6 +9222,7 @@ export namespace Prisma {
   export type ChatUncheckedUpdateWithoutResumeInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: NullableStringFieldUpdateOperationsInput | string | null
+    lang?: StringFieldUpdateOperationsInput | string
     vacancyId?: NullableStringFieldUpdateOperationsInput | string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
@@ -9231,6 +9237,7 @@ export namespace Prisma {
   export type ChatUncheckedUpdateManyWithoutResumeInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: NullableStringFieldUpdateOperationsInput | string | null
+    lang?: StringFieldUpdateOperationsInput | string
     vacancyId?: NullableStringFieldUpdateOperationsInput | string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
@@ -9244,6 +9251,7 @@ export namespace Prisma {
   export type ChatCreateManyUserInput = {
     id?: string
     title?: string | null
+    lang?: string
     vacancyId?: string | null
     resumeId?: string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
@@ -9277,6 +9285,7 @@ export namespace Prisma {
   export type ChatUpdateWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: NullableStringFieldUpdateOperationsInput | string | null
+    lang?: StringFieldUpdateOperationsInput | string
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
     analysis?: NullableJsonNullValueInput | InputJsonValue
     facts_meta?: NullableJsonNullValueInput | InputJsonValue
@@ -9291,6 +9300,7 @@ export namespace Prisma {
   export type ChatUncheckedUpdateWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: NullableStringFieldUpdateOperationsInput | string | null
+    lang?: StringFieldUpdateOperationsInput | string
     vacancyId?: NullableStringFieldUpdateOperationsInput | string | null
     resumeId?: NullableStringFieldUpdateOperationsInput | string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue
@@ -9305,6 +9315,7 @@ export namespace Prisma {
   export type ChatUncheckedUpdateManyWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: NullableStringFieldUpdateOperationsInput | string | null
+    lang?: StringFieldUpdateOperationsInput | string
     vacancyId?: NullableStringFieldUpdateOperationsInput | string | null
     resumeId?: NullableStringFieldUpdateOperationsInput | string | null
     requirements_checklist?: NullableJsonNullValueInput | InputJsonValue

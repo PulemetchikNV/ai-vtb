@@ -62,8 +62,11 @@ def api_analyze():
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(filepath)
 
+    # Получаем язык из формы, по умолчанию 'ru'
+    lang = request.form.get('lang', 'ru')
+
     try:
-        analysis_result = analyze_sentiment(filepath)
+        analysis_result = analyze_sentiment(filepath, lang=lang)
     finally:
         # Удаляем временный файл после анализа
         try:

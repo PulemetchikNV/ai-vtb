@@ -9,7 +9,7 @@ export interface EmotionsResult {
 }
 
 export interface Transcriber {
-    transcribeAudioWebmOpus(audioBuffer: Buffer, opts?: { chatId?: string; segmentId?: string }): Promise<EmotionsResult>;
+    transcribeAudioWebmOpus(audioBuffer: Buffer, opts?: { chatId?: string; segmentId?: string; lang?: string }): Promise<EmotionsResult>;
 }
 
 export class StubTranscriber implements Transcriber {
@@ -25,7 +25,7 @@ export class EmotionsParserTranscriber implements Transcriber {
         this.baseUrl = baseUrl.replace(/\/$/, '')
     }
 
-    async transcribeAudioWebmOpus(audioBuffer: Buffer, opts?: { chatId?: string; segmentId?: string }): Promise<EmotionsResult> {
+    async transcribeAudioWebmOpus(audioBuffer: Buffer, opts?: { chatId?: string; segmentId?: string; lang?: string }): Promise<EmotionsResult> {
         const { transcodeWebmOpusToWav, isWav } = await import('./audio')
         // Convert to WAV if needed
         const wavBuffer = isWav(audioBuffer) ? audioBuffer : await transcodeWebmOpusToWav(audioBuffer)
@@ -34,6 +34,11 @@ export class EmotionsParserTranscriber implements Transcriber {
         const form = new FormData()
         const filename = `${opts?.segmentId || 'segment'}.wav`
         form.append('file', new Blob([wavBuffer], { type: 'audio/wav' }), filename)
+
+        // Добавляем язык в форму
+        if (opts?.lang) {
+            form.append('lang', opts.lang)
+        }
 
         const url = `${this.baseUrl}/api/analyze`
         const res = await fetch(url, { method: 'POST', body: form as any })

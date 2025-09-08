@@ -52,6 +52,7 @@ export default async function chatRoutes(server: FastifyInstance) {
                 type: 'object',
                 properties: {
                     title: { type: ['string', 'null'] },
+                    lang: { type: 'string' },
                     vacancyId: { type: ['string', 'null'] },
                     resumeId: { type: ['string', 'null'] }
                 },
@@ -60,7 +61,7 @@ export default async function chatRoutes(server: FastifyInstance) {
         }
     }, async (req, reply) => {
         const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
-        const body = (req.body as { title?: string | null; vacancyId?: string | null; resumeId?: string | null }) || {};
+        const body = (req.body as { title?: string | null; lang?: string; vacancyId?: string | null; resumeId?: string | null }) || {};
         const vacancy = body.vacancyId ? await prisma.vacancy.findUnique({ where: { id: body.vacancyId } }) : null;
         const initialChecklist = vacancy?.requirements_checklist || [];
 
@@ -68,6 +69,7 @@ export default async function chatRoutes(server: FastifyInstance) {
             data: ({
                 user: { connect: { id: user.id } },
                 title: body.title ?? null,
+                lang: body.lang ?? 'ru',
                 requirements_checklist: initialChecklist as any,
                 ...(body.vacancyId
                     ? { vacancy: { connect: { id: body.vacancyId } } }
@@ -90,7 +92,7 @@ export default async function chatRoutes(server: FastifyInstance) {
                 const resume = body.resumeId ? (await prisma.resume.findUnique({ where: { id: body.resumeId } })) : null;
 
                 const resumeText = resume?.text ?? resume?.text_raw ?? '';
-                const { systemPrompt, initialMessage } = await dialogueService.getInitialMessage({ vacancy, resumeText });
+                const { systemPrompt, initialMessage } = await dialogueService.getInitialMessage({ vacancy, resumeText, lang: body.lang });
                 await prisma.message.create({ data: { chatId: chat.id, role: 'user', content: ``, hiddenContent: systemPrompt } });
                 await prisma.message.create({ data: { chatId: chat.id, role: 'assistant', content: initialMessage } });
             } catch (e) {

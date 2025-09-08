@@ -114,7 +114,7 @@ def synthesize(payload: SynthesizeRequest) -> Response:
 class YaSynthesizeRequest(BaseModel):
     text: str
     voice: str | None = 'jane'
-    role: str | None = 'good'
+    role: str | None = ''
 
 
 @app.post("/synthesize-ya")

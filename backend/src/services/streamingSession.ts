@@ -37,8 +37,15 @@ export class StreamingAudioSession {
         const audio = Buffer.concat(this.bufferParts);
         this.bufferParts = [];
         try {
+            // Получаем язык чата из базы данных
+            const chat = await prisma.chat.findUnique({
+                where: { id: this.chatId },
+                select: { lang: true }
+            });
+            const lang = chat?.lang || 'ru';
+
             const segmentId = `${this.chatId}_${Date.now()}`;
-            const emotions = await this.transcriber.transcribeAudioWebmOpus(audio, { chatId: this.chatId, segmentId });
+            const emotions = await this.transcriber.transcribeAudioWebmOpus(audio, { chatId: this.chatId, segmentId, lang });
             const text = (emotions.recognized_text || '').trim();
             if (!text) return;
 

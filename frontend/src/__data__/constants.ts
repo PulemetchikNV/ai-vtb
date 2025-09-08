@@ -6,3 +6,8 @@ export const REQUIREMENT_TYPES = [
 
 
 export const TOKEN_KEY = 'token'
+
+export const LANG_OPTIONS = [
+    { value: 'ru', label: 'Русский', ttsOptions: { voice: 'julia', role: 'strict' } },
+    { value: 'en', label: 'Английский', ttsOptions: { voice: 'john' } },
+] as const

@@ -14,10 +14,19 @@ type GetNextMessageParams = {
 }
 
 export const dialogueService = {
-    async getInitialMessage({ vacancy, resumeText }: { vacancy: Vacancy, resumeText?: string }) {
+    async getInitialMessage({ vacancy, resumeText, lang }: { vacancy: Vacancy, resumeText?: string, lang?: string }) {
+        if(!lang) lang = 'ru'
+
         const basePrompt = INITIAL_DIALOG_PROMPT({ vacancy })
-        const prompt = resumeText ? `${basePrompt}
-\n[Контекст из резюме кандидата (используй как фактическую информацию):\n${resumeText}\n]` : basePrompt
+        let prompt = basePrompt
+        if(resumeText) {
+            prompt += `
+        \n[Контекст из резюме кандидата (используй как фактическую информацию):\n${resumeText}\n]`
+        }
+        prompt += `
+        \n[ЯЗЫК ДИАЛОГА: ${lang}. НЕ ОБРАЩАЙ ВНИМАНИЕ НА ТО КАКОЙ ЯЗЫК В РЕЗЮМЕ, ВЕДИ ДИАЛОГ ТОЛЬКО НА НЕМ. Не вставляй никаких звездочек и прочих символов которые трудно произнеси]
+        `
+
         const initialMessage = await aiService.communicateWithGemini([{ role: 'user', content: prompt }], true)
 
         return {
@@ -28,7 +37,8 @@ export const dialogueService = {
     async getNextMessage({ userMessage, messageHistory, chatId, analyzerMeta }: GetNextMessageParams) {
         await chatDebugSeparator(chatId)
         // fetch latest contradictions
-        const chat = await prisma.chat.findUnique({ where: { id: chatId }, select: { facts_meta: true } }) as any
+        const chat = await prisma.chat.findUnique({ where: { id: chatId }, select: { facts_meta: true, lang: true } }) as any
+        const chatLang = chat?.lang || 'ru'
         const contradictions = (chat?.facts_meta as FactsMeta)?.contradictions || []
         const notSent = contradictions.filter((c: Contradiction) => !c.sent)
         chatDebugLog(chatId, `обнаружены несостыковки: ${JSON.stringify(notSent)}`)
@@ -68,12 +78,16 @@ export const dialogueService = {
         ]
         ` : ''
 
+        const langNote = `
+        \n\n(НАПОМИНАНИЕ ОТ АДМИНИСТРАТОРА БЕСЕДЫ) [Язык ответа: ${chatLang}. Не вставляй никаких звездочек и прочих символов которые трудно произнеси]
+        `
+
         const formattedMessages = messageHistory.slice(0, -1).map(message => ({
             role: message.role === 'user' ? 'user' as const : 'model' as const,
             content: `${message.content}${message.hiddenContent ? ` \n\n${message.hiddenContent}` : ''}`
         }
         ))
-        formattedMessages.push({ role: 'user' as const, content: `${userMessage}${contradictionsNote}${qualityNote}`, })
+        formattedMessages.push({ role: 'user' as const, content: `${userMessage}${contradictionsNote}${qualityNote}${langNote}`, })
 
         try {
             const aiResponse = await aiService.communicateWithGemini(formattedMessages)

@@ -16,6 +16,7 @@ enum Role {
 model Chat {
     id                     String    @id @default(cuid())
     title                  String?
+    lang                   String    @default("ru")
     vacancyId              String?
     vacancy                Vacancy?  @relation(fields: [vacancyId], references: [id], onDelete: SetNull)
     resumeId               String?
