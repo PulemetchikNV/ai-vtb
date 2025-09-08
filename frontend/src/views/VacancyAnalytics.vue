@@ -266,7 +266,7 @@ async function loadChatsForDate(dateStr: string) {
 
 function navigateToChat(chatId: string) {
   // Open chat in new tab to keep analytics page open
-  window.open(`/voice-chat/${chatId}`, '_blank')
+  window.open(`/voice-chat/${chatId}?is_hr_view=true`, '_blank')
 }
 
 function formatScore(score: number | null): string {
@@ -522,7 +522,7 @@ onMounted(loadData)
                         :key="category"
                         class="weight-item"
                       >
-                        <span class="weight-label">{{ getRequirementTypeLabel(category) }}</span>
+                        <span class="weight-label">{{ getRequirementTypeLabel(category as string) }}</span>
                         <div class="weight-bar">
                           <div 
                             class="weight-fill" 

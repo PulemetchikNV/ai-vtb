@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watchEffect } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, onUnmounted, watchEffect, onBeforeMount } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useChat } from '../composables/useChat'
 import { useVoiceChat } from '../composables/useVoiceChat'
 
@@ -26,6 +26,7 @@ import { synthesizeAndPlay } from '../services/ttsClient'
 
 // Chat composable
 const { startChat, sendMessage, fetchChat, chat, finishChat, currentChatId, messages, loadChatHistory, loading, analysis, analysisError, error: chatError, wsConnected, wsReconnecting, getErrorMessage } = useChat()
+const route = useRoute()
 const router = useRouter()
 
 // UI state
@@ -36,6 +37,9 @@ const selectedResumeId = ref<string | null>(null)
 const showNewChat = ref(false)
 const { vacancies, load: loadVacancies } = useVacancies()
 const { resumes, load: loadResumes } = useResumes()
+
+// HR режим просмотра (только чтение)
+const isHrViewMode = ref(false)
 
 // Voice UI state
 const isAssistantSpeaking = ref(false)
@@ -157,23 +161,39 @@ function handleTTSMessage(event: CustomEvent) {
   })
 }
 
+onBeforeMount(() => {
+  const route = router.currentRoute.value
+  if (route.query.is_hr_view === 'true') {
+    isHrViewMode.value = true
+    activeTab.value = 'text' // Принудительно устанавливаем текстовый режим для HR
+  }
+})
+
 // Autostart chat on first mount
 onMounted(async () => {
   await loadVacancies()
   await loadResumes()
   
-  // Подписываемся на TTS события
-  window.addEventListener('tts-message', handleTTSMessage as EventListener)
+  // Подписываемся на TTS события только если не HR режим
+  if (!isHrViewMode.value) {
+    window.addEventListener('tts-message', handleTTSMessage as EventListener)
+  }
   
   // Check for query parameters to auto-open new chat dialog
-  const route = router.currentRoute.value
   if (route.query.newChat === 'true' && route.query.vacancy) {
     selectedVacancyId.value = route.query.vacancy as string
     showNewChat.value = true
     // Clean up the URL
     router.replace({ path: '/voice-chat' })
   } else if (currentChatId.value) {
-    router.replace({ name: undefined, params: { chatId: currentChatId.value } as any })
+    router.replace({ 
+      name: undefined,
+      params: { chatId: currentChatId.value } as any,
+      query: { 
+        is_hr_view: String(isHrViewMode.value),
+        newChat: String(showNewChat.value)
+      }
+    })
   }
   // messages autoscroll handled inside Messages component
 })
@@ -226,7 +246,7 @@ watchEffect(() => {
             <span class="app-title">Чат</span>
             <span class="chat-id" v-if="currentChatId">#{{ currentChatId?.slice(0, 6) }}</span>
           </div>
-          <div class="actions">
+          <div class="actions" v-if="!isHrViewMode">
             <Button label="Новый" icon="pi pi-plus" size="small" @click="handleNewChat" :disabled="loading" />
             <Button label="Удалить" icon="pi pi-trash" size="small" severity="danger" class="ml-8" @click="handleDeleteChat(currentChatId as string)" :disabled="!currentChatId || loading" />
             <Button 
@@ -272,14 +292,14 @@ watchEffect(() => {
           </div>
         </Message>
 
-        <div class="content">
+        <div class="content" :class="{ 'hr-mode': isHrViewMode }">
           <div class="main">
             <div v-if="!currentChatId" class="placeholder">
               <p>Создайте новый чат или выберите существующий в истории справа.</p>
             </div>
             <template v-else>
             <!-- Tabs for modes (PrimeVue 4 Tabs API) -->
-            <Tabs v-model:value="activeTab">
+            <Tabs v-model:value="activeTab" v-if="!isHrViewMode">
               <TabList>
                 <Tab value="voice">Звонок</Tab>
                 <Tab value="text">Текст</Tab>
@@ -452,9 +472,22 @@ watchEffect(() => {
               </TabPanel>
               </TabPanels>
             </Tabs>
+            
+            <!-- HR View Mode: только текстовый интерфейс без ввода -->
+            <div v-if="isHrViewMode" class="hr-view-mode">
+              <div class="hr-view-header">
+                <i class="pi pi-eye"></i>
+                <span>Режим просмотра HR</span>
+              </div>
+              <Messages :messages="messages" />
+              <Divider class="my-12" />
+              <div v-if="analysis" class="analysis">
+                <AnalysisView :analysis="analysis as any" />
+              </div>
+            </div>
             </template>
           </div>
-          <div class="aside">
+          <div class="aside" v-if="!isHrViewMode">
             <div class="chat-history-wrapper">
               <ChatHistory 
                 :active-id="currentChatId"
@@ -536,6 +569,7 @@ watchEffect(() => {
 }
 
 .content { display: grid; grid-template-columns: 1fr 280px; gap: 12px; }
+.content.hr-mode { grid-template-columns: 1fr; }
 .main { min-width: 0; }
 .aside { min-width: 0; }
 
@@ -639,6 +673,28 @@ watchEffect(() => {
 }
 
 .mt-12 { margin-top: 12px; }
+
+/* HR View Mode Styles */
+.hr-view-mode {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.hr-view-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, var(--blue-50), var(--surface-section));
+  border: 2px solid var(--blue-200);
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  color: var(--blue-700);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
 
 /* Call Interface Styles */
 .call-interface {
