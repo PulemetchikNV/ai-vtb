@@ -41,9 +41,11 @@ export default async function vacancyRoutes(server: FastifyInstance) {
     // Explicit OPTIONS handlers for problematic routes
     server.options('/vacancies/:id', async (req, reply) => {
         console.log('OPTIONS /vacancies/:id received', { id: req.params, headers: req.headers });
-        reply.header('Access-Control-Allow-Origin', '*');
+        const origin = req.headers.origin || 'http://localhost:5174';
+        reply.header('Access-Control-Allow-Origin', origin);
         reply.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
         reply.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+        reply.header('Access-Control-Allow-Credentials', 'true');
         return reply.code(204).send();
     });
 
