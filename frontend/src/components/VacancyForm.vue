@@ -80,11 +80,6 @@ function delReq(idx: number) {
 function submit() {
   emit('submit', model.value)
 }
-
-// Следим за изменениями props и обновляем модель
-watch(() => props.modelValue, (newValue) => {
-  model.value = {...newValue}
-}, { deep: true })
 </script>
 
 <template>

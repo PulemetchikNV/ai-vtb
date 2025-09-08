@@ -61,14 +61,12 @@ function shortenDescription(text: string) {
   return text.length > 100 ? text.slice(0, 100) + '...' : text
 }
 
-async function submit() {
+async function submit(newForm: Form) {
+  form.value = newForm
   const checklist = form.value.requirements.map(it => ({ id: it.id, description: it.description, type: it.type, weight: it.weight }))
   await create({ title: form.value.title, description_text: form.value.description_text, requirements_checklist: checklist, category_weights: form.value.weights })
   showCreate.value = false
-  form.value.title = ''
-  form.value.description_text = ''
-  form.value.requirements = [{ id: 'req1', description: '', type: 'technical_skill', weight: 1 }]
-  form.value.weights = weightsDefault
+  form.value = {...formDefaultValue}
 }
 
 function openCreate() {
