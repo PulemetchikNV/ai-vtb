@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useVacancies } from '../composables/useVacancies'
+import { useAuth } from '../composables/useAuth'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import Card from 'primevue/card'
@@ -8,6 +10,8 @@ import { REQUIREMENT_TYPES } from '../__data__/constants'
 import VacancyForm from '../components/VacancyForm.vue'
 
 const { vacancies, load, create, remove, update, loading } = useVacancies()
+const { user, isHr } = useAuth()
+const router = useRouter()
 
 const reqTypes = REQUIREMENT_TYPES as unknown as Array<{ value: 'technical_skill' | 'soft_skill'; label: string }>
 const weightsDefault = reqTypes.reduce((acc, it) => {
@@ -89,6 +93,18 @@ async function submitEdit(newForm: Form) {
   editingId.value = null
 }
 
+// Function to start chat for regular users
+function startChatWithVacancy(vacancyId: string) {
+  // Navigate to voice chat with the vacancy pre-selected
+  router.push({
+    path: '/voice-chat',
+    query: { 
+      vacancy: vacancyId,
+      newChat: 'true'
+    }
+  })
+}
+
 onMounted(load)
 </script>
 
@@ -96,7 +112,16 @@ onMounted(load)
   <div class="page">
     <div class="header">
       <h2>Вакансии</h2>
-      <Button label="Создать" icon="pi pi-plus" @click="openCreate" :disabled="loading" />
+      <Button 
+        v-if="isHr" 
+        label="Создать" 
+        icon="pi pi-plus" 
+        @click="openCreate" 
+        :disabled="loading" 
+      />
+      <div v-else class="user-info">
+        <span class="info-text">Выберите вакансию для начала собеседования</span>
+      </div>
     </div>
 
     <div class="grid">
@@ -117,21 +142,38 @@ onMounted(load)
         </template>
         <template #footer>
           <div class="buttons">
-            <Button size="small" icon="pi pi-pencil" class="mr-2" @click="openEdit(v)" :disabled="loading" />
-            <Button size="small" variant="text" icon="pi pi-trash" severity="danger" @click="remove(v.id)" :disabled="loading" />
+            <!-- HR buttons -->
+            <template v-if="isHr">
+              <Button size="small" icon="pi pi-pencil" class="mr-2" @click="openEdit(v)" :disabled="loading" />
+              <Button size="small" variant="text" icon="pi pi-trash" severity="danger" @click="remove(v.id)" :disabled="loading" />
+            </template>
+            <!-- User button -->
+            <template v-else>
+              <Button 
+                label="Начать чат" 
+                icon="pi pi-comments" 
+                size="small" 
+                class="start-chat-btn"
+                @click="startChatWithVacancy(v.id)" 
+                :disabled="loading" 
+              />
+            </template>
           </div>
         </template>
       </Card>
       <p v-if="!vacancies.length">Нет вакансий</p>
     </div>
 
-    <Dialog v-model:visible="showCreate" modal header="Новая вакансия" :style="{ width: '720px' }">
-      <VacancyForm v-model="form" @add-req="addReq" @del-req="delReq" @submit="submit" />
-    </Dialog>
+    <!-- HR-only dialogs -->
+    <template v-if="isHr">
+      <Dialog v-model:visible="showCreate" modal header="Новая вакансия" :style="{ width: '720px' }">
+        <VacancyForm v-model="form" @add-req="addReq" @del-req="delReq" @submit="submit" />
+      </Dialog>
 
-    <Dialog v-model:visible="showEdit" modal header="Редактировать вакансию" :style="{ width: '720px' }">
-      <VacancyForm v-model="form" @add-req="addReq" @del-req="delReq" @submit="submitEdit" />
-    </Dialog>
+      <Dialog v-model:visible="showEdit" modal header="Редактировать вакансию" :style="{ width: '720px' }">
+        <VacancyForm v-model="form" @add-req="addReq" @del-req="delReq" @submit="submitEdit" />
+      </Dialog>
+    </template>
   </div>
 </template>
 
@@ -150,4 +192,28 @@ onMounted(load)
 .req-row { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 8px; align-items: center; }
 .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
 .buttons { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* User info styling */
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+.info-text {
+  font-size: 0.9rem;
+  color: var(--text-color-secondary);
+  font-style: italic;
+}
+
+/* Start chat button styling */
+.start-chat-btn {
+  background: var(--p-primary-color);
+  border-color: var(--p-primary-color);
+  color: white;
+}
+
+.start-chat-btn:hover {
+  background: var(--p-primary-600);
+  border-color: var(--p-primary-600);
+}
 </style>

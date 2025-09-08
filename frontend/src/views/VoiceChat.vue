@@ -82,7 +82,15 @@ async function handleDeleteChat(id: string) {
 onMounted(async () => {
   await loadVacancies()
   await loadResumes()
-  if (currentChatId.value) {
+  
+  // Check for query parameters to auto-open new chat dialog
+  const route = router.currentRoute.value
+  if (route.query.newChat === 'true' && route.query.vacancy) {
+    selectedVacancyId.value = route.query.vacancy as string
+    showNewChat.value = true
+    // Clean up the URL
+    router.replace({ path: '/voice-chat' })
+  } else if (currentChatId.value) {
     router.replace({ name: undefined, params: { chatId: currentChatId.value } as any })
   }
   // messages autoscroll handled inside Messages component
