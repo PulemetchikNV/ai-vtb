@@ -40,8 +40,11 @@ const { resumes, load: loadResumes } = useResumes()
 // Voice UI state
 const isAssistantSpeaking = ref(false)
 const currentAssistantText = ref('')
-const typingSpeed = 50 // миллисекунды между символами
+const typingSpeed = 70 // миллисекунды между символами
+const typingDelay = 0 // задержка перед началом печати (мс)
 const isTyping = ref(false)
+const isProcessingMessage = ref(false) // индикатор обработки записанного сообщения
+const isWaitingForAI = ref(false) // индикатор ожидания ответа от AI
 let typingInterval: number | null = null
 
 async function handleSend() {
@@ -61,7 +64,11 @@ const wsChatConnected = voice.wsChatConnected
 const getVoiceErrorMessage = voice.getErrorMessage
 
 function startRecording() { voice.startRecording() }
-function stopRecording() { voice.stopRecording() }
+function stopRecording() { 
+  voice.stopRecording()
+  // Устанавливаем флаг обработки сообщения после остановки записи
+  isProcessingMessage.value = true
+}
 
 // Функции для синхронизации текста со звуком
 function startTypingEffect(text: string) {
@@ -71,18 +78,22 @@ function startTypingEffect(text: string) {
   
   currentAssistantText.value = ''
   isTyping.value = true
-  let index = 0
   
-  typingInterval = setInterval(() => {
-    if (index < text.length) {
-      currentAssistantText.value += text[index]
-      index++
-    } else {
-      clearInterval(typingInterval!)
-      typingInterval = null
-      isTyping.value = false
-    }
-  }, typingSpeed)
+  // Задержка перед началом печати
+  setTimeout(() => {
+    let index = 0
+    
+    typingInterval = setInterval(() => {
+      if (index < text.length) {
+        currentAssistantText.value += text[index]
+        index++
+      } else {
+        clearInterval(typingInterval!)
+        typingInterval = null
+        isTyping.value = false
+      }
+    }, typingSpeed)
+  }, typingDelay)
 }
 
 function stopTypingEffect() {
@@ -178,6 +189,29 @@ watchEffect(async () => {
     analysis.value = null
     analysisError.value = false
     await fetchChat(currentChatId.value)
+  }
+})
+
+// Отслеживаем новые сообщения для управления состояниями
+watchEffect(() => {
+  if (messages.value.length > 0) {
+    const lastMessage = messages.value[messages.value.length - 1]
+    
+    // Если получили новое user сообщение
+    if (lastMessage.role === 'user') {
+      if (isProcessingMessage.value) {
+        isProcessingMessage.value = false
+        // Начинаем ожидание ответа AI
+        isWaitingForAI.value = true
+      }
+    }
+    
+    // Если получили новое assistant сообщение
+    if (lastMessage.role === 'assistant') {
+      if (isWaitingForAI.value) {
+        isWaitingForAI.value = false
+      }
+    }
   }
 })
 </script>
@@ -278,9 +312,13 @@ watchEffect(async () => {
                   <!-- Main Call Area -->
                   <div class="call-main">
                     <!-- Assistant Speaking Area -->
-                    <div class="speaker-area" :class="{ 'speaking': isAssistantSpeaking }">
+                    <div class="speaker-area" :class="{ 'speaking': isAssistantSpeaking, 'thinking': isWaitingForAI }">
                       <div class="speaker-avatar">
-                        <i class="pi pi-user" :class="{ 'pulse': isAssistantSpeaking }"></i>
+                        <i class="pi" :class="{ 
+                          'pi-user': !isWaitingForAI, 
+                          'pi-spin pi-spinner': isWaitingForAI,
+                          'pulse': isAssistantSpeaking 
+                        }"></i>
                       </div>
                       <div class="speaker-content">
                         <div class="speaker-label">AI Собеседник</div>
@@ -288,7 +326,11 @@ watchEffect(async () => {
                           {{ currentAssistantText }}
                           <span v-if="isTyping" class="typing-cursor">|</span>
                         </div>
-                        <div class="speaker-status" v-if="isAssistantSpeaking">
+                        <div class="speaker-status" v-if="isWaitingForAI">
+                          <i class="pi pi-spin pi-cog"></i>
+                          Думает над ответом...
+                        </div>
+                        <div class="speaker-status" v-else-if="isAssistantSpeaking">
                           <i class="pi pi-volume-up"></i>
                           Говорит...
                         </div>
@@ -296,13 +338,23 @@ watchEffect(async () => {
                     </div>
 
                     <!-- User Speaking Area -->
-                    <div class="user-area" :class="{ 'speaking': isRecording }">
+                    <div class="user-area" :class="{ 'speaking': isRecording, 'processing': isProcessingMessage }">
                       <div class="user-avatar">
-                        <i class="pi pi-microphone" :class="{ 'pulse': isRecording }"></i>
+                        <i class="pi" :class="{ 
+                          'pi-microphone': !isProcessingMessage, 
+                          'pi-spin pi-spinner': isProcessingMessage,
+                          'pulse': isRecording 
+                        }"></i>
                       </div>
                       <div class="user-content">
                         <div class="user-label">Вы</div>
-                        <div class="user-status" v-if="isRecording">
+                        <div class="user-status" v-if="isProcessingMessage">
+                          <div class="processing-indicator">
+                            <i class="pi pi-spin pi-cog"></i>
+                            Обработка сообщения...
+                          </div>
+                        </div>
+                        <div class="user-status" v-else-if="isRecording">
                           <div class="recording-indicator">
                             <span class="recording-dot"></span>
                             Запись...
@@ -318,11 +370,12 @@ watchEffect(async () => {
                   <!-- Call Controls -->
                   <div class="call-controls">
                     <Button 
-                      :label="isRecording ? 'Остановить' : 'Говорить'" 
-                      :icon="isRecording ? 'pi pi-stop' : 'pi pi-microphone'"
-                      :severity="isRecording ? 'danger' : 'success'"
+                      :label="isProcessingMessage ? 'Обработка сообщения...' : (isRecording ? 'Остановить' : 'Говорить')" 
+                      :icon="isProcessingMessage ? 'pi pi-spin pi-spinner' : (isRecording ? 'pi pi-stop' : 'pi pi-microphone')"
+                      :severity="isProcessingMessage ? 'info' : (isRecording ? 'danger' : 'success')"
                       size="large"
-                      :disabled="!currentChatId || isAssistantSpeaking"
+                      :disabled="!currentChatId || isAssistantSpeaking || isProcessingMessage"
+                      :loading="isProcessingMessage"
                       @click="isRecording ? stopRecording() : startRecording()"
                       class="record-button"
                     />
@@ -620,10 +673,22 @@ watchEffect(async () => {
   box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
 }
 
+.speaker-area.thinking {
+  border-color: var(--purple-400);
+  background: linear-gradient(135deg, var(--purple-50), var(--surface-section));
+  box-shadow: 0 0 20px rgba(147, 51, 234, 0.2);
+}
+
 .user-area.speaking {
   border-color: var(--blue-400);
   background: linear-gradient(135deg, var(--blue-50), var(--surface-section));
   box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+}
+
+.user-area.processing {
+  border-color: var(--orange-400);
+  background: linear-gradient(135deg, var(--orange-50), var(--surface-section));
+  box-shadow: 0 0 20px rgba(251, 146, 60, 0.2);
 }
 
 .speaker-avatar, .user-avatar {
@@ -721,7 +786,7 @@ watchEffect(async () => {
   font-style: italic;
 }
 
-.recording-indicator {
+.recording-indicator, .processing-indicator {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -738,6 +803,11 @@ watchEffect(async () => {
 @keyframes recording-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
+}
+
+.processing-indicator {
+  color: var(--orange-600);
+  font-weight: 500;
 }
 
 .call-controls {

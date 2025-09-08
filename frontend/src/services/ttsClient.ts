@@ -19,8 +19,6 @@ export async function synthesizeAndPlay(
     }
 ): Promise<void> {
     try {
-        callbacks?.onStart?.()
-
         const base = (import.meta as any).env?.VITE_TTS_URL || 'http://localhost:8081'
         const url = `${String(base).replace(/\/$/, '')}/synthesize-ya`
         const res = await fetch(url, {
@@ -47,6 +45,7 @@ export async function synthesizeAndPlay(
         }
 
         await audio.play()
+        callbacks?.onStart?.()
     } catch (error) {
         callbacks?.onError?.(error as Error)
         throw error

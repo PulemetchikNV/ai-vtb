@@ -42,7 +42,7 @@ export const dialogueService = {
             (c: Contradiction) => `- ${c.explanation} 
                     (факты-основания: ${c.conflicting_facts
                     .map((f: ContradictingFactRef) => `${f.fact}(${f.source === 'resume' ? 'кандидат указал в резюме' : 'кандидат упоминал в чате'})`).join(', ')})`
-            ).join('\n')
+        ).join('\n')
             }
         ]
         ` : ''
@@ -53,17 +53,17 @@ export const dialogueService = {
         ${
             // analyzerMeta.is_canned_answer ? `Упомяни в своей фразе что этот ответ слишком общий и задай вопрос который покажет конкретные знания кандидата` : ''
             ''
-        }
+            }
         - Уклончивость: ${analyzerMeta.is_evasive ? 'да' : 'нет'}
         ${
             // analyzerMeta.is_evasive ? `Верни русло разговора в предыдущую тему и заставь кандидата полностью раскрыть вопрос` : ''
             ''
-        }
+            }
         - Неполный ответ: ${analyzerMeta.is_not_full_answer ? 'да' : 'нет'}
         ${
             // analyzerMeta.is_not_full_answer ? `Упомяни в своей фразе что этот ответ не раскрывает всю суть и задай вопрос который покажет конкретные знания кандидата` : ''
             ''
-        }
+            }
         Пояснение: ${analyzerMeta.analysis}
         ]
         ` : ''
@@ -75,14 +75,25 @@ export const dialogueService = {
         ))
         formattedMessages.push({ role: 'user' as const, content: `${userMessage}${contradictionsNote}${qualityNote}`, })
 
-        const aiResponse = await aiService.communicateWithGemini(formattedMessages)
-        await chatDebugLog(chatId, `отправляем пользователю сообщение ${JSON.stringify(aiResponse)}`)
-        // mark contradictions as sent
-        if (notSent.length) {
-            const current = (chat?.facts_meta) || {}
-            const updated = (current.contradictions || []).map((c: Contradiction) => ({ ...c, sent: true }))
-            await prisma.chat.update({ where: { id: chatId }, data: { facts_meta: { ...current, contradictions: updated } } })
+        try {
+            const aiResponse = await aiService.communicateWithGemini(formattedMessages)
+            await chatDebugLog(chatId, `отправляем пользователю сообщение ${JSON.stringify(aiResponse)}`)
+
+            // mark contradictions as sent
+            if (notSent.length) {
+                const current = (chat?.facts_meta) || {}
+                const updated = (current.contradictions || []).map((c: Contradiction) => ({ ...c, sent: true }))
+                await prisma.chat.update({ where: { id: chatId }, data: { facts_meta: { ...current, contradictions: updated } } })
+            }
+
+            return aiResponse
+        } catch (error: any) {
+            await chatDebugLog(chatId, `ошибка при получении ответа от AI: ${error.message || error}`)
+            console.error('Error in getNextMessage:', error)
+
+            // Возвращаем сообщение-заглушку при ошибке
+            const errorMessage = '🤖 *Извините, возникла техническая проблема при формировании ответа. Пожалуйста, повторите свой вопрос.*'
+            return errorMessage
         }
-        return aiResponse
     }
 }
