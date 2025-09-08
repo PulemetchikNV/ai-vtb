@@ -131,6 +131,7 @@ exports.Prisma.ChatScalarFieldEnum = {
   analysis: 'analysis',
   facts_meta: 'facts_meta',
   is_finished: 'is_finished',
+  userId: 'userId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -151,7 +152,8 @@ exports.Prisma.VacancyScalarFieldEnum = {
   requirements_checklist: 'requirements_checklist',
   category_weights: 'category_weights',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  userId: 'userId'
 };
 
 exports.Prisma.ResumeScalarFieldEnum = {
@@ -161,7 +163,17 @@ exports.Prisma.ResumeScalarFieldEnum = {
   text: 'text',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  facts: 'facts'
+  facts: 'facts',
+  userId: 'userId'
+};
+
+exports.Prisma.UserScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  password: 'password',
+  role: 'role',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.SortOrder = {
@@ -193,13 +205,17 @@ exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
 };
-
+exports.Role = exports.$Enums.Role = {
+  user: 'user',
+  hr: 'hr'
+};
 
 exports.Prisma.ModelName = {
   Chat: 'Chat',
   Message: 'Message',
   Vacancy: 'Vacancy',
-  Resume: 'Resume'
+  Resume: 'Resume',
+  User: 'User'
 };
 
 /**

@@ -8,6 +8,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  user
+  hr
+}
+
 model Chat {
   id                     String    @id @default(cuid())
   title                  String?
@@ -19,6 +24,8 @@ model Chat {
   analysis               Json?
   facts_meta             Json?
   is_finished            Boolean   @default(false)
+  userId                 String?
+  user                   User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
   messages               Message[]
@@ -46,6 +53,8 @@ model Vacancy {
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
   chats                  Chat[]
+  userId                 String?
+  user                   User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
 
 model Resume {
@@ -57,4 +66,18 @@ model Resume {
   updatedAt DateTime @updatedAt
   chats     Chat[]
   facts     Json?
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  password  String
+  role      Role      @default(user)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  chats     Chat[]
+  vacancies Vacancy[]
+  resumes   Resume[]
 }

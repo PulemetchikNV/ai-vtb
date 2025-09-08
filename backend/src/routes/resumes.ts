@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify'
 import type { FastifyRequest } from 'fastify'
 import { prisma } from '../prisma'
 import { documentsApi } from '../services/documentsApi'
+import { requireAuth } from '../middleware/authMiddleware'
 import { pdfParser, docParser } from '../services/pdfParser'
 import { resumeConvertorChain } from '../chains/resumeConvertorChain'
 import factExtractorChain from '../chains/factExtractorChain'
@@ -9,6 +10,7 @@ import factExtractorChain from '../chains/factExtractorChain'
 export default async function resumeRoutes(server: FastifyInstance) {
     // Создание: multipart (file=pdf) или JSON (text)
     server.post('/resumes', async (req: FastifyRequest, reply) => {
+        const user = requireAuth(req as any); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
         let fileName = 'resume.pdf'
         let textRaw = ''
 
@@ -41,13 +43,13 @@ export default async function resumeRoutes(server: FastifyInstance) {
         if (!textRaw) return reply.code(400).send({ error: 'text is required or PDF file' })
 
         let [facts, text] = await Promise.all([
-            (async () => await factExtractorChain.invoke({ context: textRaw, doc_type: 'резюме', max_facts: 10 }))(),
+            (async () => await factExtractorChain.invoke({ candidate_sentence: textRaw }))(),
             (async () => await resumeConvertorChain.invoke({ text: textRaw }))()
         ])
         if (!Array.isArray(facts)) facts = [] as any
         if (typeof text !== 'string') text = ''
 
-        const resume = await (prisma as any).resume.create({ data: { fileName, text_raw: textRaw, text, facts } })
+        const resume = await (prisma as any).resume.create({ data: { fileName, text_raw: textRaw, text, facts, userId: user.id } })
 
         try {
             await documentsApi.addDocument({
@@ -62,13 +64,15 @@ export default async function resumeRoutes(server: FastifyInstance) {
     })
 
     // Листинг
-    server.get('/resumes', async () => {
-        const items = await (prisma as any).resume.findMany({ orderBy: { createdAt: 'desc' } })
+    server.get('/resumes', async (req: FastifyRequest) => {
+        const user = requireAuth(req as any); if (!user) return []
+        const items = await (prisma as any).resume.findMany({ where: { userId: user.id }, orderBy: { createdAt: 'desc' } })
         return items
     })
 
     // Обновление: multipart или JSON
     server.put('/resumes/:id', async (req: FastifyRequest, reply) => {
+        const user = requireAuth(req as any); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
         const { id } = req.params as { id: string }
         let fileName: string | undefined
         let text: string | undefined
@@ -100,6 +104,8 @@ export default async function resumeRoutes(server: FastifyInstance) {
 
         if (!text && !fileName) return reply.code(400).send({ error: 'nothing to update' })
 
+        const current = await (prisma as any).resume.findUnique({ where: { id }, select: { userId: true } })
+        if (!current || current.userId !== user.id) return reply.code(404).send({ error: 'not found' })
         const resume = await (prisma as any).resume.update({ where: { id }, data: { ...(fileName ? { fileName } : {}), ...(text ? { text } : {}) } })
 
         if (text) {
@@ -117,14 +123,18 @@ export default async function resumeRoutes(server: FastifyInstance) {
 
     // Удаление
     server.delete('/resumes/:id', async (req, reply) => {
+        const user = requireAuth(req as any); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
         const { id } = req.params as { id: string }
+        const current = await (prisma as any).resume.findUnique({ where: { id }, select: { userId: true } })
+        if (!current || current.userId !== user.id) return reply.code(404).send({ error: 'not found' })
         await (prisma as any).resume.delete({ where: { id } })
         return reply.code(204).send()
     })
 
     server.get('/resumes/:id', async (req, reply) => {
+        const user = requireAuth(req as any); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
         const { id } = req.params as { id: string }
-        const resume = await (prisma as any).resume.findUnique({ where: { id } })
+        const resume = await (prisma as any).resume.findFirst({ where: { id, userId: user.id } })
         if (!resume) return reply.code(404).send({ error: 'not found' })
         return resume
     })

@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifySchema } from 'fastify';
 import { prisma } from '../prisma';
 import { chatEventBus } from '../services/chatEventBus';
+import { requireAuth } from '../middleware/authMiddleware'
 import { analyzer } from '../services/analyzer';
 import { dialogueService } from '../services/dialogue';
 import { factChecker } from '../services/factChecker';
@@ -36,8 +37,10 @@ async function finishChat(chatId: string, callback: () => any, finishMessage?: s
 }
 
 export default async function chatRoutes(server: FastifyInstance) {
-    server.get('/chats', async () => {
+    server.get('/chats', async (req, reply) => {
+        const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
         const chats = await prisma.chat.findMany({
+            where: { userId: user.id } as any,
             orderBy: { updatedAt: 'desc' },
             select: { id: true, title: true, createdAt: true, updatedAt: true }
         });
@@ -56,12 +59,14 @@ export default async function chatRoutes(server: FastifyInstance) {
             } as FastifySchema
         }
     }, async (req, reply) => {
+        const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
         const body = (req.body as { title?: string | null; vacancyId?: string | null; resumeId?: string | null }) || {};
         const vacancy = body.vacancyId ? await prisma.vacancy.findUnique({ where: { id: body.vacancyId } }) : null;
         const initialChecklist = vacancy?.requirements_checklist || [];
 
         const chat = await prisma.chat.create({
-            data: {
+            data: ({
+                userId: user.id,
                 title: body.title ?? null,
                 requirements_checklist: initialChecklist as any,
                 ...(body.vacancyId
@@ -71,7 +76,7 @@ export default async function chatRoutes(server: FastifyInstance) {
                     ? { resume: { connect: { id: body.resumeId } } }
                     : {}),
                 facts_meta: { fact_ledger: [], contradictions: [] } as any
-            }
+            } as any)
         });
 
         // If resume selected, push its facts into per-chat vectorstore and ledger
@@ -98,9 +103,10 @@ export default async function chatRoutes(server: FastifyInstance) {
     });
 
     server.delete('/chat/:id', async (req, reply) => {
+        const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
         const { id } = req.params as { id: string };
-        await prisma.message.deleteMany({ where: { chatId: id } });
-        await prisma.chat.delete({ where: { id } });
+        await prisma.message.deleteMany({ where: { chatId: id, chat: { userId: user.id } } as any });
+        await prisma.chat.delete({ where: { id, userId: user.id } as any });
         return reply.code(204).send();
     });
 
@@ -116,13 +122,15 @@ export default async function chatRoutes(server: FastifyInstance) {
             } as FastifySchema
         }
     }, async (req, reply) => {
+        const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
         const { id } = req.params as { id: string };
         const { content } = req.body as { content: string };
 
         // Save user message
-        const userMsg = await prisma.message.create({
-            data: { chatId: id, role: 'user', content }
-        });
+        const chatOwner = await prisma.chat.findUnique({ where: { id }, select: { userId: true } as any }) as any
+        if (!chatOwner || chatOwner.userId !== user.id) return reply.code(404).send({ error: 'Chat not found' })
+
+        const userMsg = await prisma.message.create({ data: { chatId: id, role: 'user', content } });
         chatEventBus.broadcastMessageCreated(userMsg);
 
         const messageHistory = await prisma.message.findMany({ where: { chatId: id }, orderBy: { createdAt: 'asc' } });
@@ -140,16 +148,18 @@ export default async function chatRoutes(server: FastifyInstance) {
         }
     });
 
-    server.get('/chat/:id', async (req) => {
+    server.get('/chat/:id', async (req, reply) => {
+        const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
         const { id } = req.params as { id: string };
-        const chat = await prisma.chat.findUnique({
-            where: { id },
+        const chat = await prisma.chat.findFirst({
+            where: { id, userId: user.id } as any,
             include: { messages: { orderBy: { createdAt: 'asc' } } }
         });
         return chat;
     });
 
     server.post('/chat/:id/finish', async (req, reply) => {
+        const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
         const { id } = req.params as { id: string };
         // пометить чат завершённым
         flowFinishChat(id, () => reply.code(204).send());

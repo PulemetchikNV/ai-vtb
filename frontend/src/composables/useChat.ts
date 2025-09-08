@@ -4,6 +4,7 @@ import axios from 'axios'
 import { useRoute } from 'vue-router'
 import router from '../router'
 import { chatHistory } from '../__data__/store'
+import { axiosInstance } from '../plugins/axios'
 
 export type Chat = {
     id: string
@@ -23,9 +24,7 @@ export type Message = {
     createdAt: string
 }
 
-const api = axios.create({
-    baseURL: (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000'
-})
+const api = axiosInstance
 
 const isTtsClientMode = !!((import.meta as any).env?.VITE_TTS_CLIENT_MODE ?? 'true')
 

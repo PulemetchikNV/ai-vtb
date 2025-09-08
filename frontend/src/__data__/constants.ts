@@ -5,3 +5,4 @@ export const REQUIREMENT_TYPES = [
 ] as const
 
 
+export const TOKEN_KEY = 'token'

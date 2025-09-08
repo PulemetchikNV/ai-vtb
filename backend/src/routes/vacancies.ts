@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifySchema } from 'fastify';
 import { prisma } from '../prisma';
 import { REQUIREMENT_TYPES } from '../__data__/constants';
+import { requireAuth, requireRole } from '../middleware/authMiddleware'
 
 const vacancySchema = {
     body: {
@@ -37,7 +38,8 @@ const vacancySchema = {
 }
 
 export default async function vacancyRoutes(server: FastifyInstance) {
-    server.get('/vacancies', async () => {
+    server.get('/vacancies', async (req, reply) => {
+        const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
         const vacancies = await prisma.vacancy.findMany({
             orderBy: { updatedAt: 'desc' },
             select: { id: true, title: true, description_text: true, requirements_checklist: true, category_weights: true, createdAt: true, updatedAt: true }
@@ -48,12 +50,16 @@ export default async function vacancyRoutes(server: FastifyInstance) {
     server.post('/vacancies', {
         schema: vacancySchema
     }, async (req, reply) => {
+        const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
+        if (!requireRole(user, 'hr', reply)) return
         const body = req.body as { title: string; description_text: string; requirements_checklist: unknown; category_weights?: Record<string, number> };
-        const vacancy = await prisma.vacancy.create({ data: body as any });
+        const vacancy = await prisma.vacancy.create({ data: ({ ...body, userId: user.id } as any) });
         return reply.code(201).send(vacancy);
     });
 
     server.delete('/vacancies/:id', async (req, reply) => {
+        const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
+        if (!requireRole(user, 'hr', reply)) return
         const { id } = req.params as { id: string };
         await prisma.vacancy.delete({ where: { id } });
         return reply.code(204).send();
@@ -62,6 +68,8 @@ export default async function vacancyRoutes(server: FastifyInstance) {
     server.put('/vacancies/:id', {
         schema: vacancySchema
     }, async (req, reply) => {
+        const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
+        if (!requireRole(user, 'hr', reply)) return
         const { id } = req.params as { id: string };
         const body = req.body as Partial<{ title: string; description_text: string; requirements_checklist: unknown; category_weights?: Record<string, number> }>;
         const vacancy = await prisma.vacancy.update({ where: { id }, data: body as any });

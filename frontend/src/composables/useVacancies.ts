@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import axios from 'axios'
+import { axiosInstance } from '../plugins/axios'
 
 export type VacancyRequirement = {
     id: string
@@ -18,9 +19,7 @@ export type Vacancy = {
     updatedAt: string
 }
 
-const api = axios.create({
-    baseURL: (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000'
-})
+const api = axiosInstance
 
 export function useVacancies() {
     const vacancies = ref<Vacancy[]>([])

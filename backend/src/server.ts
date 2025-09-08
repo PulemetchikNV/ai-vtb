@@ -6,10 +6,13 @@ import type { IncomingMessage } from 'http';
 import chatRoutes from './routes/chat';
 import vacancyRoutes from './routes/vacancies';
 import resumeRoutes from './routes/resumes';
+import authRoutes from './routes/auth';
 import { EmotionsParserTranscriber, StubTranscriber } from './services/transcriber';
 import { StreamingAudioSession } from './services/streamingSession';
 import { chatDebugLog } from './services/chatDebug';
 import { chatEventBus } from './services/chatEventBus';
+import middie from '@fastify/middie';
+import registerAuthMiddleware from './middleware/authMiddleware';
 
 export const server = Fastify({
     logger: {
@@ -45,11 +48,16 @@ export const logger = server.log;
 async function start() {
     await server.register(cors, { origin: true });
     await server.register(multipart);
+    await server.register(middie, { hook: 'preHandler' });
+    await server.register(registerAuthMiddleware);
 
     server.get('/health', async () => {
         return { status: 'ok' };
     });
 
+    await server.register(async (s) => {
+        await authRoutes(s);
+    });
     await server.register(async (s) => {
         await chatRoutes(s);
     });
