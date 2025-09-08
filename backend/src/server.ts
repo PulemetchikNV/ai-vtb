@@ -46,7 +46,20 @@ export const server = Fastify({
 export const logger = server.log;
 
 async function start() {
-    await server.register(cors, { origin: true });
+    await server.register(cors, {
+        origin: true,
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+    });
+
+    // Additional CORS hook for troubleshooting
+    server.addHook('onSend', async (request, reply) => {
+        reply.header('Access-Control-Allow-Origin', '*');
+        reply.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        reply.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+        reply.header('Access-Control-Allow-Credentials', 'true');
+    });
     await server.register(multipart);
     await server.register(middie, { hook: 'preHandler' });
     await server.register(registerAuthMiddleware);

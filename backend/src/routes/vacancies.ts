@@ -40,6 +40,10 @@ const vacancySchema = {
 export default async function vacancyRoutes(server: FastifyInstance) {
     // Explicit OPTIONS handlers for problematic routes
     server.options('/vacancies/:id', async (req, reply) => {
+        console.log('OPTIONS /vacancies/:id received', { id: req.params, headers: req.headers });
+        reply.header('Access-Control-Allow-Origin', '*');
+        reply.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        reply.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
         return reply.code(204).send();
     });
 
@@ -86,11 +90,14 @@ export default async function vacancyRoutes(server: FastifyInstance) {
     server.put('/vacancies/:id', {
         schema: vacancySchema
     }, async (req, reply) => {
+        console.log('PUT /vacancies/:id received', { id: req.params, headers: req.headers });
         const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
         if (!requireRole(user, 'hr', reply)) return
         const { id } = req.params as { id: string };
         const body = req.body as Partial<{ title: string; description_text: string; requirements_checklist: unknown; category_weights?: Record<string, number> }>;
+        console.log('PUT vacancy body:', body);
         const vacancy = await prisma.vacancy.update({ where: { id }, data: body as any });
+        console.log('PUT vacancy success:', vacancy.id);
         return reply.code(200).send(vacancy);
     });
 
