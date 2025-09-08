@@ -119,18 +119,34 @@ class YaSynthesizeRequest(BaseModel):
 
 @app.post("/synthesize-ya")
 def synthesize_ya(payload: YaSynthesizeRequest) -> Response:
-    iam_token = os.getenv("YANDEX_IAM_TOKEN") or os.getenv("IAM_TOKEN")
-    if not iam_token:
-        raise HTTPException(status_code=500, detail="YANDEX_IAM_TOKEN is not set")
+    api_key = os.getenv("YANDEX_API_KEY")
+    if not api_key:
+        # Fallback to IAM token for backward compatibility
+        iam_token = os.getenv("YANDEX_IAM_TOKEN") or os.getenv("IAM_TOKEN")
+        if not iam_token:
+            raise HTTPException(status_code=500, detail="YANDEX_API_KEY or YANDEX_IAM_TOKEN is not set")
+        
+        try:
+            # Configure SpeechKit SDK with IAM token
+            configure_credentials(
+                yandex_credentials=creds.YandexCredentials(
+                    iam_token=iam_token
+                )
+            )
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"SpeechKit IAM token configuration error: {e}")
+    else:
+        try:
+            # Configure SpeechKit SDK with API key
+            configure_credentials(
+                yandex_credentials=creds.YandexCredentials(
+                    api_key=api_key
+                )
+            )
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"SpeechKit API key configuration error: {e}")
 
     try:
-        # Configure SpeechKit SDK with IAM token
-        configure_credentials(
-            yandex_credentials=creds.YandexCredentials(
-                iam_token=iam_token
-            )
-        )
-
         model = model_repository.synthesis_model()
         if payload.voice:
             model.voice = payload.voice

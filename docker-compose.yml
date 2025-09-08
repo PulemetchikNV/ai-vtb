@@ -54,6 +54,7 @@ services:
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY_TTS}
       - YANDEX_IAM_TOKEN=${YANDEX_IAM_TOKEN}
+      - YANDEX_API_KEY=${YANDEX_API_KEY}
     ports:
       - "8081:8081"
     restart: unless-stopped
@@ -69,6 +70,7 @@ services:
       - TRANSFORMERS_CACHE=/app/hf_cache
       - HUGGINGFACE_HUB_CACHE=/app/hf_cache
       - YANDEX_IAM_TOKEN=${YANDEX_IAM_TOKEN}
+      - YANDEX_API_KEY=${YANDEX_API_KEY}
     # - HUGGING_FACE_HUB_TOKEN=${HUGGING_FACE_HUB_TOKEN}
     ports:
       - "5000:5000"

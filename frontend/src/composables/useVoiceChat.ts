@@ -1,4 +1,5 @@
 import { ref, onBeforeUnmount } from 'vue'
+import { addMessage } from '../__data__/notifications'
 
 type SpeechSegmentPayload = {
     chatId: string
@@ -19,6 +20,12 @@ type AudioReadyPayload = {
     wavBase64: string
 }
 
+export type VoiceError = {
+    type: 'permission' | 'websocket' | 'audio' | 'network' | 'server' | 'unknown'
+    message: string
+    details?: string
+}
+
 export function useVoiceChat(getChatId: () => string | null) {
     const isRecording = ref(false)
     const statusText = ref<'disconnected' | 'connected' | 'closed' | 'error' | 'permission-error'>('disconnected')
@@ -27,6 +34,9 @@ export function useVoiceChat(getChatId: () => string | null) {
     const lastSegment = ref<SpeechSegmentPayload | null>(null)
     const lastAudioText = ref<string>('')
     const playbackError = ref<string>('')
+    const error = ref<VoiceError | null>(null)
+    const wsAudioConnected = ref(false)
+    const wsChatConnected = ref(false)
 
     let mediaRecorder: MediaRecorder | null = null
     let micStream: MediaStream | null = null
@@ -46,6 +56,7 @@ export function useVoiceChat(getChatId: () => string | null) {
             try { wsAudio.close() } catch { }
             wsAudio = null
         }
+        wsAudioConnected.value = false
     }
 
     function disconnectWsChat() {
@@ -53,14 +64,51 @@ export function useVoiceChat(getChatId: () => string | null) {
             try { wsChat.close() } catch { }
             wsChat = null
         }
+        wsChatConnected.value = false
     }
 
     async function startRecording() {
         if (isRecording.value) return
         const chatId = getChatId()
-        if (!chatId) return
+        if (!chatId) {
+            const validationError: VoiceError = {
+                type: 'unknown',
+                message: 'Чат не инициализирован'
+            }
+            error.value = validationError
+            addMessage({
+                severity: 'warn',
+                summary: 'Ошибка записи',
+                detail: validationError.message,
+                life: 3000
+            })
+            return
+        }
+
+        error.value = null
+        playbackError.value = ''
+
         try {
-            micStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+            // Запрос разрешения на микрофон
+            try {
+                micStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+            } catch (permissionError: any) {
+                statusText.value = 'permission-error'
+                const voiceError: VoiceError = {
+                    type: 'permission',
+                    message: 'Нет доступа к микрофону',
+                    details: permissionError.message
+                }
+                error.value = voiceError
+
+                addMessage({
+                    severity: 'warn',
+                    summary: 'Нет доступа к микрофону',
+                    detail: 'Разрешите доступ к микрофону для записи голоса',
+                    life: 5000
+                })
+                return
+            }
 
             const wsBase = (import.meta as any).env?.VITE_BACKEND_WS_URL || 'ws://localhost:3000'
 
@@ -68,54 +116,178 @@ export function useVoiceChat(getChatId: () => string | null) {
             wsAudio = new WebSocket(`${wsBase}/ws/audio?chatId=${encodeURIComponent(chatId)}`)
             wsAudio.binaryType = 'arraybuffer'
 
+            wsAudio.onopen = () => {
+                statusText.value = 'connected'
+                wsAudioConnected.value = true
+
+                try {
+                    mediaRecorder = new MediaRecorder(micStream as MediaStream, { mimeType: 'audio/webm;codecs=opus' })
+                    mediaRecorder.ondataavailable = (ev: BlobEvent) => {
+                        if (!ev.data || ev.data.size === 0) return
+                        ev.data.arrayBuffer().then((buf) => {
+                            if (wsAudio && wsAudio.readyState === WebSocket.OPEN) {
+                                wsAudio.send(buf)
+                                chunkCount.value += 1
+                                bytesSent.value += buf.byteLength
+                            }
+                        }).catch((e) => {
+                            console.error('Failed to process audio chunk:', e)
+                        })
+                    }
+                    mediaRecorder.start(250)
+                    isRecording.value = true
+                } catch (recorderError: any) {
+                    const voiceError: VoiceError = {
+                        type: 'audio',
+                        message: 'Не удалось инициализировать запись звука',
+                        details: recorderError.message
+                    }
+                    error.value = voiceError
+
+                    addMessage({
+                        severity: 'error',
+                        summary: 'Ошибка записи',
+                        detail: voiceError.message,
+                        life: 4000
+                    })
+                }
+            }
+
+            wsAudio.onclose = (event) => {
+                statusText.value = 'closed'
+                wsAudioConnected.value = false
+
+                if (event.code !== 1000 && isRecording.value) {
+                    const wsError: VoiceError = {
+                        type: 'websocket',
+                        message: 'Соединение с сервером прервано'
+                    }
+                    error.value = wsError
+
+                    addMessage({
+                        severity: 'error',
+                        summary: 'Соединение прервано',
+                        detail: 'Аудио-соединение с сервером потеряно',
+                        life: 4000
+                    })
+                }
+            }
+
+            wsAudio.onerror = () => {
+                statusText.value = 'error'
+                wsAudioConnected.value = false
+
+                const wsError: VoiceError = {
+                    type: 'websocket',
+                    message: 'Ошибка аудио-соединения с сервером'
+                }
+                error.value = wsError
+
+                addMessage({
+                    severity: 'error',
+                    summary: 'Ошибка соединения',
+                    detail: wsError.message,
+                    life: 4000
+                })
+            }
+
             // Chat events WS (for TTS/audio.ready and speech.segment)
             wsChat = new WebSocket(`${wsBase}/ws/chat?chatId=${encodeURIComponent(chatId)}`)
+
+            wsChat.onopen = () => {
+                wsChatConnected.value = true
+            }
+
+            wsChat.onclose = (event) => {
+                wsChatConnected.value = false
+
+                if (event.code !== 1000 && isRecording.value) {
+                    console.warn('Chat WebSocket closed unexpectedly:', event.code, event.reason)
+                }
+            }
+
+            wsChat.onerror = (event) => {
+                wsChatConnected.value = false
+                console.error('Chat WebSocket error:', event)
+            }
+
             wsChat.onmessage = (ev) => {
                 try {
-                    console.log({ ev })
                     const raw = JSON.parse(ev.data)
                     const type = raw?.type ?? raw?.payload?.type
                     const payload = raw?.payload ?? raw
 
-                    console.log('=== EVENT ===', { type, payload })
                     if (type === 'speech.segment') {
                         lastSegment.value = payload as SpeechSegmentPayload
                     } else if (type === 'audio.ready') {
                         const p = payload as AudioReadyPayload
                         lastAudioText.value = p.text
-                        const wavBlob = b64ToBlob(p.wavBase64, 'audio/wav')
-                        const url = URL.createObjectURL(wavBlob)
-                        audioEl.src = url
-                        console.log('=== PLAYING AUDIO ===', url)
-                        audioEl.play().then(() => { playbackError.value = '' }).catch((e) => { playbackError.value = e?.message || 'playback blocked' })
-                    }
-                } catch (e) {
-                    console.error(e)
-                }
-            }
 
-            wsAudio.onopen = () => {
-                statusText.value = 'connected'
-                mediaRecorder = new MediaRecorder(micStream as MediaStream, { mimeType: 'audio/webm;codecs=opus' })
-                mediaRecorder.ondataavailable = (ev: BlobEvent) => {
-                    if (!ev.data || ev.data.size === 0) return
-                    ev.data.arrayBuffer().then((buf) => {
-                        if (wsAudio && wsAudio.readyState === WebSocket.OPEN) {
-                            wsAudio.send(buf)
-                            chunkCount.value += 1
-                            bytesSent.value += buf.byteLength
+                        try {
+                            const wavBlob = b64ToBlob(p.wavBase64, 'audio/wav')
+                            const url = URL.createObjectURL(wavBlob)
+                            audioEl.src = url
+                            audioEl.play()
+                                .then(() => {
+                                    playbackError.value = ''
+                                })
+                                .catch((e) => {
+                                    playbackError.value = e?.message || 'playback blocked'
+
+                                    const audioError: VoiceError = {
+                                        type: 'audio',
+                                        message: 'Не удалось воспроизвести аудио',
+                                        details: e?.message
+                                    }
+                                    error.value = audioError
+                                })
+                        } catch (audioError: any) {
+                            const voiceError: VoiceError = {
+                                type: 'audio',
+                                message: 'Ошибка обработки аудио',
+                                details: audioError.message
+                            }
+                            error.value = voiceError
+                            playbackError.value = voiceError.message
                         }
-                    })
-                }
-                mediaRecorder.start(250)
-                isRecording.value = true
-            }
+                    } else if (type === 'error') {
+                        const serverError: VoiceError = {
+                            type: 'server',
+                            message: payload?.message || 'Ошибка сервера'
+                        }
+                        error.value = serverError
 
-            wsAudio.onclose = () => { statusText.value = 'closed' }
-            wsAudio.onerror = () => { statusText.value = 'error' }
-        } catch (e) {
-            statusText.value = 'permission-error'
-            console.error(e)
+                        addMessage({
+                            severity: 'error',
+                            summary: 'Ошибка сервера',
+                            detail: serverError.message,
+                            life: 5000
+                        })
+                    }
+                } catch (parseError: any) {
+                    console.error('Failed to parse voice chat message:', parseError)
+                    const voiceError: VoiceError = {
+                        type: 'unknown',
+                        message: 'Ошибка обработки сообщения сервера'
+                    }
+                    error.value = voiceError
+                }
+            }
+        } catch (generalError: any) {
+            statusText.value = 'error'
+            const voiceError: VoiceError = {
+                type: 'unknown',
+                message: 'Неожиданная ошибка при запуске записи',
+                details: generalError.message
+            }
+            error.value = voiceError
+
+            addMessage({
+                severity: 'error',
+                summary: 'Ошибка записи',
+                detail: voiceError.message,
+                life: 5000
+            })
         }
     }
 
@@ -149,7 +321,37 @@ export function useVoiceChat(getChatId: () => string | null) {
         stopRecording()
     })
 
-    return { isRecording, statusText, chunkCount, bytesSent, lastSegment, lastAudioText, playbackError, startRecording, stopRecording }
+    // Функция для получения пользовательского сообщения об ошибке
+    function getErrorMessage(error: VoiceError | null): string {
+        if (!error) return ''
+
+        const typeMessages = {
+            permission: '🎤 Нет доступа к микрофону',
+            websocket: '🔌 Проблемы с подключением',
+            audio: '🔊 Ошибка аудио',
+            network: '🌐 Проблемы с сетью',
+            server: '🔧 Ошибка сервера',
+            unknown: '❓ Неизвестная ошибка'
+        }
+
+        return `${typeMessages[error.type]} • ${error.message}`
+    }
+
+    return {
+        isRecording,
+        statusText,
+        chunkCount,
+        bytesSent,
+        lastSegment,
+        lastAudioText,
+        playbackError,
+        error,
+        wsAudioConnected,
+        wsChatConnected,
+        startRecording,
+        stopRecording,
+        getErrorMessage
+    }
 }
 
 

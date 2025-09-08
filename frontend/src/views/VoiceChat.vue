@@ -18,12 +18,13 @@ import ChatHistory from '../components/ChatHistory.vue'
 import Messages from '../components/Messages.vue'
 import Dropdown from 'primevue/dropdown'
 import Dialog from 'primevue/dialog'
+import Message from 'primevue/message'
 import { useVacancies } from '../composables/useVacancies'
 import { useResumes } from '../composables/useResumes'
 import AnalysisView from '../components/AnalysisView.vue'
 
 // Chat composable
-const { startChat, sendMessage, fetchChat, chat, finishChat, currentChatId, messages, loadChatHistory, loading, analysis, analysisError } = useChat()
+const { startChat, sendMessage, fetchChat, chat, finishChat, currentChatId, messages, loadChatHistory, loading, analysis, analysisError, error: chatError, wsConnected, wsReconnecting, getErrorMessage } = useChat()
 const router = useRouter()
 
 // UI state
@@ -50,6 +51,10 @@ const chunkCount = voice.chunkCount
 const bytesSent = voice.bytesSent
 const lastSegment = voice.lastSegment
 const lastAudioText = voice.lastAudioText
+const voiceError = voice.error
+const wsAudioConnected = voice.wsAudioConnected
+const wsChatConnected = voice.wsChatConnected
+const getVoiceErrorMessage = voice.getErrorMessage
 
 function startRecording() { voice.startRecording() }
 function stopRecording() { voice.stopRecording() }
@@ -133,6 +138,34 @@ watchEffect(async () => {
 
         <Divider class="my-12" />
 
+        <!-- Общие ошибки чата -->
+        <Message 
+          v-if="chatError" 
+          :severity="chatError.type === 'network' || chatError.type === 'websocket' ? 'warn' : 'error'" 
+          :closable="true"
+          @close="chatError = null"
+          class="error-message"
+        >
+          <template #icon>
+            <i class="pi" :class="{
+              'pi-exclamation-triangle': chatError.type === 'validation',
+              'pi-wifi': chatError.type === 'network',
+              'pi-server': chatError.type === 'server',
+              'pi-lock': chatError.type === 'auth',
+              'pi-link': chatError.type === 'websocket',
+              'pi-times-circle': chatError.type === 'unknown'
+            }"></i>
+          </template>
+          {{ getErrorMessage(chatError) }}
+          
+          <!-- Статус подключения -->
+          <div v-if="chatError.type === 'websocket'" class="connection-status">
+            <small>
+              WebSocket: {{ wsConnected ? '✅ Подключен' : wsReconnecting ? '🔄 Переподключение...' : '❌ Отключен' }}
+            </small>
+          </div>
+        </Message>
+
         <div class="content">
           <div class="main">
             <div v-if="!currentChatId" class="placeholder">
@@ -151,9 +184,28 @@ watchEffect(async () => {
 
                 <!-- Input area -->
                 <div class="input-bar">
-                  <InputTextarea v-model="inputText" autoResize rows="1" :disabled="loading" placeholder="Введите сообщение..." class="flex-1" />
-                  <Button icon="pi pi-send" label="Отправить" class="send-btn" :disabled="loading || !inputText.trim()" @click="handleSend" />
+                  <InputTextarea 
+                    v-model="inputText" 
+                    autoResize 
+                    rows="1" 
+                    :disabled="loading" 
+                    placeholder="Введите сообщение..." 
+                    class="flex-1"
+                    :class="{ 'p-invalid': inputText.length > 10000 }"
+                    @keydown.enter.exact.prevent="handleSend"
+                  />
+                  <Button 
+                    icon="pi pi-send" 
+                    label="Отправить" 
+                    class="send-btn" 
+                    :disabled="loading || !inputText.trim() || inputText.length > 10000" 
+                    :loading="loading"
+                    @click="handleSend" 
+                  />
                 </div>
+                <small v-if="inputText.length > 9000" class="text-counter" :class="{ 'text-counter-warning': inputText.length > 10000 }">
+                  {{ inputText.length }} / 10,000 символов
+                </small>
 
                 <Divider class="my-12" />
                 <div v-if="analysis" class="analysis">
@@ -166,14 +218,63 @@ watchEffect(async () => {
 
               <TabPanel value="voice">
                 <div class="voice">
+                  <!-- Ошибки голосового чата -->
+                  <Message 
+                    v-if="voiceError" 
+                    :severity="voiceError.type === 'permission' ? 'warn' : 'error'" 
+                    :closable="true"
+                    @close="voiceError = null"
+                    class="voice-error-message"
+                  >
+                    <template #icon>
+                      <i class="pi" :class="{
+                        'pi-microphone': voiceError.type === 'permission',
+                        'pi-volume-up': voiceError.type === 'audio',
+                        'pi-link': voiceError.type === 'websocket',
+                        'pi-wifi': voiceError.type === 'network',
+                        'pi-server': voiceError.type === 'server',
+                        'pi-times-circle': voiceError.type === 'unknown'
+                      }"></i>
+                    </template>
+                    {{ getVoiceErrorMessage(voiceError) }}
+                  </Message>
+
                   <div class="voice-stats">
-                    <div class="stat-item"><span class="label">Статус:</span> <span class="value">{{ statusText }}</span></div>
+                    <div class="stat-item">
+                      <span class="label">Статус:</span> 
+                      <span class="value" :class="{
+                        'status-connected': statusText === 'connected',
+                        'status-error': statusText === 'error' || statusText === 'permission-error',
+                        'status-disconnected': statusText === 'disconnected' || statusText === 'closed'
+                      }">{{ statusText }}</span>
+                    </div>
                     <div class="stat-item"><span class="label">Чанков:</span> <span class="value">{{ chunkCount }}</span></div>
                     <div class="stat-item"><span class="label">Байт:</span> <span class="value">{{ bytesSent }}</span></div>
+                    <div class="stat-item">
+                      <span class="label">Аудио:</span> 
+                      <span class="value">{{ wsAudioConnected ? '✅' : '❌' }}</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="label">Чат:</span> 
+                      <span class="value">{{ wsChatConnected ? '✅' : '❌' }}</span>
+                    </div>
                   </div>
                   <div class="voice-actions">
-                    <Button label="Старт" icon="pi pi-microphone" :disabled="isRecording" @click="startRecording" />
-                    <Button label="Стоп" icon="pi pi-stop" severity="danger" :disabled="!isRecording" class="ml-8" @click="stopRecording" />
+                    <Button 
+                      label="Старт" 
+                      icon="pi pi-microphone" 
+                      :disabled="isRecording || !currentChatId" 
+                      @click="startRecording"
+                      :severity="voiceError?.type === 'permission' ? 'warn' : 'primary'"
+                    />
+                    <Button 
+                      label="Стоп" 
+                      icon="pi pi-stop" 
+                      severity="danger" 
+                      :disabled="!isRecording" 
+                      class="ml-8" 
+                      @click="stopRecording" 
+                    />
                   </div>
 
                   <Divider class="my-12" />
@@ -229,13 +330,44 @@ watchEffect(async () => {
   
   <Dialog v-model:visible="showNewChat" modal header="Новый диалог" :style="{ width: '520px' }">
     <div class="new-chat-form">
-      <label>Выберите вакансию</label>
-      <Dropdown v-model="selectedVacancyId" :options="vacancies" optionLabel="title" optionValue="id" placeholder="Выбор вакансии" class="w-full" style="width: 100%" />
+      <label>Выберите вакансию *</label>
+      <Dropdown 
+        v-model="selectedVacancyId" 
+        :options="vacancies" 
+        optionLabel="title" 
+        optionValue="id" 
+        placeholder="Выбор вакансии" 
+        class="w-full" 
+        style="width: 100%"
+        :class="{ 'p-invalid': !selectedVacancyId && showNewChat }"
+      />
+      <small v-if="!selectedVacancyId && showNewChat" class="validation-error">
+        Выбор вакансии обязателен
+      </small>
+      
       <label class="mt-12">Выберите резюме (опционально)</label>
-      <Dropdown v-model="selectedResumeId" :options="resumes" optionLabel="fileName" optionValue="id" placeholder="Выбор резюме" class="w-full" style="width: 100%" />
+      <Dropdown 
+        v-model="selectedResumeId" 
+        :options="resumes" 
+        optionLabel="fileName" 
+        optionValue="id" 
+        placeholder="Выбор резюме" 
+        class="w-full" 
+        style="width: 100%" 
+      />
+      <small class="help-text">
+        Резюме поможет AI лучше понять кандидата
+      </small>
+      
       <div class="actions mt-12">
         <Button label="Отмена" severity="secondary" @click="showNewChat = false" />
-        <Button label="Начать" icon="pi pi-arrow-right" @click="confirmStartChat" :disabled="!selectedVacancyId" />
+        <Button 
+          label="Начать" 
+          icon="pi pi-arrow-right" 
+          @click="confirmStartChat" 
+          :disabled="!selectedVacancyId"
+          :loading="loading"
+        />
       </div>
     </div>
   </Dialog>
@@ -303,7 +435,67 @@ watchEffect(async () => {
   border-radius: 8px;
 }
 
-.new-chat-form { display: grid; gap: 10px; }
+.error-message { 
+  margin-bottom: 1rem; 
+}
+
+.connection-status {
+  margin-top: 0.5rem;
+  opacity: 0.8;
+}
+
+.voice-error-message {
+  margin-bottom: 1rem;
+}
+
+.status-connected {
+  color: var(--green-500);
+  font-weight: 600;
+}
+
+.status-error {
+  color: var(--red-500);
+  font-weight: 600;
+}
+
+.status-disconnected {
+  color: var(--text-color-secondary);
+}
+
+.text-counter {
+  color: var(--text-color-secondary);
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.text-counter-warning {
+  color: var(--red-500);
+  font-weight: 600;
+}
+
+.new-chat-form { 
+  display: grid; 
+  gap: 1rem; 
+}
+
+.new-chat-form label {
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.validation-error {
+  color: var(--red-500);
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+.help-text {
+  color: var(--text-color-secondary);
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
 .mt-12 { margin-top: 12px; }
 
 .analysis { text-align: left; }

@@ -98,10 +98,16 @@ def analyze_sentiment(audio_file_path):
     # 2. Распознавание речи (Yandex SpeechKit)
     text = ''
     try:
-        iam_token = os.environ.get('YANDEX_IAM_TOKEN') or os.environ.get('IAM_TOKEN')
-        if not iam_token:
-            raise RuntimeError('YANDEX_IAM_TOKEN is not set')
-        configure_credentials(yandex_credentials=creds.YandexCredentials(iam_token=iam_token))
+        api_key = os.environ.get('YANDEX_API_KEY')
+        if api_key:
+            # Используем API key
+            configure_credentials(yandex_credentials=creds.YandexCredentials(api_key=api_key))
+        else:
+            # Fallback to IAM token for backward compatibility
+            iam_token = os.environ.get('YANDEX_IAM_TOKEN') or os.environ.get('IAM_TOKEN')
+            if not iam_token:
+                raise RuntimeError('YANDEX_API_KEY or YANDEX_IAM_TOKEN is not set')
+            configure_credentials(yandex_credentials=creds.YandexCredentials(iam_token=iam_token))
 
         # Загружаем WAV, конвертируем в raw PCM 16k mono
         audio = AudioSegment.from_wav(audio_file_path).set_frame_rate(16000).set_channels(1).set_sample_width(2)

@@ -40,7 +40,7 @@ export default async function chatRoutes(server: FastifyInstance) {
     server.get('/chats', async (req, reply) => {
         const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
         const chats = await prisma.chat.findMany({
-            where: { userId: user.id } as any,
+            where: { user: { id: user.id } } as any,
             orderBy: { updatedAt: 'desc' },
             select: { id: true, title: true, createdAt: true, updatedAt: true }
         });
@@ -66,7 +66,7 @@ export default async function chatRoutes(server: FastifyInstance) {
 
         const chat = await prisma.chat.create({
             data: ({
-                userId: user.id,
+                user: { connect: { id: user.id } },
                 title: body.title ?? null,
                 requirements_checklist: initialChecklist as any,
                 ...(body.vacancyId
@@ -105,8 +105,8 @@ export default async function chatRoutes(server: FastifyInstance) {
     server.delete('/chat/:id', async (req, reply) => {
         const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
         const { id } = req.params as { id: string };
-        await prisma.message.deleteMany({ where: { chatId: id, chat: { userId: user.id } } as any });
-        await prisma.chat.delete({ where: { id, userId: user.id } as any });
+        await prisma.message.deleteMany({ where: { chatId: id, chat: { user: { id: user.id } } } as any });
+        await prisma.chat.delete({ where: { id, user: { id: user.id } } as any });
         return reply.code(204).send();
     });
 
@@ -127,8 +127,8 @@ export default async function chatRoutes(server: FastifyInstance) {
         const { content } = req.body as { content: string };
 
         // Save user message
-        const chatOwner = await prisma.chat.findUnique({ where: { id }, select: { userId: true } as any }) as any
-        if (!chatOwner || chatOwner.userId !== user.id) return reply.code(404).send({ error: 'Chat not found' })
+        const chatOwner = await prisma.chat.findUnique({ where: { id }, select: { user: { select: { id: true } } } as any }) as any
+        if (!chatOwner || chatOwner.user.id !== user.id) return reply.code(404).send({ error: 'Chat not found' })
 
         const userMsg = await prisma.message.create({ data: { chatId: id, role: 'user', content } });
         chatEventBus.broadcastMessageCreated(userMsg);
@@ -153,7 +153,7 @@ export default async function chatRoutes(server: FastifyInstance) {
         const { id } = req.params as { id: string };
 
         // HR can access any chat, users can only access their own chats
-        const whereCondition = user.role === 'hr' ? { id } : { id, userId: user.id };
+        const whereCondition = user.role === 'hr' ? { id } : { id, user: { id: user.id } };
 
         const chat = await prisma.chat.findFirst({
             where: whereCondition as any,
