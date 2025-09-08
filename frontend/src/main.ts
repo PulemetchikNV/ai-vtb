@@ -8,11 +8,13 @@ import './plugins/primevue/locale'
 import theme from './plugins/primevue/theme'
 import 'primeicons/primeicons.css'
 import { ToastService, ConfirmationService, Tooltip } from 'primevue'
+import VueApexCharts from 'vue3-apexcharts'
 
 createApp(App)
     .use(router)
     .use(PrimeVue, { theme })
     .use(ToastService)
     .use(ConfirmationService)
+    .use(VueApexCharts)
     .directive('tooltip', Tooltip)
     .mount('#app')

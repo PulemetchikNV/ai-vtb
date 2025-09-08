@@ -4,6 +4,7 @@ import Vacancies from '../views/Vacancies.vue';
 import Resumes from '../views/Resumes.vue';
 import Login from '../views/Login.vue';
 import Profile from '../views/Profile.vue';
+import VacancyAnalytics from '../views/VacancyAnalytics.vue';
 
 const router = createRouter({
     history: createWebHistory(),
@@ -12,6 +13,7 @@ const router = createRouter({
         { path: '/login', component: Login },
         { path: '/voice-chat/:chatId?', component: VoiceChat },
         { path: '/vacancies', component: Vacancies },
+        { path: '/vacancy/:id/analytics', component: VacancyAnalytics },
         { path: '/resumes', component: Resumes },
         { path: '/profile', component: Profile },
     ],

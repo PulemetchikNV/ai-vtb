@@ -144,6 +144,16 @@ onMounted(load)
           <div class="buttons">
             <!-- HR buttons -->
             <template v-if="isHr">
+              <Button 
+                size="small" 
+                icon="pi pi-eye" 
+                severity="secondary"
+                outlined
+                class="mr-2" 
+                @click="router.push(`/vacancy/${v.id}/analytics`)" 
+                :disabled="loading"
+                v-tooltip.top="'Аналитика'"
+              />
               <Button size="small" icon="pi pi-pencil" class="mr-2" @click="openEdit(v)" :disabled="loading" />
               <Button size="small" variant="text" icon="pi pi-trash" severity="danger" @click="remove(v.id)" :disabled="loading" />
             </template>
