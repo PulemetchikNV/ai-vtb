@@ -469,7 +469,14 @@ export function useChat() {
                         messages.value = [...messages.value, msg]
 
                         if (isTtsClientMode && msg.role === 'assistant' && typeof msg.content === 'string' && msg.content.trim().length > 0) {
-                            synthesizeAndPlay(msg.content).catch(() => { /* ignore */ })
+                            // Эмитируем событие для синхронизации с UI
+                            const event = new CustomEvent('tts-message', {
+                                detail: {
+                                    messageId: msg.id,
+                                    text: msg.content
+                                }
+                            })
+                            window.dispatchEvent(event)
                         }
                     }
                 } else if (evt?.type === 'analysis.started') {

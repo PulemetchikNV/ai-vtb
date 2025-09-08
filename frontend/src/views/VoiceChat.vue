@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watchEffect } from 'vue'
+import { ref, onMounted, onUnmounted, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 import { useChat } from '../composables/useChat'
 import { useVoiceChat } from '../composables/useVoiceChat'
@@ -22,19 +22,27 @@ import Message from 'primevue/message'
 import { useVacancies } from '../composables/useVacancies'
 import { useResumes } from '../composables/useResumes'
 import AnalysisView from '../components/AnalysisView.vue'
+import { synthesizeAndPlay } from '../services/ttsClient'
 
 // Chat composable
 const { startChat, sendMessage, fetchChat, chat, finishChat, currentChatId, messages, loadChatHistory, loading, analysis, analysisError, error: chatError, wsConnected, wsReconnecting, getErrorMessage } = useChat()
 const router = useRouter()
 
 // UI state
-const activeTab = ref('text')
+const activeTab = ref('voice') // Дефолт - звуковая вкладка
 const inputText = ref('')
 const selectedVacancyId = ref<string | null>(null)
 const selectedResumeId = ref<string | null>(null)
 const showNewChat = ref(false)
 const { vacancies, load: loadVacancies } = useVacancies()
 const { resumes, load: loadResumes } = useResumes()
+
+// Voice UI state
+const isAssistantSpeaking = ref(false)
+const currentAssistantText = ref('')
+const typingSpeed = 50 // миллисекунды между символами
+const isTyping = ref(false)
+let typingInterval: number | null = null
 
 async function handleSend() {
   const text = inputText.value.trim()
@@ -46,11 +54,7 @@ async function handleSend() {
 // Voice/WebSocket area via composable
 const voice = useVoiceChat(() => currentChatId.value)
 const isRecording = voice.isRecording
-const statusText = voice.statusText
-const chunkCount = voice.chunkCount
-const bytesSent = voice.bytesSent
 const lastSegment = voice.lastSegment
-const lastAudioText = voice.lastAudioText
 const voiceError = voice.error
 const wsAudioConnected = voice.wsAudioConnected
 const wsChatConnected = voice.wsChatConnected
@@ -58,6 +62,36 @@ const getVoiceErrorMessage = voice.getErrorMessage
 
 function startRecording() { voice.startRecording() }
 function stopRecording() { voice.stopRecording() }
+
+// Функции для синхронизации текста со звуком
+function startTypingEffect(text: string) {
+  if (typingInterval) {
+    clearInterval(typingInterval)
+  }
+  
+  currentAssistantText.value = ''
+  isTyping.value = true
+  let index = 0
+  
+  typingInterval = setInterval(() => {
+    if (index < text.length) {
+      currentAssistantText.value += text[index]
+      index++
+    } else {
+      clearInterval(typingInterval!)
+      typingInterval = null
+      isTyping.value = false
+    }
+  }, typingSpeed)
+}
+
+function stopTypingEffect() {
+  if (typingInterval) {
+    clearInterval(typingInterval)
+    typingInterval = null
+  }
+  isTyping.value = false
+}
 
 function handleNewChat() {
   showNewChat.value = true
@@ -83,10 +117,42 @@ async function handleDeleteChat(id: string) {
   }
 }
 
+// Обработчик TTS событий
+function handleTTSMessage(event: CustomEvent) {
+  const { text } = event.detail
+  
+  // Начинаем воспроизведение и синхронизацию
+  isAssistantSpeaking.value = true
+  
+  synthesizeAndPlay(text, {
+    onStart: () => {
+      startTypingEffect(text)
+    },
+    onEnd: () => {
+      isAssistantSpeaking.value = false
+      currentAssistantText.value = text // Показываем полный текст
+    },
+    onError: (error) => {
+      console.error('TTS Error:', error)
+      isAssistantSpeaking.value = false
+      stopTypingEffect()
+      currentAssistantText.value = text // Показываем полный текст даже при ошибке
+    }
+  }).catch(error => {
+    console.error('TTS playback failed:', error)
+    isAssistantSpeaking.value = false
+    stopTypingEffect()
+    currentAssistantText.value = text
+  })
+}
+
 // Autostart chat on first mount
 onMounted(async () => {
   await loadVacancies()
   await loadResumes()
+  
+  // Подписываемся на TTS события
+  window.addEventListener('tts-message', handleTTSMessage as EventListener)
   
   // Check for query parameters to auto-open new chat dialog
   const route = router.currentRoute.value
@@ -99,6 +165,12 @@ onMounted(async () => {
     router.replace({ name: undefined, params: { chatId: currentChatId.value } as any })
   }
   // messages autoscroll handled inside Messages component
+})
+
+onUnmounted(() => {
+  // Отписываемся от событий и очищаем интервалы
+  window.removeEventListener('tts-message', handleTTSMessage as EventListener)
+  stopTypingEffect()
 })
 
 watchEffect(async () => {
@@ -175,10 +247,120 @@ watchEffect(async () => {
             <!-- Tabs for modes (PrimeVue 4 Tabs API) -->
             <Tabs v-model:value="activeTab">
               <TabList>
-                <Tab value="text">Текст</Tab>
                 <Tab value="voice">Звонок</Tab>
+                <Tab value="text">Текст</Tab>
               </TabList>
               <TabPanels>
+              <TabPanel value="voice">
+                <!-- Call Interface -->
+                <div class="call-interface">
+                  <!-- Ошибки голосового чата -->
+                  <Message 
+                    v-if="voiceError" 
+                    :severity="voiceError.type === 'permission' ? 'warn' : 'error'" 
+                    :closable="true"
+                    @close="voiceError = null"
+                    class="voice-error-message"
+                  >
+                    <template #icon>
+                      <i class="pi" :class="{
+                        'pi-microphone': voiceError.type === 'permission',
+                        'pi-volume-up': voiceError.type === 'audio',
+                        'pi-link': voiceError.type === 'websocket',
+                        'pi-wifi': voiceError.type === 'network',
+                        'pi-server': voiceError.type === 'server',
+                        'pi-times-circle': voiceError.type === 'unknown'
+                      }"></i>
+                    </template>
+                    {{ getVoiceErrorMessage(voiceError) }}
+                  </Message>
+
+                  <!-- Main Call Area -->
+                  <div class="call-main">
+                    <!-- Assistant Speaking Area -->
+                    <div class="speaker-area" :class="{ 'speaking': isAssistantSpeaking }">
+                      <div class="speaker-avatar">
+                        <i class="pi pi-user" :class="{ 'pulse': isAssistantSpeaking }"></i>
+                      </div>
+                      <div class="speaker-content">
+                        <div class="speaker-label">AI Собеседник</div>
+                        <div class="speaker-text" v-if="currentAssistantText || isTyping">
+                          {{ currentAssistantText }}
+                          <span v-if="isTyping" class="typing-cursor">|</span>
+                        </div>
+                        <div class="speaker-status" v-if="isAssistantSpeaking">
+                          <i class="pi pi-volume-up"></i>
+                          Говорит...
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- User Speaking Area -->
+                    <div class="user-area" :class="{ 'speaking': isRecording }">
+                      <div class="user-avatar">
+                        <i class="pi pi-microphone" :class="{ 'pulse': isRecording }"></i>
+                      </div>
+                      <div class="user-content">
+                        <div class="user-label">Вы</div>
+                        <div class="user-status" v-if="isRecording">
+                          <div class="recording-indicator">
+                            <span class="recording-dot"></span>
+                            Запись...
+                          </div>
+                        </div>
+                        <div class="user-status" v-else-if="lastSegment?.recognized_text">
+                          "{{ lastSegment.recognized_text }}"
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Call Controls -->
+                  <div class="call-controls">
+                    <Button 
+                      :label="isRecording ? 'Остановить' : 'Говорить'" 
+                      :icon="isRecording ? 'pi pi-stop' : 'pi pi-microphone'"
+                      :severity="isRecording ? 'danger' : 'success'"
+                      size="large"
+                      :disabled="!currentChatId || isAssistantSpeaking"
+                      @click="isRecording ? stopRecording() : startRecording()"
+                      class="record-button"
+                    />
+                  </div>
+
+                  <!-- Connection Status -->
+                  <div class="connection-status-bar">
+                    <div class="status-item">
+                      <span class="status-dot" :class="{ 'connected': wsAudioConnected }"></span>
+                      Аудио: {{ wsAudioConnected ? 'Подключено' : 'Отключено' }}
+                    </div>
+                    <div class="status-item">
+                      <span class="status-dot" :class="{ 'connected': wsChatConnected }"></span>
+                      Чат: {{ wsChatConnected ? 'Подключен' : 'Отключен' }}
+                    </div>
+                  </div>
+
+                  <!-- Compact Message History -->
+                  <div class="compact-history" v-if="messages.length > 0">
+                    <div class="history-header">
+                      <i class="pi pi-clock"></i>
+                      История разговора
+                    </div>
+                    <div class="history-messages">
+                      <div 
+                        v-for="msg in messages.slice(-5)" 
+                        :key="msg.id" 
+                        class="history-message"
+                        :class="{ 'user': msg.role === 'user', 'assistant': msg.role === 'assistant' }"
+                      >
+                        <div class="message-role">{{ msg.role === 'user' ? 'Вы' : 'AI' }}</div>
+                        <div class="message-content">{{ msg.content }}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </TabPanel>
+
               <TabPanel value="text">
                 <Messages :messages="messages" />
 
@@ -215,99 +397,6 @@ watchEffect(async () => {
                   </div>
                 </div>
               </TabPanel>
-
-              <TabPanel value="voice">
-                <div class="voice">
-                  <!-- Ошибки голосового чата -->
-                  <Message 
-                    v-if="voiceError" 
-                    :severity="voiceError.type === 'permission' ? 'warn' : 'error'" 
-                    :closable="true"
-                    @close="voiceError = null"
-                    class="voice-error-message"
-                  >
-                    <template #icon>
-                      <i class="pi" :class="{
-                        'pi-microphone': voiceError.type === 'permission',
-                        'pi-volume-up': voiceError.type === 'audio',
-                        'pi-link': voiceError.type === 'websocket',
-                        'pi-wifi': voiceError.type === 'network',
-                        'pi-server': voiceError.type === 'server',
-                        'pi-times-circle': voiceError.type === 'unknown'
-                      }"></i>
-                    </template>
-                    {{ getVoiceErrorMessage(voiceError) }}
-                  </Message>
-
-                  <div class="voice-stats">
-                    <div class="stat-item">
-                      <span class="label">Статус:</span> 
-                      <span class="value" :class="{
-                        'status-connected': statusText === 'connected',
-                        'status-error': statusText === 'error' || statusText === 'permission-error',
-                        'status-disconnected': statusText === 'disconnected' || statusText === 'closed'
-                      }">{{ statusText }}</span>
-                    </div>
-                    <div class="stat-item"><span class="label">Чанков:</span> <span class="value">{{ chunkCount }}</span></div>
-                    <div class="stat-item"><span class="label">Байт:</span> <span class="value">{{ bytesSent }}</span></div>
-                    <div class="stat-item">
-                      <span class="label">Аудио:</span> 
-                      <span class="value">{{ wsAudioConnected ? '✅' : '❌' }}</span>
-                    </div>
-                    <div class="stat-item">
-                      <span class="label">Чат:</span> 
-                      <span class="value">{{ wsChatConnected ? '✅' : '❌' }}</span>
-                    </div>
-                  </div>
-                  <div class="voice-actions">
-                    <Button 
-                      label="Старт" 
-                      icon="pi pi-microphone" 
-                      :disabled="isRecording || !currentChatId" 
-                      @click="startRecording"
-                      :severity="voiceError?.type === 'permission' ? 'warn' : 'primary'"
-                    />
-                    <Button 
-                      label="Стоп" 
-                      icon="pi pi-stop" 
-                      severity="danger" 
-                      :disabled="!isRecording" 
-                      class="ml-8" 
-                      @click="stopRecording" 
-                    />
-                  </div>
-
-                  <Divider class="my-12" />
-
-                  <div class="emotions" v-if="lastSegment">
-                    <div class="emo-row">
-                      <span class="label">Распознано:</span>
-                      <span class="value">{{ lastSegment?.recognized_text }}</span>
-                    </div>
-                    <div class="emo-row">
-                      <span class="label">Модель/уверенность:</span>
-                      <span class="value">{{ lastSegment?.sentiment_model || '-' }} / {{ lastSegment?.sentiment_confidence ?? '-' }}</span>
-                    </div>
-                    <div class="emo-row">
-                      <span class="label">Эмоция:</span>
-                      <span class="value">{{ lastSegment?.final_emotion?.label || '-' }}</span>
-                    </div>
-                    <div class="emo-row">
-                      <span class="label">Паузы:</span>
-                      <span class="value">{{ lastSegment?.pause_count ?? 0 }} (∑ {{ lastSegment?.total_pause_duration_seconds ?? 0 }}s)</span>
-                    </div>
-                  </div>
-
-                  <div class="tts" v-if="lastAudioText">
-                    <div class="emo-row">
-                      <span class="label">TTS ответ:</span>
-                      <span class="value">{{ lastAudioText }}</span>
-                    </div>
-                  </div>
-
-                  <Messages :messages="messages" />
-                </div>
-                </TabPanel>
               </TabPanels>
             </Tabs>
             </template>
@@ -498,6 +587,263 @@ watchEffect(async () => {
 
 .mt-12 { margin-top: 12px; }
 
+/* Call Interface Styles */
+.call-interface {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.call-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  min-height: 300px;
+}
+
+.speaker-area, .user-area {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-radius: 16px;
+  border: 2px solid transparent;
+  background: var(--surface-section);
+  transition: all 0.3s ease;
+}
+
+.speaker-area.speaking {
+  border-color: var(--green-400);
+  background: linear-gradient(135deg, var(--green-50), var(--surface-section));
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
+}
+
+.user-area.speaking {
+  border-color: var(--blue-400);
+  background: linear-gradient(135deg, var(--blue-50), var(--surface-section));
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+}
+
+.speaker-avatar, .user-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  background: var(--surface-card);
+  border: 3px solid var(--surface-border);
+  transition: all 0.3s ease;
+}
+
+.speaker-avatar {
+  background: linear-gradient(135deg, var(--green-100), var(--green-200));
+  color: var(--green-700);
+}
+
+.user-avatar {
+  background: linear-gradient(135deg, var(--blue-100), var(--blue-200));
+  color: var(--blue-700);
+}
+
+.speaker-avatar.pulse, .user-avatar.pulse {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+  }
+}
+
+.user-avatar.pulse {
+  animation: pulse-blue 1.5s infinite;
+}
+
+@keyframes pulse-blue {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+  }
+}
+
+.speaker-content, .user-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.speaker-label, .user-label {
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.speaker-text {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: var(--text-color);
+  min-height: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.typing-cursor {
+  color: var(--green-500);
+  font-weight: bold;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.speaker-status, .user-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-color-secondary);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.recording-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.recording-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--red-500);
+  border-radius: 50%;
+  animation: recording-pulse 1s infinite;
+}
+
+@keyframes recording-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.call-controls {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.record-button {
+  min-width: 150px;
+  height: 60px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 30px;
+}
+
+.connection-status-bar {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  padding: 1rem;
+  background: var(--surface-ground);
+  border-radius: 12px;
+  border: 1px solid var(--surface-border);
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-color-secondary);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--red-400);
+  transition: background-color 0.3s ease;
+}
+
+.status-dot.connected {
+  background: var(--green-400);
+}
+
+.compact-history {
+  margin-top: 2rem;
+  background: var(--surface-ground);
+  border-radius: 12px;
+  border: 1px solid var(--surface-border);
+  overflow: hidden;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: var(--surface-section);
+  border-bottom: 1px solid var(--surface-border);
+  font-weight: 600;
+  color: var(--text-color-secondary);
+  font-size: 0.9rem;
+}
+
+.history-messages {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.history-message {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--surface-border);
+  transition: background-color 0.2s ease;
+}
+
+.history-message:hover {
+  background: var(--surface-hover);
+}
+
+.history-message:last-child {
+  border-bottom: none;
+}
+
+.message-role {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-color-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.history-message.user .message-role {
+  color: var(--blue-500);
+}
+
+.history-message.assistant .message-role {
+  color: var(--green-500);
+}
+
+.message-content {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--text-color);
+}
+
 .analysis { text-align: left; }
 .analysis .json {
   background: var(--surface-ground);
@@ -513,6 +859,51 @@ watchEffect(async () => {
   .chat-container { padding: 8px; border: none; border-radius: 0; }
   .messages { height: 50vh; }
   .msg .bubble { max-width: 90%; }
+  
+  .call-interface {
+    max-width: 100%;
+    gap: 1rem;
+  }
+  
+  .call-main {
+    gap: 1rem;
+    min-height: 200px;
+  }
+  
+  .speaker-area, .user-area {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+  
+  .speaker-avatar, .user-avatar {
+    width: 50px;
+    height: 50px;
+    font-size: 1.2rem;
+  }
+  
+  .speaker-text {
+    font-size: 1rem;
+    min-height: 2rem;
+  }
+  
+  .record-button {
+    min-width: 120px;
+    height: 50px;
+    font-size: 1rem;
+  }
+  
+  .connection-status-bar {
+    gap: 1rem;
+    padding: 0.75rem;
+  }
+  
+  .compact-history {
+    margin-top: 1rem;
+  }
+  
+  .history-messages {
+    max-height: 150px;
+  }
 }
 
 @media (max-width: 900px) {
