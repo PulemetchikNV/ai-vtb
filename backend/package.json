@@ -5,7 +5,7 @@
     "description": "Simple Fastify backend in TypeScript",
     "main": "dist/server.js",
     "scripts": {
-        "build": "node -e \"console.log('skip tsc build')\"",
+        "build": "tsc -p tsconfig.json --noEmitOnError false",
         "start": "node dist/server.js",
         "dev": "tsx watch src/server.ts",
         "prisma:generate": "prisma generate",
