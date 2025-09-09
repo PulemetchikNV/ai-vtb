@@ -42,3 +42,6 @@ hf_cache/
 C/
 *.log
 *.tmp
+
+api-key.yml
+yc-key
