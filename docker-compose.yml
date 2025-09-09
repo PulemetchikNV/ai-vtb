@@ -105,6 +105,8 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+    volumes:
+      - /srv/certbot/www:/var/www/certbot
 
   postgres:
     image: postgres:16-alpine
