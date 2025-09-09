@@ -41,7 +41,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./backend:/app:ro
+      - ./backend:/app
     depends_on:
       - resumeparsing
       - postgres
