@@ -5,7 +5,7 @@ import { requireAuth } from '../middleware/authMiddleware'
 import { analyzer } from '../services/analyzer';
 import { dialogueService } from '../services/dialogue';
 import { factChecker } from '../services/factChecker';
-import { processSavedUserMessage, finishChat as flowFinishChat } from '../services/chatFlow'
+import { processSavedUserMessage, finishChat as flowFinishChat, updateScenarioProgress } from '../services/chatFlow'
 import { factsApi } from '../services/factsApi';
 import { ingestResumeFactsToChat } from '../services/resumeFacts';
 
@@ -107,9 +107,16 @@ export default async function chatRoutes(server: FastifyInstance) {
                 const resume = body.resumeId ? (await prisma.resume.findUnique({ where: { id: body.resumeId } })) : null;
 
                 const resumeText = resume?.text ?? resume?.text_raw ?? '';
-                const { systemPrompt, initialMessage } = await dialogueService.getInitialMessage({ vacancy, resumeText, lang: body.lang });
+                const { systemPrompt, initialMessage } = await dialogueService.getInitialMessage({
+                    vacancy,
+                    resumeText,
+                    lang: body.lang
+                });
                 const systemMsg = await prisma.message.create({ data: { chatId: chat.id, role: 'user', content: ``, hiddenContent: systemPrompt } });
                 const assistantMsg = await prisma.message.create({ data: { chatId: chat.id, role: 'assistant', content: initialMessage } });
+
+                // Инициализируем прогресс сценария сразу после создания стартовых сообщений
+                await updateScenarioProgress({ chatId: chat.id, messageHistory: [systemMsg, assistantMsg].map(m => ({ role: m.role, content: m.content || '' })) })
 
                 // Отправляем WebSocket события для начальных сообщений с задержкой
                 // чтобы фронтенд успел получить ответ и подписаться на канал
@@ -124,7 +131,7 @@ export default async function chatRoutes(server: FastifyInstance) {
                 return reply.code(500).send({ error: 'Error getting initial message' });
             }
         }
-        return reply.code(201).send({...chat, messages: []});
+        return reply.code(201).send({ ...chat, messages: [] });
     });
 
     server.delete('/chat/:id', async (req, reply) => {

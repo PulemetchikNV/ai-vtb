@@ -29,21 +29,19 @@ type GetNextMessageParams = {
     scenarioTransition?: ScenarioTransition | null,
     currentBlock?: CurrentScenarioBlock | null,
     forceFinish?: boolean,
+    checkerComment?: string,
 }
 
 export const dialogueService = {
     async getInitialMessage({ vacancy, resumeText, lang }: { vacancy: Vacancy, resumeText?: string, lang?: string }) {
         if (!lang) lang = 'ru'
 
-        const basePrompt = INITIAL_DIALOG_PROMPT({ vacancy })
+        const basePrompt = INITIAL_DIALOG_PROMPT({ vacancy, lang })
         let prompt = basePrompt
         if (resumeText) {
             prompt += `
         \n[Контекст из резюме кандидата (используй как фактическую информацию):\n${resumeText}\n]`
         }
-        prompt += `
-        \n[ЯЗЫК ДИАЛОГА: ${lang}. НЕ ОБРАЩАЙ ВНИМАНИЕ НА ТО КАКОЙ ЯЗЫК В РЕЗЮМЕ, ВЕДИ ДИАЛОГ ТОЛЬКО НА НЕМ. Не вставляй никаких звездочек и прочих символов которые трудно произнеси]
-        `
 
         const initialMessage = await aiService.communicateWithGemini([{ role: 'user', content: prompt }], true)
 
@@ -52,7 +50,7 @@ export const dialogueService = {
             initialMessage
         }
     },
-    async getNextMessage({ userMessage, messageHistory, chatId, analyzerMeta, scenarioTransition, currentBlock, forceFinish }: GetNextMessageParams) {
+    async getNextMessage({ userMessage, messageHistory, chatId, analyzerMeta, scenarioTransition, currentBlock, forceFinish, checkerComment }: GetNextMessageParams) {
         await chatDebugSeparator(chatId)
         // fetch latest contradictions
         const chat = await prisma.chat.findUnique({ where: { id: chatId }, select: { facts_meta: true, lang: true } }) as any
@@ -128,7 +126,14 @@ export const dialogueService = {
             \n\n(НАПОМИНАНИЕ ОТ АДМИНИСТРАТОРА БЕСЕДЫ) [Язык ответа: ${chatLang}. Не вставляй никаких звездочек и прочих символов которые трудно произнеси]
             `
 
-            finalMessage = `${userMessage}${contradictionsNote}${qualityNote}${scenarioNote}${currentBlockNote}${langNote}`
+            finalMessage = `
+            ${userMessage}
+            ${contradictionsNote}
+            ${qualityNote}
+            ${scenarioNote}
+            ${currentBlockNote}
+            ${checkerComment}
+            ${langNote}`
         } else {
             finalMessage = `${userMessage} [Комментарий администратора: Пользователь не прошел блок. Принудительно завершай разговор]`
         }

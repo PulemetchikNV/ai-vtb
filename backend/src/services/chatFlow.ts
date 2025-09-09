@@ -46,103 +46,7 @@ export async function processSavedUserMessage(params: { chatId: string; userCont
         const [analyzerMeta] = await Promise.all([analyzerPromise, factCheckerPromise])
 
         // Проверяем и обновляем прогресс по блокам сценария
-        let scenarioTransition = null;
-        let currentBlock = null;
-        let forceFinish = false;
-
-        const chat = await prisma.chat.findUnique({
-            where: { id: chatId },
-            select: { meta: true }
-        });
-
-        if (chat?.meta && typeof chat.meta === 'object' && 'scenario' in (chat.meta as any)) {
-            const meta = chat.meta as any;
-            const scenario = meta.scenario;
-            console.log('=== SCENARIO ===', scenario)
-
-            if (scenario && scenario.current_block) {
-                // Всегда формируем информацию о текущем блоке
-                currentBlock = {
-                    title: scenario.current_block.title,
-                    duration: scenario.current_block.duration,
-                    keypoints: scenario.current_block.keypoints || [],
-                    counter: scenario.counter,
-                    block_index: scenario.current_block_index,
-                    total_blocks: scenario.blocks.length
-                };
-
-                // Проверяем завершение блока только если не превышен лимит сообщений
-                // Проверяем, завершен ли текущий блок
-                const { scenarioCheckerChain } = await import('../chains/scenarioCheckerChain');
-
-                const blockMessages = messageHistory
-                    .slice(-6) // Берем последние 6 сообщений для анализа
-                    .map(msg => `${msg.role}: ${msg.content}`)
-                    .join('\n');
-
-                const checkerResult = await scenarioCheckerChain.invoke({
-                    scenario_block_name: scenario.current_block.title,
-                    messages: blockMessages,
-                    scenario_block_keypoints: scenario.current_block.keypoints || []
-                })
-                forceFinish = checkerResult.is_need_finish;
-
-                if (checkerResult.is_passed || scenario.counter >= (scenario.current_block.duration || 3)) {
-                    // Блок завершен, переходим к следующему
-                    const nextBlockIndex = scenario.current_block_index + 1;
-                    if (nextBlockIndex < scenario.blocks.length) {
-                        const nextBlock = scenario.blocks[nextBlockIndex];
-                        const updatedMeta = {
-                            ...meta,
-                            scenario: {
-                                ...scenario,
-                                current_block_index: nextBlockIndex,
-                                current_block: nextBlock,
-                                counter: 0
-                            }
-                        };
-
-                        await prisma.chat.update({
-                            where: { id: chatId },
-                            data: { meta: updatedMeta }
-                        });
-
-                        scenarioTransition = {
-                            from_block: scenario.current_block.title,
-                            to_block: nextBlock.title,
-                            block_keypoints: nextBlock.keypoints || []
-                        };
-
-                        // Обновляем currentBlock для нового блока
-                        currentBlock = {
-                            title: nextBlock.title,
-                            duration: nextBlock.duration,
-                            keypoints: nextBlock.keypoints || [],
-                            counter: 0,
-                            block_index: nextBlockIndex,
-                            total_blocks: scenario.blocks.length
-                        };
-                    }
-                } else {
-                    // Блок не завершен, увеличиваем counter
-                    const updatedMeta = {
-                        ...meta,
-                        scenario: {
-                            ...scenario,
-                            counter: scenario.counter + 1
-                        }
-                    };
-
-                    await prisma.chat.update({
-                        where: { id: chatId },
-                        data: { meta: updatedMeta }
-                    });
-
-                    // Обновляем counter в currentBlock
-                    currentBlock.counter = scenario.counter + 1;
-                }
-            }
-        }
+        const { scenarioTransition, currentBlock, forceFinish, checkerComment } = await updateScenarioProgress({ chatId, messageHistory })
 
         const assistantText = await dialogueService.getNextMessage({
             userMessage: userContent,
@@ -152,6 +56,7 @@ export async function processSavedUserMessage(params: { chatId: string; userCont
             scenarioTransition,
             currentBlock,
             forceFinish,
+            checkerComment,
         })
         const assistantMsg = await prisma.message.create({ data: { chatId, role: 'assistant', content: assistantText } })
         chatEventBus.broadcastMessageCreated(assistantMsg)
@@ -164,6 +69,104 @@ export async function processSavedUserMessage(params: { chatId: string; userCont
     } catch (e) {
         return { assistantMsg: null }
     }
+}
+
+
+export async function updateScenarioProgress(params: { chatId: string; messageHistory: Array<{ role: string; content: string }> }): Promise<{ scenarioTransition: any | null; currentBlock: any | null; forceFinish: boolean; checkerComment: string }> {
+    const { chatId, messageHistory } = params
+    let scenarioTransition: any | null = null
+    let currentBlock: any | null = null
+    let forceFinish = false
+    let checkerComment = ''
+
+    const chat = await prisma.chat.findUnique({
+        where: { id: chatId },
+        select: { meta: true }
+    })
+
+    if (chat?.meta && typeof chat.meta === 'object' && 'scenario' in (chat.meta as any)) {
+        const meta = chat.meta as any
+        const scenario = meta.scenario
+        console.log('=== SCENARIO ===', scenario)
+
+        if (scenario && scenario.current_block) {
+            // Всегда формируем информацию о текущем блоке
+            currentBlock = {
+                title: scenario.current_block.title,
+                duration: scenario.current_block.duration,
+                keypoints: scenario.current_block.keypoints || [],
+                counter: scenario.counter,
+                block_index: scenario.current_block_index,
+                total_blocks: scenario.blocks.length
+            }
+
+            // Проверяем, завершен ли текущий блок
+            const { scenarioCheckerChain } = await import('../chains/scenarioCheckerChain')
+
+            const blockMessages = messageHistory
+                .slice(-6)
+                .map(msg => `${msg.role}: ${msg.content}`)
+                .join('\n')
+
+            const checkerResult = await scenarioCheckerChain.invoke({
+                scenario_block_name: scenario.current_block.title,
+                messages: blockMessages,
+                scenario_block_keypoints: scenario.current_block.keypoints || []
+            })
+            forceFinish = checkerResult.is_need_finish
+            checkerComment = checkerResult.comment
+            console.log('=== CHECKER RESULT ===', checkerResult)
+
+            if (checkerResult.is_passed || scenario.counter >= (scenario.current_block.duration - 1 || 3)) {
+                // Блок завершен, переходим к следующему
+                const nextBlockIndex = scenario.current_block_index + 1
+                if (nextBlockIndex < scenario.blocks.length) {
+                    const nextBlock = scenario.blocks[nextBlockIndex]
+                    const updatedMeta = {
+                        ...meta,
+                        scenario: {
+                            ...scenario,
+                            current_block_index: nextBlockIndex,
+                            current_block: nextBlock,
+                            counter: 0
+                        }
+                    }
+
+                    await prisma.chat.update({ where: { id: chatId }, data: { meta: updatedMeta } })
+
+                    scenarioTransition = {
+                        from_block: scenario.current_block.title,
+                        to_block: nextBlock.title,
+                        block_keypoints: nextBlock.keypoints || []
+                    }
+
+                    // Обновляем currentBlock для нового блока
+                    currentBlock = {
+                        title: nextBlock.title,
+                        duration: nextBlock.duration,
+                        keypoints: nextBlock.keypoints || [],
+                        counter: 0,
+                        block_index: nextBlockIndex,
+                        total_blocks: scenario.blocks.length
+                    }
+                }
+            } else {
+                // Блок не завершен, увеличиваем counter
+                const updatedMeta = {
+                    ...meta,
+                    scenario: {
+                        ...scenario,
+                        counter: scenario.counter + 1
+                    }
+                }
+                await prisma.chat.update({ where: { id: chatId }, data: { meta: updatedMeta } })
+                // Обновляем counter в currentBlock
+                currentBlock.counter = scenario.counter + 1
+            }
+        }
+    }
+
+    return { scenarioTransition, currentBlock, forceFinish, checkerComment }
 }
 
 
