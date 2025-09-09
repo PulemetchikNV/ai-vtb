@@ -39,13 +39,15 @@ const showEdit = ref(false)
 const editingId = ref<string | null>(null)
 
 type ReqRow = { id: string; description: string; type: 'technical_skill' | 'soft_skill'; weight: number }
-type Form = { title: string; description_text: string; requirements: Array<ReqRow>; weights: Record<string, number> }
+type ScenarioBlock = { title: string; duration?: number; keypoints?: string[] }
+type Form = { title: string; description_text: string; requirements: Array<ReqRow>; weights: Record<string, number>; scenario_blocks?: ScenarioBlock[] }
 
 const formDefaultValue: Form = { 
   title: '',
   description_text: '',
   requirements: [{ id: 'req1', description: '', type: 'technical_skill', weight: 1 }],
-  weights: weightsDefault
+  weights: weightsDefault,
+  scenario_blocks: []
 }
 const form = ref<Form>({...formDefaultValue})
 
@@ -64,7 +66,19 @@ function shortenDescription(text: string) {
 async function submit(newForm: Form) {
   form.value = newForm
   const checklist = form.value.requirements.map(it => ({ id: it.id, description: it.description, type: it.type, weight: it.weight }))
-  await create({ title: form.value.title, description_text: form.value.description_text, requirements_checklist: checklist, category_weights: form.value.weights })
+  const createData: any = {
+    title: form.value.title, 
+    description_text: form.value.description_text, 
+    requirements_checklist: checklist, 
+    category_weights: form.value.weights
+  }
+  
+  // Добавляем scenario_blocks только если они есть и не пустые
+  if (form.value.scenario_blocks && form.value.scenario_blocks.length > 0) {
+    createData.scenario_blocks = form.value.scenario_blocks
+  }
+  
+  await create(createData)
   showCreate.value = false
   form.value = {...formDefaultValue}
 }
@@ -80,6 +94,7 @@ function openEdit(v: any) {
   form.value.description_text = v.description_text
   form.value.requirements = Array.isArray(v.requirements_checklist) ? v.requirements_checklist.map((r: any) => ({ id: r.id, description: r.description, type: r.type, weight: r.weight })) : []
   form.value.weights = v.category_weights || weightsDefault
+  form.value.scenario_blocks = Array.isArray(v.scenario_blocks) ? v.scenario_blocks : []
   showEdit.value = true
 }
 
@@ -95,12 +110,19 @@ async function submitEdit(newForm: Form) {
       weight: it.weight
     }))
 
-  await update(editingId.value, {
+  const updateData: any = {
     title: newForm.title,
     description_text: newForm.description_text,
     requirements_checklist: checklist,
     category_weights: newForm.weights
-  })
+  }
+  
+  // Добавляем scenario_blocks только если они есть
+  if (newForm.scenario_blocks) {
+    updateData.scenario_blocks = newForm.scenario_blocks
+  }
+
+  await update(editingId.value, updateData)
   
   showEdit.value = false
   editingId.value = null
@@ -218,7 +240,7 @@ function startChatWithVacancy(vacancyId: string) {
         :dismissableMask="!isMobile"
         class="vacancy-dialog"
       >
-        <VacancyForm v-model="form" @add-req="addReq" @del-req="delReq" @submit="submit" />
+        <VacancyForm v-model="form" :isEditing="false" @add-req="addReq" @del-req="delReq" @submit="submit" />
       </Dialog>
 
       <Dialog 
@@ -231,7 +253,7 @@ function startChatWithVacancy(vacancyId: string) {
         :dismissableMask="!isMobile"
         class="vacancy-dialog"
       >
-        <VacancyForm v-model="form" @add-req="addReq" @del-req="delReq" @submit="submitEdit" />
+        <VacancyForm v-model="form" :isEditing="true" @add-req="addReq" @del-req="delReq" @submit="submitEdit" />
       </Dialog>
     </template>
   </div>

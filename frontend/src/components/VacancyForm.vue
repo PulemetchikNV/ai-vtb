@@ -6,13 +6,19 @@ import InputNumber from 'primevue/inputnumber'
 import Slider from 'primevue/slider'
 import Button from 'primevue/button'
 import FloatLabel from 'primevue/floatlabel'
+import Chips from 'primevue/chips'
+import Card from 'primevue/card'
 import { REQUIREMENT_TYPES } from '../__data__/constants'
 import { ref, watch } from 'vue'
 
 type ReqRow = { id: string; description: string; type: 'technical_skill' | 'soft_skill'; weight: number }
-type FormModel = { title: string; description_text: string; requirements: Array<ReqRow>; weights: Record<string, number> }
+type ScenarioBlock = { title: string; duration?: number; keypoints?: string[] }
+type FormModel = { title: string; description_text: string; requirements: Array<ReqRow>; weights: Record<string, number>; scenario_blocks?: ScenarioBlock[] }
 
-const props = defineProps<{ modelValue: FormModel }>()
+const props = defineProps<{ 
+  modelValue: FormModel
+  isEditing?: boolean
+}>()
 const emit = defineEmits<{ 
   (e: 'update:modelValue', v: FormModel): void;
   (e: 'add-req'): void;
@@ -80,6 +86,51 @@ function delReq(idx: number) {
 function submit() {
   emit('submit', model.value)
 }
+
+// Функции для работы с блоками сценария
+function addScenarioBlock() {
+  if (!model.value.scenario_blocks) {
+    model.value.scenario_blocks = []
+  }
+  model.value.scenario_blocks.push({
+    title: '',
+    duration: 3,
+    keypoints: []
+  })
+  emit('update:modelValue', model.value)
+}
+
+function removeScenarioBlock(index: number) {
+  if (model.value.scenario_blocks) {
+    model.value.scenario_blocks.splice(index, 1)
+    emit('update:modelValue', model.value)
+  }
+}
+
+function moveScenarioBlock(index: number, direction: 'up' | 'down') {
+  if (!model.value.scenario_blocks) return
+  
+  const newIndex = direction === 'up' ? index - 1 : index + 1
+  if (newIndex < 0 || newIndex >= model.value.scenario_blocks.length) return
+  
+  const blocks = [...model.value.scenario_blocks]
+  const temp = blocks[index]
+  blocks[index] = blocks[newIndex]
+  blocks[newIndex] = temp
+  
+  model.value.scenario_blocks = blocks
+  emit('update:modelValue', model.value)
+}
+
+function updateScenarioBlock(index: number, field: keyof ScenarioBlock, value: any) {
+  if (model.value.scenario_blocks && model.value.scenario_blocks[index]) {
+    model.value.scenario_blocks[index] = {
+      ...model.value.scenario_blocks[index],
+      [field]: value
+    }
+    emit('update:modelValue', model.value)
+  }
+}
 </script>
 
 <template>
@@ -145,6 +196,102 @@ function submit() {
       </div>
       <Button icon="pi pi-plus" label="Добавить" @click="addReq" outlined />
     </div>
+
+    <template v-if="props.isEditing">
+      <label>Блоки сценария</label>
+      <div class="scenario-blocks">
+      <Card 
+        v-for="(block, index) in model.scenario_blocks || []" 
+        :key="index" 
+        class="scenario-block"
+      >
+        <template #header>
+          <div class="block-header">
+            <span class="block-number">{{ index + 1 }}</span>
+            <div class="block-controls">
+              <Button 
+                icon="pi pi-arrow-up" 
+                size="small" 
+                severity="secondary" 
+                outlined
+                :disabled="index === 0"
+                @click="moveScenarioBlock(index, 'up')"
+                v-tooltip.top="'Переместить вверх'"
+              />
+              <Button 
+                icon="pi pi-arrow-down" 
+                size="small" 
+                severity="secondary" 
+                outlined
+                :disabled="index === (model.scenario_blocks?.length || 0) - 1"
+                @click="moveScenarioBlock(index, 'down')"
+                v-tooltip.top="'Переместить вниз'"
+              />
+              <Button 
+                icon="pi pi-trash" 
+                size="small" 
+                severity="danger" 
+                outlined
+                @click="removeScenarioBlock(index)"
+                v-tooltip.top="'Удалить блок'"
+              />
+            </div>
+          </div>
+        </template>
+        <template #content>
+          <div class="block-content">
+            <div class="block-field">
+              <label>Название блока</label>
+              <InputText 
+                :modelValue="block.title"
+                @update:modelValue="(value) => updateScenarioBlock(index, 'title', value)"
+                placeholder="Например: Вступление"
+              />
+            </div>
+            
+            <div class="block-field">
+              <FloatLabel variant="on">
+                <InputNumber 
+                  :modelValue="block.duration"
+                  @update:modelValue="(value) => updateScenarioBlock(index, 'duration', value)"
+                  :min="1"
+                  :max="10"
+                  mode="decimal"
+                  :step="1"
+                  inputClass="p-inputtext p-component"
+                  buttonLayout="stacked"
+                  :showButtons="true"
+                  :id="`duration-${index}`"
+                />
+                <label :for="`duration-${index}`">Макс. сообщений</label>
+              </FloatLabel>
+            </div>
+            
+            <div class="block-field">
+              <label>Ключевые точки</label>
+              <FloatLabel variant="on">
+              <Chips 
+                :modelValue="block.keypoints || []"
+                @update:modelValue="(value) => updateScenarioBlock(index, 'keypoints', value as string[])"
+                placeholder="Нажмите Enter для добавления"
+                separator=","
+              />
+              </FloatLabel>
+              <small class="field-help">Нажмите Enter или запятую для добавления новой точки</small>
+            </div>
+          </div>
+        </template>
+      </Card>
+      
+        <Button 
+          icon="pi pi-plus" 
+          label="Добавить блок" 
+          @click="addScenarioBlock" 
+          outlined 
+          class="add-block-btn"
+        />
+      </div>
+    </template>
 
     <div class="actions">
       <slot name="actions">
@@ -232,6 +379,87 @@ function submit() {
   justify-content: flex-end;
   gap: 8px; 
   margin-top: 8px; 
+}
+
+/* Стили для блоков сценария */
+.scenario-blocks {
+  display: grid;
+  gap: 12px;
+}
+
+.scenario-block {
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+}
+
+.block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--surface-50);
+  border-bottom: 1px solid var(--surface-border);
+  border-radius: 8px 8px 0 0;
+}
+
+.block-number {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--primary-color);
+  background: var(--primary-50);
+  padding: 4px 8px;
+  border-radius: 12px;
+  min-width: 24px;
+  text-align: center;
+}
+
+.block-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.block-content {
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.block-field {
+  display: grid;
+  gap: 6px;
+}
+
+.block-field label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.field-help {
+  color: var(--text-color-secondary);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.add-block-btn {
+  justify-self: start;
+  margin-top: 8px;
+}
+
+/* Стили для chips */
+:deep(.p-chips .p-chips-multiple-container) {
+  min-height: 42px;
+}
+
+:deep(.p-chips .p-chips-token) {
+  background: var(--primary-100);
+  color: var(--primary-700);
+  border: 1px solid var(--primary-200);
+}
+
+:deep(.p-chips .p-chips-token .p-chips-token-label) {
+  padding: 4px 8px;
+  font-size: 13px;
 }
 </style>
 

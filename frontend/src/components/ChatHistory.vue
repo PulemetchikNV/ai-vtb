@@ -27,7 +27,6 @@ function selectChat(id: string) {
 async function handleDeleteChat(id: string) {
   if (!id) return
   await deleteChat(id)
-  await loadChatHistory()
   emit('delete', id)
 }
 

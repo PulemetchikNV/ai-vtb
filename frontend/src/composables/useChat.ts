@@ -198,7 +198,7 @@ export function useChat() {
         error.value = null
         try {
             const res = await api.get<{ id: string; messages: Message[]; analysis?: any } & any>(`/chat/${id}`)
-            if(!res.data.id) throw new Error('Chat not found')
+            if (!res.data.id) throw new Error('Chat not found')
             currentChatId.value = res.data.id
             chat.value = res.data
             if (res.data.analysis) {
@@ -350,6 +350,7 @@ export function useChat() {
     async function loadChatHistory() {
         loading.value = true
         error.value = null
+        console.log('loadChatHistory')
         try {
             const res = await api.get<Chat[]>('/chats')
             chatHistory.value = res.data

@@ -24,6 +24,7 @@ model Chat {
     requirements_checklist Json?
     analysis               Json?
     facts_meta             Json?
+    meta                   Json?
     is_finished            Boolean   @default(false)
     userId                 String?
     user                   User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -51,6 +52,7 @@ model Vacancy {
     description_text       String
     requirements_checklist Json
     category_weights       Json?
+    scenario_blocks        Json?
     createdAt              DateTime @default(now())
     updatedAt              DateTime @updatedAt
     chats                  Chat[]

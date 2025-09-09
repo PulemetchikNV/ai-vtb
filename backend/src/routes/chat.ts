@@ -65,6 +65,20 @@ export default async function chatRoutes(server: FastifyInstance) {
         const vacancy = body.vacancyId ? await prisma.vacancy.findUnique({ where: { id: body.vacancyId } }) : null;
         const initialChecklist = vacancy?.requirements_checklist || [];
 
+        // Инициализируем meta с блоками сценария, если есть вакансия
+        let chatMeta = null;
+        if (vacancy && vacancy.scenario_blocks && Array.isArray(vacancy.scenario_blocks) && vacancy.scenario_blocks.length > 0) {
+            const scenarioBlocks = vacancy.scenario_blocks as any[];
+            chatMeta = {
+                scenario: {
+                    blocks: scenarioBlocks,
+                    current_block_index: 0,
+                    current_block: scenarioBlocks[0],
+                    counter: 0
+                }
+            };
+        }
+
         const chat = await prisma.chat.create({
             data: ({
                 user: { connect: { id: user.id } },
@@ -77,7 +91,8 @@ export default async function chatRoutes(server: FastifyInstance) {
                 ...(body.resumeId
                     ? { resume: { connect: { id: body.resumeId } } }
                     : {}),
-                facts_meta: { fact_ledger: [], contradictions: [] } as any
+                facts_meta: { fact_ledger: [], contradictions: [] } as any,
+                meta: chatMeta as any
             } as any)
         });
 
@@ -93,15 +108,23 @@ export default async function chatRoutes(server: FastifyInstance) {
 
                 const resumeText = resume?.text ?? resume?.text_raw ?? '';
                 const { systemPrompt, initialMessage } = await dialogueService.getInitialMessage({ vacancy, resumeText, lang: body.lang });
-                await prisma.message.create({ data: { chatId: chat.id, role: 'user', content: ``, hiddenContent: systemPrompt } });
-                await prisma.message.create({ data: { chatId: chat.id, role: 'assistant', content: initialMessage } });
+                const systemMsg = await prisma.message.create({ data: { chatId: chat.id, role: 'user', content: ``, hiddenContent: systemPrompt } });
+                const assistantMsg = await prisma.message.create({ data: { chatId: chat.id, role: 'assistant', content: initialMessage } });
+
+                // Отправляем WebSocket события для начальных сообщений с задержкой
+                // чтобы фронтенд успел получить ответ и подписаться на канал
+                setTimeout(() => {
+                    console.log(`Broadcasting initial messages for chat ${chat.id}`);
+                    chatEventBus.broadcastMessageCreated(systemMsg);
+                    chatEventBus.broadcastMessageCreated(assistantMsg);
+                }, 500); // Увеличиваем задержку до 500мс
             } catch (e) {
                 console.error('Error getting initial message', e);
                 await prisma.chat.delete({ where: { id: chat.id } });
                 return reply.code(500).send({ error: 'Error getting initial message' });
             }
         }
-        return reply.code(201).send(chat);
+        return reply.code(201).send({...chat, messages: []});
     });
 
     server.delete('/chat/:id', async (req, reply) => {

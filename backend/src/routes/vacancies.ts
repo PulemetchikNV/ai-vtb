@@ -1,7 +1,35 @@
 import { FastifyInstance, FastifySchema } from 'fastify';
 import { prisma } from '../prisma';
-import { REQUIREMENT_TYPES } from '../__data__/constants';
+import { REQUIREMENT_TYPES, SCENARIO_BLOCKS } from '../__data__/constants';
 import { requireAuth, requireRole } from '../middleware/authMiddleware'
+
+// Функция для создания default scenario_blocks
+function createDefaultScenarioBlocks(requirementsChecklist: any[]): any[] {
+    const scenarioBlocks = [];
+
+    // 1. Блок вступления
+    scenarioBlocks.push(SCENARIO_BLOCKS.INTRODUCTION);
+
+    // 2. Блоки по требованиям, отсортированные по весу (приоритетные сначала)
+    const sortedRequirements = [...requirementsChecklist].sort((a, b) => b.weight - a.weight);
+
+    for (const requirement of sortedRequirements) {
+        scenarioBlocks.push({
+            title: `Проверка: ${requirement.description}`,
+            duration: Math.max(2, Math.min(5, Math.ceil(requirement.weight / 2))), // duration от 2 до 5 в зависимости от веса
+            keypoints: [
+                `Оценка навыка: ${requirement.description}`,
+                `Практические вопросы по теме`,
+                `Примеры из опыта кандидата`
+            ]
+        });
+    }
+
+    // 3. Блок завершения
+    scenarioBlocks.push(SCENARIO_BLOCKS.CONCLUSION);
+
+    return scenarioBlocks;
+}
 
 const vacancySchema = {
     body: {
@@ -31,6 +59,22 @@ const vacancySchema = {
                     soft_skill: { type: 'number', minimum: 0, maximum: 1 }
                 },
                 additionalProperties: true
+            },
+            scenario_blocks: {
+                type: 'array',
+                items: {
+                    type: 'object',
+                    required: ['title'],
+                    properties: {
+                        title: { type: 'string' },
+                        duration: { type: 'number', minimum: 1, maximum: 10 },
+                        keypoints: {
+                            type: 'array',
+                            items: { type: 'string' }
+                        }
+                    },
+                    additionalProperties: false
+                }
             }
         },
         additionalProperties: false
@@ -53,7 +97,7 @@ export default async function vacancyRoutes(server: FastifyInstance) {
         const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
         const vacancies = await prisma.vacancy.findMany({
             orderBy: { updatedAt: 'desc' },
-            select: { id: true, title: true, description_text: true, requirements_checklist: true, category_weights: true, createdAt: true, updatedAt: true }
+            select: { id: true, title: true, description_text: true, requirements_checklist: true, category_weights: true, scenario_blocks: true, createdAt: true, updatedAt: true }
         });
         return vacancies;
     });
@@ -61,9 +105,17 @@ export default async function vacancyRoutes(server: FastifyInstance) {
     server.post('/vacancies', {
         schema: vacancySchema
     }, async (req, reply) => {
-        const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
+        const user = requireAuth(req);
+        if (!user) return reply.code(401).send({ error: 'Unauthorized' })
         if (!requireRole(user, 'hr', reply)) return
-        const body = req.body as { title: string; description_text: string; requirements_checklist: unknown; category_weights?: Record<string, number> };
+
+        const body = req.body as { title: string; description_text: string; requirements_checklist: any[]; category_weights?: Record<string, number>; scenario_blocks?: unknown };
+
+        // Если scenario_blocks не переданы, создаем default значения
+        if (!body.scenario_blocks) {
+            body.scenario_blocks = createDefaultScenarioBlocks(body.requirements_checklist);
+        }
+
         const vacancy = await prisma.vacancy.create({ data: ({ ...body, userId: user.id } as any) });
         return reply.code(201).send(vacancy);
     });
@@ -80,6 +132,7 @@ export default async function vacancyRoutes(server: FastifyInstance) {
                 description_text: true,
                 requirements_checklist: true,
                 category_weights: true,
+                scenario_blocks: true,
                 createdAt: true,
                 updatedAt: true,
                 userId: true
@@ -96,7 +149,7 @@ export default async function vacancyRoutes(server: FastifyInstance) {
         const user = requireAuth(req); if (!user) return reply.code(401).send({ error: 'Unauthorized' })
         if (!requireRole(user, 'hr', reply)) return
         const { id } = req.params as { id: string };
-        const body = req.body as Partial<{ title: string; description_text: string; requirements_checklist: unknown; category_weights?: Record<string, number> }>;
+        const body = req.body as Partial<{ title: string; description_text: string; requirements_checklist: unknown; category_weights?: Record<string, number>; scenario_blocks?: unknown }>;
         console.log('PUT vacancy body:', body);
         const vacancy = await prisma.vacancy.update({ where: { id }, data: body as any });
         console.log('PUT vacancy success:', vacancy.id);
