@@ -59,6 +59,11 @@ let typingInterval: number | null = null
 async function handleSend() {
   const text = inputText.value.trim()
   if (!text) return
+  // Очистить предыдущее сообщение ассистента до получения нового
+  stopTypingEffect()
+  isAssistantSpeaking.value = false
+  currentAssistantText.value = ''
+  isWaitingForAI.value = true
   await sendMessage(text)
   inputText.value = ''
 }
@@ -120,11 +125,12 @@ function handleNewChat() {
 
 async function confirmStartChat() {
   if (!selectedVacancyId.value) return
-  const chat = await startChat(`Собеседование (${selectedVacancyId.value})`, selectedVacancyId.value, selectedResumeId.value || undefined, selectedLang.value)
+  const newChat = await startChat(`Собеседование (${selectedVacancyId.value})`, selectedVacancyId.value, selectedResumeId.value || undefined, selectedLang.value)
+  chat.value = newChat
   showNewChat.value = false
   if(!chat) return
 
-  router.push({ path: `/voice-chat/${chat.id}` })
+  router.push({ path: `/voice-chat/${newChat.id}?newChat=true` })
   loadChatHistory()
 }
 
@@ -142,10 +148,11 @@ async function handleDeleteChat(id: string) {
 
 // Обработчик TTS событий
 function handleTTSMessage(event: CustomEvent) {
-  const { text } = event.detail
+  let { text } = event.detail
   
   // Начинаем воспроизведение и синхронизацию
   isAssistantSpeaking.value = true
+  if(text.includes('*FINISH CALL*')) text = text.replace('*FINISH CALL*', '')
   
   synthesizeAndPlay(text, lang.value, {
     onStart: () => {
@@ -213,7 +220,7 @@ onUnmounted(() => {
 })
 
 watchEffect(async () => {
-  if (currentChatId.value) {
+  if (currentChatId.value && (!route.query.newChat && chat.value)) {
     analysis.value = null
     analysisError.value = false
     await fetchChat(currentChatId.value)
@@ -232,6 +239,10 @@ watchEffect(() => {
     
     // Если получили новое user сообщение
     if (lastMessage.role === 'user') {
+      // Сбрасываем предыдущее сообщение ассистента, пока ждём новый ответ
+      stopTypingEffect()
+      isAssistantSpeaking.value = false
+      currentAssistantText.value = ''
       if (isProcessingMessage.value) {
         isProcessingMessage.value = false
         // Начинаем ожидание ответа AI
@@ -403,11 +414,11 @@ watchEffect(() => {
                   <!-- Call Controls -->
                   <div class="call-controls">
                     <Button 
-                      :label="isProcessingMessage ? 'Обработка сообщения...' : (isRecording ? 'Остановить' : 'Говорить')" 
-                      :icon="isProcessingMessage ? 'pi pi-spin pi-spinner' : (isRecording ? 'pi pi-stop' : 'pi pi-microphone')"
-                      :severity="isProcessingMessage ? 'info' : (isRecording ? 'danger' : 'success')"
+                      :label="chat?.is_finished ? 'Звонок завершён' : (isProcessingMessage ? 'Обработка сообщения...' : (isRecording ? 'Остановить' : 'Говорить'))" 
+                      :icon="chat?.is_finished ? 'pi pi-check-circle' : (isProcessingMessage ? 'pi pi-spin pi-spinner' : (isRecording ? 'pi pi-stop' : 'pi pi-microphone'))"
+                      :severity="chat?.is_finished ? 'secondary' : (isProcessingMessage ? 'info' : (isRecording ? 'danger' : 'success'))"
                       size="large"
-                      :disabled="!currentChatId || isAssistantSpeaking || isProcessingMessage"
+                      :disabled="!currentChatId || isAssistantSpeaking || isProcessingMessage || !!chat?.is_finished"
                       :loading="isProcessingMessage"
                       @click="isRecording ? stopRecording() : startRecording()"
                       class="record-button"
@@ -442,6 +453,15 @@ watchEffect(() => {
                         <div class="message-role">{{ msg.role === 'user' ? 'Вы' : 'AI' }}</div>
                         <div class="message-content">{{ msg.content }}</div>
                       </div>
+                    </div>
+                  </div>
+
+                  <!-- Analysis block (должен быть виден и в режиме звонка) -->
+                  <Divider class="my-12" />
+                  <div v-if="analysis" class="analysis">
+                    <AnalysisView :analysis="analysis as any" />
+                    <div v-if="analysisError" class="error mt-8">
+                      <Button label="Пересоздать отчёт" icon="pi pi-refresh" @click="finishChat" />
                     </div>
                   </div>
                 </div>
