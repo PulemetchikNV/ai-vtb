@@ -5,7 +5,7 @@
     "description": "Simple Fastify backend in TypeScript",
     "main": "dist/server.js",
     "scripts": {
-        "build": "npx prisma generate && tsc -p tsconfig.json --noEmitOnError false --skipLibCheck",
+        "build": "npx prisma generate && tsc",
         "start": "node dist/server.js",
         "dev": "tsx watch src/server.ts",
         "prisma:generate": "prisma generate",
