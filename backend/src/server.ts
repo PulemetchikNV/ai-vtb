@@ -71,16 +71,16 @@ async function start() {
 
     await server.register(async (s) => {
         await authRoutes(s);
-    });
+    }, { prefix: '/api' });
     await server.register(async (s) => {
         await chatRoutes(s);
-    });
+    }, { prefix: '/api' });
     await server.register(async (s) => {
         await vacancyRoutes(s);
-    });
+    }, { prefix: '/api' });
     await server.register(async (s) => {
         await resumeRoutes(s);
-    });
+    }, { prefix: '/api' });
 
     // WebSocket server for streaming audio chunks
     // Use noServer and a single upgrade handler to multiplex by path safely

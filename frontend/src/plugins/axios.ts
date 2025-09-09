@@ -6,7 +6,7 @@ console.log('AXIOS INIT', import.meta.env.VITE_API_URL);
 
 
 export const axiosInstance = axios.create({
-    baseURL: (import.meta as any).env?.VITE_API_URL || (window as any).__VITE_API_URL__ || '/',
+    baseURL: ((import.meta as any).env?.VITE_API_URL || (window as any).__VITE_API_URL__ || '/') + 'api',
     withCredentials: true,
     timeout: 30000,
     headers: {
