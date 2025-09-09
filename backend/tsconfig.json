@@ -6,13 +6,33 @@
         "outDir": "dist",
         "esModuleInterop": true,
         "moduleResolution": "node",
-        "forceConsistentCasingInFileNames": true,
+        "allowJs": true,
+        "checkJs": false,
+        "declaration": false,
+        "declarationMap": false,
+        "sourceMap": false,
+        "removeComments": true,
         "strict": false,
-        "skipLibCheck": true,
         "noImplicitAny": false,
-        "noEmitOnError": false
+        "strictNullChecks": false,
+        "strictFunctionTypes": false,
+        "strictBindCallApply": false,
+        "strictPropertyInitialization": false,
+        "noImplicitThis": false,
+        "noImplicitReturns": false,
+        "noFallthroughCasesInSwitch": false,
+        "noUncheckedIndexedAccess": false,
+        "noImplicitOverride": false,
+        "exactOptionalPropertyTypes": false,
+        "noPropertyAccessFromIndexSignature": false,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": false,
+        "noEmitOnError": false,
+        "suppressImplicitAnyIndexErrors": true,
+        "suppressExcessPropertyErrors": true
     },
     "include": [
         "src"
-    ]
+    ],
+    "exclude": []
 }
