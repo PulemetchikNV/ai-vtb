@@ -28,8 +28,6 @@
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": false,
         "noEmitOnError": false,
-        "suppressImplicitAnyIndexErrors": true,
-        "suppressExcessPropertyErrors": true
     },
     "include": [
         "src"
