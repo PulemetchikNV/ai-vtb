@@ -133,5 +133,6 @@ services:
 
 volumes:
   node_modules_cache:
-
+  backend_node_modules:
+  pg_data:
 
