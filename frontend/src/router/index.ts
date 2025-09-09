@@ -5,6 +5,7 @@ import Resumes from '../views/Resumes.vue';
 import Login from '../views/Login.vue';
 import Profile from '../views/Profile.vue';
 import VacancyAnalytics from '../views/VacancyAnalytics.vue';
+import { isAuthorized } from '../__data__/store';
 
 const router = createRouter({
     history: createWebHistory(),
@@ -18,5 +19,13 @@ const router = createRouter({
         { path: '/profile', component: Profile },
     ],
 });
+
+router.beforeEach((to, from, next) => {
+    if(isAuthorized.value && to.path !== '/login') {
+        next()
+    } else {
+        next('/login')
+    }
+})
 
 export default router;
