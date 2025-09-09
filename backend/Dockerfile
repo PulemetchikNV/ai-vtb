@@ -10,6 +10,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY package.json ./
 COPY tsconfig.json ./
+COPY prisma ./prisma
 COPY src ./src
 RUN npm run build
 
@@ -17,6 +18,7 @@ FROM node:20-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /app/dist ./dist
+COPY --from=build /app/prisma ./prisma
 COPY package.json ./
 RUN npm install --omit=dev --no-audit --no-fund || true
 # ffmpeg is needed if incoming chunks are not WAV; installing via apk
