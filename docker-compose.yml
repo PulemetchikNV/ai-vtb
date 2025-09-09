@@ -106,6 +106,30 @@ services:
       - backend
     restart: unless-stopped
 
+  postgres:
+    image: postgres:16-alpine
+    container_name: pg-dev
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=ai_vtb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: pgadmin-dev
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:
+      - "5051:80"
+    depends_on:
+      - postgres
+    restart: unless-stopped
 
 volumes:
   node_modules_cache:
