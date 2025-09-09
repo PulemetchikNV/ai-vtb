@@ -102,11 +102,13 @@ services:
     image: frontend-nginx:latest
     ports:
       - "80:80"
+      - "443:443"
     depends_on:
       - backend
     restart: unless-stopped
     volumes:
       - /srv/certbot/www:/var/www/certbot
+      - /etc/letsencrypt:/etc/letsencrypt:ro
 
   postgres:
     image: postgres:16-alpine
