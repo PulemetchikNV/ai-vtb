@@ -21,10 +21,14 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-    if(isAuthorized.value && to.path !== '/login') {
+    console.log(isAuthorized.value)
+    if (isAuthorized.value) {
         next()
-    } else {
+    } else if (to.path !== '/login') {
+        console.log('login')
         next('/login')
+    } else {
+        next()
     }
 })
 
